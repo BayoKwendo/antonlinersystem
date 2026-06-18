@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DrillDriver</string>
+    <string name="continues">Continue</string>
+    <string name="error_icon_content_description">Error</string>
+    <string name="exposed_dropdown_menu_content_description">Show dropdown menu</string>
+   <string name="hide_bottom_view_on_scroll_behavior">com.google.android.material.behavior.HideBottomViewOnScrollBehavior</string>
+    <string name="icon_content_description">Dialog Icon</string>
+    <string name="item_view_role_description">Tab</string>
+    <string name="location_content">This app wants to change your device settings use GPS,Wi-Fi and cell networks for your location</string>
+    <string name="material_clock_display_divider">:</string>
+    <string name="need_location">Enable GPS SERVICE</string>
+    <string name="offline">Offline</string>
+    <string name="online_driver">Online</string>
+    <string name="password">Password</string>
+    <string name="password_toggle_content_description">Show password</string>
+    <string name="search_menu_title">Search</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_in_with_your_id_number">Sign in here</string>
+    <string name="status_bar_notification_info_overflow">999+</string>
+    <string name="welcome_back">Welcome Back</string>
+</resources>

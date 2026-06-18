@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    app:cardElevation="10.0dip">
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:backgroundTint="@color/white"
+        android:orientation="vertical">
+
+        <ScrollView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10.0dip"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvName"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dip"
+                    android:padding="5.0dip"
+                    android:autoLink="web"
+                    android:textColor="?editTextColor"
+                    android:textSize="15.0sp"
+                    android:visibility="gone"
+                    android:layout_marginBottom="40dp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvdesc"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dip"
+                    android:padding="5.0dip"
+                    android:text="Service"
+                    android:autoLink="web"
+                    android:visibility="gone"
+                    android:textColor="?editTextColor"
+                    android:textSize="18.0sp"
+                    android:layout_marginBottom="40dp"
+                    android:textStyle="bold" />
+               <Button
+                    android:id="@+id/btnAction"
+                    android:layout_width="200dip"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.4"
+                    android:layout_gravity="center"
+                    android:background="@drawable/button_calculator"
+                    android:textColor="@color/white" />
+
+
+
+
+                <EditText
+                    android:id="@+id/report"
+                    android:layout_width="fill_parent"
+                    android:inputType="textMultiLine"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:hint="Put Your complain here to make report"
+                    android:maxLength="10000"
+                    android:layout_marginTop="20dp"
+                    android:textSize="16.0sp"
+                    android:maxLines="10" />
+
+                <Button
+                    android:id="@+id/btnReport"
+                    android:layout_width="200dip"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.4"
+                    android:visibility="gone"
+                    android:layout_marginTop="15dp"
+                    android:layout_gravity="center"
+                    android:text="Make a Report"
+                    android:background="@drawable/button_calculator"
+                    android:textColor="@color/white" />
+            </LinearLayout>
+        </ScrollView>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="10.0dip"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:weightSum="1.0">
+
+            <Button
+                android:id="@+id/update"
+                android:layout_width="100.0dip"
+                android:layout_height="50.0dip"
+                android:layout_weight="0.4"
+                android:background="@drawable/button_calculator"
+                android:text="Close"
+                android:textColor="@color/white" />
+
+            <View
+                android:layout_width="20.0dip"
+                android:id="@+id/mview"
+                android:layout_height="0.0dip" />
+
+            <Button
+                android:id="@+id/logout"
+                android:layout_width="100.0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.6"
+                android:background="@drawable/button_close"
+                android:text="LogOut"
+                android:textColor="@color/white" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

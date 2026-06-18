@@ -1,0 +1,5 @@
+portal/node_modules
+portal/dist
+.env
+*.local
+.DS_Store

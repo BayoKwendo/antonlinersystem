@@ -1,0 +1,15 @@
+version: '3.7'
+services:
+  water:
+    restart: always
+    network_mode: host
+    build: .
+    container_name: dril
+    
+  # deposit:
+  #   restart: always
+  #   network_mode: host
+  #   build:
+  #     context: ./deposits
+  #     dockerfile: Dockerfile
+  #   container_name: service

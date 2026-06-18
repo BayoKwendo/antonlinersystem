@@ -1,0 +1,32 @@
+// =============================================================================
+//  v1 provider self-service controller (online/offline, live location, me).
+// =============================================================================
+import { type Context } from "../../deps.ts";
+import { ok } from "../../utils/http.ts";
+import { parseBody } from "../../utils/validate.ts";
+import { currentUser } from "../../middlewares/auth.ts";
+import providerRepo from "../../repositories/providerRepo.ts";
+import { providerLocationSchema, providerOnlineSchema } from "../../validators/schemas.ts";
+
+const providerController = {
+  me: async (ctx: Context) => {
+    const me = currentUser(ctx);
+    ok(ctx, await providerRepo.profile(me.userId));
+  },
+
+  setOnline: async (ctx: Context) => {
+    const me = currentUser(ctx);
+    const { online } = await parseBody(ctx, providerOnlineSchema);
+    await providerRepo.setOnline(me.userId, online);
+    ok(ctx, { online }, online ? "You are online" : "You are offline");
+  },
+
+  updateLocation: async (ctx: Context) => {
+    const me = currentUser(ctx);
+    const { lat, lng } = await parseBody(ctx, providerLocationSchema);
+    await providerRepo.updateLocation(me.userId, lat, lng);
+    ok(ctx);
+  },
+};
+
+export default providerController;

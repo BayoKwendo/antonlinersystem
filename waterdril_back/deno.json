@@ -1,0 +1,25 @@
+{
+  "tasks": {
+    "start": "deno run --allow-net --allow-env --allow-read --allow-sys server.ts",
+    "dev": "deno run --watch --allow-net --allow-env --allow-read --allow-sys server.ts",
+    "check": "deno check server.ts"
+  },
+  "imports": {
+    "@oak/oak": "jsr:@oak/oak@^17.1.4",
+    "@std/dotenv": "jsr:@std/dotenv@^0.225.3",
+    "@std/fmt": "jsr:@std/fmt@^1.0.5",
+    "@std/datetime": "jsr:@std/datetime@^0.225.3",
+    "mysql2/promise": "npm:mysql2@^3.11.5/promise",
+    "bcryptjs": "npm:bcryptjs@^2.4.3",
+    "jose": "npm:jose@^5.9.6",
+    "zod": "npm:zod@^3.24.1",
+    "@aws-sdk/client-s3": "npm:@aws-sdk/client-s3@^3.700.0"
+  },
+  "fmt": {
+    "lineWidth": 100,
+    "exclude": ["node_modules", "dist"]
+  },
+  "lint": {
+    "exclude": ["node_modules", "dist"]
+  }
+}
