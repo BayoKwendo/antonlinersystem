@@ -1,5 +1,26 @@
-portal/node_modules
-portal/dist
-.env
+# --- dependencies / build output ---
+**/node_modules/
+**/dist/
+**/build/
+**/.gradle/
+**/.kotlin/
+**/app/release/
+
+# --- secrets & local config ---
+**/.env
+**/local.properties
 *.local
 .DS_Store
+Thumbs.db
+
+# --- IDE ---
+**/.idea/
+**/*.iml
+
+# --- Deno backups (contain real data) ---
+waterdril_back/db/backups/
+
+# --- build artifacts ---
+**/*.apk
+**/*.aab
+*.log
