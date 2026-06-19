@@ -11,15 +11,18 @@ import { PageHeader } from "../components/PageHeader";
 import { PAGE_SIZE, Pager } from "../components/Pager";
 import { downloadCsv } from "../lib/csv";
 import { date, money } from "../lib/format";
+import { sanitizePhone, validatePhoneOptional } from "../lib/validation";
 import type { Payment } from "../lib/types";
 
 export default function Payments() {
   const qc = useQueryClient();
   const [opened, { open, close }] = useDisclosure(false);
   const [page, setPage] = useState(1);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const payments = useQuery({
-    queryKey: ["payments", page],
-    queryFn: () => api.payments({ limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
+    queryKey: ["payments", page, from, to],
+    queryFn: () => api.payments({ from: from || undefined, to: to || undefined, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
   });
   const items = payments.data?.items ?? [];
 
@@ -29,6 +32,7 @@ export default function Payments() {
       booking_id: (v) => (v <= 0 ? "Required" : null),
       amount: (v) => (v <= 0 ? "Required" : null),
       receipt: (v) => (v.length < 3 ? "Required" : null),
+      phone: validatePhoneOptional,
     },
   });
 
@@ -55,12 +59,16 @@ export default function Payments() {
           </Group>
         }
       />
-      {payments.data?.sum != null && (
-        <Card withBorder radius="md" padding="sm" mb="md" w="fit-content">
-          <Text size="xs" c="dimmed">Total received (filtered)</Text>
-          <Text fw={800} fz="lg" c="teal">{money(payments.data.sum)}</Text>
-        </Card>
-      )}
+      <Group mb="md" align="flex-end">
+        <TextInput type="date" label="From" value={from} onChange={(e) => { setFrom(e.currentTarget.value); setPage(1); }} />
+        <TextInput type="date" label="To" value={to} onChange={(e) => { setTo(e.currentTarget.value); setPage(1); }} />
+        {payments.data?.sum != null && (
+          <Card withBorder radius="md" padding="sm" w="fit-content">
+            <Text size="xs" c="dimmed">Total received (filtered)</Text>
+            <Text fw={800} fz="lg" c="teal">{money(payments.data.sum)}</Text>
+          </Card>
+        )}
+      </Group>
       {payments.isLoading ? <Center h={200}><Loader /></Center> : (
         <Table.ScrollContainer minWidth={800}>
           <Table striped highlightOnHover verticalSpacing="sm">
@@ -100,7 +108,13 @@ export default function Payments() {
           <NumberInput label="Booking ID" min={1} {...form.getInputProps("booking_id")} mb="sm" />
           <NumberInput label="Amount (KES)" min={1} {...form.getInputProps("amount")} mb="sm" />
           <TextInput label="M-Pesa receipt" {...form.getInputProps("receipt")} mb="sm" />
-          <TextInput label="Payer phone (optional)" {...form.getInputProps("phone")} mb="md" />
+          <TextInput
+            label="Payer phone (optional)"
+            inputMode="tel"
+            {...form.getInputProps("phone")}
+            onChange={(e) => form.setFieldValue("phone", sanitizePhone(e.currentTarget.value))}
+            mb="md"
+          />
           <Group justify="flex-end">
             <Button variant="default" onClick={close}>Cancel</Button>
             <Button type="submit" loading={reconcile.isPending}>Reconcile</Button>

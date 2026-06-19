@@ -30,6 +30,7 @@ import { PageHeader } from "../components/PageHeader";
 import { PAGE_SIZE, Pager } from "../components/Pager";
 import { downloadCsv } from "../lib/csv";
 import { date, money, statusColor, titleCase } from "../lib/format";
+import { sanitizePhone, validatePhone } from "../lib/validation";
 import type { Provider } from "../lib/types";
 
 function ProviderDrawer({ id, onClose }: { id: number | null; onClose: () => void }) {
@@ -125,7 +126,7 @@ export default function Providers() {
   const form = useForm({
     initialValues: { phone: "", display_name: "", password: "", category: "", base_price: 0, bio: "" },
     validate: {
-      phone: (v) => (v.length < 7 ? "Required" : null),
+      phone: validatePhone,
       display_name: (v) => (v.length < 2 ? "Required" : null),
       password: (v) => (v.length < 6 ? "Min 6 characters" : null),
       category: (v) => (!v ? "Pick a category" : null),
@@ -148,9 +149,20 @@ export default function Providers() {
     onSuccess: () => {
       notifications.show({ color: "teal", message: "Updated" });
       qc.invalidateQueries({ queryKey: ["providers"] });
+      setEditing(null);
     },
     onError: (e) => notifications.show({ color: "red", message: apiError(e) }),
   });
+
+  const [editing, setEditing] = useState<Provider | null>(null);
+  const editForm = useForm({
+    initialValues: { display_name: "", phone: "", base_price: 0, bio: "" },
+    validate: { display_name: (v) => (v.length < 2 ? "Required" : null), phone: validatePhone },
+  });
+  function openEdit(p: Provider) {
+    editForm.setValues({ display_name: p.display_name, phone: p.phone, base_price: Number(p.base_price), bio: "" });
+    setEditing(p);
+  }
 
   return (
     <>
@@ -210,6 +222,7 @@ export default function Providers() {
                     <Menu position="bottom-end" withinPortal>
                       <Menu.Target><ActionIcon variant="subtle"><IconDots size={18} /></ActionIcon></Menu.Target>
                       <Menu.Dropdown>
+                        <Menu.Item onClick={() => openEdit(p)}>Edit details…</Menu.Item>
                         <Menu.Item onClick={() => update.mutate({ id: p.id, body: { verified: !p.verified_at } })}>
                           {p.verified_at ? "Unverify" : "Verify"}
                         </Menu.Item>
@@ -235,7 +248,14 @@ export default function Providers() {
       <Modal opened={opened} onClose={close} title="Onboard provider" centered>
         <form onSubmit={form.onSubmit((v) => onboard.mutate(v))}>
           <TextInput label="Full name" {...form.getInputProps("display_name")} mb="sm" />
-          <TextInput label="Phone" placeholder="2547XXXXXXXX" {...form.getInputProps("phone")} mb="sm" />
+          <TextInput
+            label="Phone"
+            placeholder="2547XXXXXXXX"
+            inputMode="tel"
+            {...form.getInputProps("phone")}
+            onChange={(e) => form.setFieldValue("phone", sanitizePhone(e.currentTarget.value))}
+            mb="sm"
+          />
           <TextInput label="Initial password" type="password" {...form.getInputProps("password")} mb="sm" />
           <Select
             label="Service category"
@@ -248,6 +268,20 @@ export default function Providers() {
           <Group justify="flex-end">
             <Button variant="default" onClick={close}>Cancel</Button>
             <Button type="submit" loading={onboard.isPending}>Create</Button>
+          </Group>
+        </form>
+      </Modal>
+
+      <Modal opened={editing != null} onClose={() => setEditing(null)} title={`Edit — ${editing?.display_name ?? ""}`} centered>
+        <form onSubmit={editForm.onSubmit((v) => { if (editing) update.mutate({ id: editing.id, body: { ...v, bio: v.bio || undefined } }); })}>
+          <TextInput label="Full name" {...editForm.getInputProps("display_name")} mb="sm" />
+          <TextInput label="Phone" inputMode="tel" {...editForm.getInputProps("phone")}
+            onChange={(e) => editForm.setFieldValue("phone", sanitizePhone(e.currentTarget.value))} mb="sm" />
+          <NumberInput label="Base price (KES)" min={0} {...editForm.getInputProps("base_price")} mb="sm" />
+          <TextInput label="Bio (optional)" {...editForm.getInputProps("bio")} mb="md" />
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button type="submit" loading={update.isPending}>Save</Button>
           </Group>
         </form>
       </Modal>

@@ -26,6 +26,7 @@ export interface AuthResult {
     display_name: string;
     avatar_url: string | null;
     roles: string[];
+    must_change_password: boolean;
   };
 }
 
@@ -44,6 +45,7 @@ async function issueTokens(user: UserRow): Promise<AuthResult> {
       display_name: user.display_name,
       avatar_url: user.avatar_url,
       roles,
+      must_change_password: Number(user.must_change_password) === 1,
     },
   };
 }
@@ -117,6 +119,38 @@ export const authService = {
   /** Hash a password for provider/staff account creation (used by the portal). */
   hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, BCRYPT_ROUNDS);
+  },
+
+  /**
+   * Reset a staff/provider password: generate a temporary password, store its
+   * hash and SMS it. Silent (no account enumeration).
+   */
+  async resetPassword(rawPhone: string): Promise<void> {
+    const phone = normalizePhone(rawPhone);
+    const user = await accountRepo.findByPhone(phone);
+    if (!user || !user.password_hash) return; // only password accounts; stay silent
+    const temp = randomToken(4); // 8 hex chars
+    await accountRepo.setPassword(user.id, await bcrypt.hash(temp, BCRYPT_ROUNDS));
+    await accountRepo.setMustChangePassword(user.id, true);
+    await sendSms({
+      to: phone,
+      text: `Your AntonLiner portal temporary password is ${temp}. Please change it after signing in.`,
+      asciiOnly: true,
+    });
+  },
+
+  /** Change the signed-in user's own password (verifies the current one). */
+  async changePassword(userId: number, current: string, next: string): Promise<void> {
+    const user = await accountRepo.findById(userId);
+    if (!user || !user.password_hash) throw badRequest("Password change not available for this account");
+    if (!(await bcrypt.compare(current, user.password_hash))) throw unauthorized("Current password is incorrect");
+    await accountRepo.setPassword(userId, await bcrypt.hash(next, BCRYPT_ROUNDS));
+    await accountRepo.setMustChangePassword(userId, false);
+  },
+
+  /** Update the signed-in user's own profile. */
+  async updateProfile(userId: number, displayName?: string, email?: string | null): Promise<void> {
+    await accountRepo.updateProfile(userId, { displayName, email });
   },
 };
 

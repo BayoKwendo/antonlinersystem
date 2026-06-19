@@ -290,6 +290,181 @@ const adminRepo = {
     );
     return { items, total: count.total };
   },
+
+  // --- provider detail edit (name/phone/bio/owner + price/verify/suspend) ----
+  async editProvider(
+    id: number,
+    f: {
+      base_price?: number;
+      verified?: boolean;
+      suspended?: boolean;
+      display_name?: string;
+      phone?: string;
+      bio?: string;
+      owner_id?: number;
+    },
+  ) {
+    if (f.display_name !== undefined || f.phone !== undefined) {
+      const sets: string[] = [];
+      // deno-lint-ignore no-explicit-any
+      const p: any[] = [];
+      if (f.display_name !== undefined) { sets.push("display_name = ?"); p.push(f.display_name); }
+      if (f.phone !== undefined) { sets.push("phone = ?"); p.push(f.phone); }
+      p.push(id);
+      await client.query(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`, p);
+    }
+    const ppSets: string[] = [];
+    // deno-lint-ignore no-explicit-any
+    const ppParams: any[] = [];
+    if (f.base_price !== undefined) { ppSets.push("base_price = ?"); ppParams.push(f.base_price); }
+    if (f.bio !== undefined) { ppSets.push("bio = ?"); ppParams.push(f.bio); }
+    if (f.owner_id !== undefined) { ppSets.push("owner_id = ?"); ppParams.push(f.owner_id); }
+    if (f.verified !== undefined) ppSets.push(`verified_at = ${f.verified ? "CURRENT_TIMESTAMP" : "NULL"}`);
+    if (ppSets.length) {
+      ppParams.push(id);
+      await client.query(`UPDATE provider_profiles SET ${ppSets.join(", ")} WHERE user_id = ?`, ppParams);
+    }
+    if (f.suspended !== undefined) {
+      await client.query(`UPDATE users SET status = ? WHERE id = ?`, [f.suspended ? "suspended" : "active", id]);
+    }
+  },
+
+  /** All providers that have a real location, for the live ops map/list. */
+  providerLocations() {
+    return client.query(
+      `SELECT u.id, u.display_name, u.phone, sc.\`key\` AS category,
+              pp.availability, pp.lat, pp.lng, pp.location_updated_at
+         FROM provider_profiles pp
+         JOIN users u ON u.id = pp.user_id AND u.status = 'active'
+         JOIN service_categories sc ON sc.id = pp.category_id
+        WHERE pp.lat <> 0 OR pp.lng <> 0
+        ORDER BY pp.availability = 'available' DESC, u.display_name`,
+    );
+  },
+
+  // --- staff / owners / agents (users with a non-customer/provider role) ------
+  async listUsers({ role, q, limit, offset }: { role?: string; q?: string } & Page) {
+    const roleFilter = role ? "AND r2.`key` = ?" : "AND r2.`key` IN ('admin','assistance','finance','owner','agent')";
+    const where: string[] = []; // deno-lint-ignore no-explicit-any
+    const params: any[] = role ? [role] : [];
+    if (q) { where.push("(u.display_name LIKE ? OR u.phone LIKE ?)"); params.push(`%${q}%`, `%${q}%`); }
+    const extra = where.length ? `AND ${where.join(" AND ")}` : "";
+    const sub = `SELECT DISTINCT ur2.user_id FROM user_roles ur2 JOIN roles r2 ON r2.id=ur2.role_id WHERE 1=1 ${roleFilter}`;
+    const { limit: l, offset: o } = clamp({ limit, offset });
+    const [count] = await client.query(
+      `SELECT COUNT(*) AS total FROM users u WHERE u.deleted_at IS NULL AND u.id IN (${sub}) ${extra}`,
+      params,
+    );
+    const items = await client.query(
+      `SELECT u.id, u.display_name, u.phone, u.email, u.status, u.created_at,
+              (SELECT GROUP_CONCAT(r.\`key\`) FROM user_roles ur JOIN roles r ON r.id=ur.role_id WHERE ur.user_id=u.id) AS roles
+         FROM users u
+        WHERE u.deleted_at IS NULL AND u.id IN (${sub}) ${extra}
+        ORDER BY u.id DESC LIMIT ? OFFSET ?`,
+      [...params, l, o],
+    );
+    return { items, total: count.total };
+  },
+
+  async createUser(
+    { phone, displayName, passwordHash, roleKey, email }: {
+      phone: string; displayName: string; passwordHash: string; roleKey: string; email: string | null;
+    },
+  ): Promise<number> {
+    return await client.withTransaction(async (query) => {
+      const res = await query(
+        `INSERT INTO users (uuid, phone, display_name, email, password_hash, phone_verified_at)
+         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [crypto.randomUUID(), phone, displayName, email, passwordHash],
+      );
+      const id = res.insertId as number;
+      await query(`INSERT INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE \`key\`=?`, [id, roleKey]);
+      return id;
+    });
+  },
+
+  async updateUser(
+    id: number,
+    f: { displayName?: string; email?: string | null; suspended?: boolean; roleKey?: string; passwordHash?: string },
+  ) {
+    const sets: string[] = []; // deno-lint-ignore no-explicit-any
+    const p: any[] = [];
+    if (f.displayName !== undefined) { sets.push("display_name = ?"); p.push(f.displayName); }
+    if (f.email !== undefined) { sets.push("email = ?"); p.push(f.email); }
+    if (f.passwordHash !== undefined) { sets.push("password_hash = ?"); p.push(f.passwordHash); }
+    if (f.suspended !== undefined) { sets.push("status = ?"); p.push(f.suspended ? "suspended" : "active"); }
+    if (sets.length) { p.push(id); await client.query(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`, p); }
+    if (f.roleKey) {
+      await client.withTransaction(async (query) => {
+        await query(
+          `DELETE ur FROM user_roles ur JOIN roles r ON r.id=ur.role_id
+            WHERE ur.user_id=? AND r.\`key\` IN ('admin','assistance','finance','owner','agent')`,
+          [id],
+        );
+        await query(`INSERT INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE \`key\`=?`, [id, f.roleKey]);
+      });
+    }
+  },
+
+  // --- customers (portal-managed) --------------------------------------------
+  async createCustomer(
+    { phone, displayName, idNumber }: { phone: string; displayName: string; idNumber: string | null },
+  ): Promise<number> {
+    return await client.withTransaction(async (query) => {
+      const res = await query(
+        `INSERT INTO users (uuid, phone, display_name, phone_verified_at)
+         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+        [crypto.randomUUID(), phone, displayName],
+      );
+      const id = res.insertId as number;
+      await query(`INSERT INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE \`key\`='customer'`, [id]);
+      await query(`INSERT INTO customer_profiles (user_id, id_number) VALUES (?, ?)`, [id, idNumber]);
+      return id;
+    });
+  },
+
+  async updateCustomer(
+    id: number,
+    f: { displayName?: string; idNumber?: string; suspended?: boolean },
+  ) {
+    if (f.displayName !== undefined) await client.query(`UPDATE users SET display_name=? WHERE id=?`, [f.displayName, id]);
+    if (f.suspended !== undefined) {
+      await client.query(`UPDATE users SET status=? WHERE id=?`, [f.suspended ? "suspended" : "active", id]);
+    }
+    if (f.idNumber !== undefined) {
+      await client.query(
+        `INSERT INTO customer_profiles (user_id, id_number) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE id_number = VALUES(id_number)`,
+        [id, f.idNumber],
+      );
+    }
+  },
+
+  // --- bookings with date range (portal service-requests view) ----------------
+  async bookingsRange({ from, to, status, limit, offset }: { from?: string; to?: string; status?: string } & Page) {
+    const where: string[] = []; // deno-lint-ignore no-explicit-any
+    const params: any[] = [];
+    if (from) { where.push("DATE(b.created_at) >= ?"); params.push(from); }
+    if (to) { where.push("DATE(b.created_at) <= ?"); params.push(to); }
+    if (status) { where.push("b.status = ?"); params.push(status); }
+    const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const { limit: l, offset: o } = clamp({ limit, offset });
+    const [count] = await client.query(`SELECT COUNT(*) AS total FROM bookings b ${clause}`, params);
+    const items = await client.query(
+      `SELECT b.id, b.uuid, b.status, b.deposit_amount, b.total_amount, b.amount_paid,
+              b.address, b.created_at, sc.\`key\` AS category,
+              c.display_name AS customer_name, c.phone AS customer_phone,
+              p.display_name AS provider_name, p.phone AS provider_phone
+         FROM bookings b
+         JOIN users c ON c.id = b.customer_id
+         JOIN users p ON p.id = b.provider_id
+         JOIN service_categories sc ON sc.id = b.category_id
+         ${clause}
+        ORDER BY b.id DESC LIMIT ? OFFSET ?`,
+      [...params, l, o],
+    );
+    return { items, total: count.total };
+  },
 };
 
 export default adminRepo;

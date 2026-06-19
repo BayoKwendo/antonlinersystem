@@ -64,7 +64,8 @@ INSERT INTO `roles` (`key`, `name`, `description`) VALUES
   ('assistance', 'Support',        'Support / assistance staff'),
   ('finance',    'Finance',        'Payments & reconciliation'),
   ('provider',   'Service Provider','A driller / pump installer / surveyor etc.'),
-  ('customer',   'Customer',       'End customer who books services');
+  ('customer',   'Customer',       'End customer who books services'),
+  ('agent',      'Agent',          'Field agent / referrer');
 
 -- -----------------------------------------------------------------------------
 --  service_categories — the catalogue of services a provider can offer.
@@ -101,6 +102,7 @@ CREATE TABLE `users` (
   `phone`             VARCHAR(20)  NOT NULL,
   `email`            VARCHAR(150) DEFAULT NULL,
   `password_hash`     VARCHAR(255) DEFAULT NULL,
+  `must_change_password` TINYINT(1) NOT NULL DEFAULT 0,
   `display_name`      VARCHAR(120) NOT NULL,
   `avatar_url`        VARCHAR(512) DEFAULT NULL,
   `status`            ENUM('active','suspended','pending') NOT NULL DEFAULT 'active',

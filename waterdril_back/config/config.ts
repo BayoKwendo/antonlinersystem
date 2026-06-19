@@ -39,6 +39,7 @@ export const SERVER = {
   PORT: number("PORT", 5002),
 };
 
+
 export const SECURITY = {
   /**
    * Browser origins allowed to call the API (the Vite portal). Native apps

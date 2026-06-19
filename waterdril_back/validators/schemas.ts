@@ -105,6 +105,63 @@ export const complaintUpdateSchema = z.object({
 
 export const reviewHiddenSchema = z.object({ hidden: z.boolean() });
 
+// --- auth: reset / profile / change-password ---------------------------------
+export const resetPasswordSchema = z.object({ phone: z.string().min(7).max(20) });
+export const changePasswordSchema = z.object({
+  current: z.string().min(1),
+  next: z.string().min(6).max(200),
+});
+export const updateProfileSchema = z.object({
+  display_name: z.string().min(2).max(120).optional(),
+  email: z.string().email().max(150).optional().or(z.literal("")),
+});
+
+// --- staff/owner/agent users -------------------------------------------------
+const staffRole = z.enum(["admin", "assistance", "finance", "owner", "agent"]);
+export const createUserSchema = z.object({
+  phone: z.string().min(7).max(20),
+  display_name: z.string().min(2).max(120),
+  password: z.string().min(6).max(200),
+  role: staffRole,
+  email: z.string().email().max(150).optional(),
+});
+export const updateUserSchema = z.object({
+  display_name: z.string().min(2).max(120).optional(),
+  email: z.string().email().max(150).optional().or(z.literal("")),
+  role: staffRole.optional(),
+  suspended: z.boolean().optional(),
+  password: z.string().min(6).max(200).optional(),
+});
+
+// --- customers (portal-managed) ----------------------------------------------
+export const createCustomerSchema = z.object({
+  phone: z.string().min(7).max(20),
+  display_name: z.string().min(2).max(120),
+  id_number: z.string().max(20).optional(),
+});
+export const updateCustomerSchema = z.object({
+  display_name: z.string().min(2).max(120).optional(),
+  id_number: z.string().max(20).optional(),
+  suspended: z.boolean().optional(),
+});
+
+// --- provider detail edit (extends the price/verify/suspend update) ----------
+export const editProviderSchema = z.object({
+  base_price: z.coerce.number().min(0).optional(),
+  verified: z.boolean().optional(),
+  suspended: z.boolean().optional(),
+  display_name: z.string().min(2).max(120).optional(),
+  phone: z.string().min(7).max(20).optional(),
+  bio: z.string().max(500).optional(),
+  owner_id: z.coerce.number().int().positive().optional(),
+});
+
+// --- SMS console -------------------------------------------------------------
+export const sendSmsSchema = z.object({
+  phone: z.string().min(7).max(20),
+  text: z.string().min(1).max(400),
+});
+
 export type RequestOtp = z.infer<typeof requestOtpSchema>;
 export type VerifyOtp = z.infer<typeof verifyOtpSchema>;
 export type PasswordLogin = z.infer<typeof passwordLoginSchema>;

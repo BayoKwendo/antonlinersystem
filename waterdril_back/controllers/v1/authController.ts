@@ -8,9 +8,12 @@ import { currentUser } from "../../middlewares/auth.ts";
 import authService from "../../services/authService.ts";
 import accountRepo from "../../repositories/accountRepo.ts";
 import {
+  changePasswordSchema,
   passwordLoginSchema,
   refreshSchema,
   requestOtpSchema,
+  resetPasswordSchema,
+  updateProfileSchema,
   verifyOtpSchema,
 } from "../../validators/schemas.ts";
 
@@ -47,6 +50,26 @@ const authController = {
     const user = await accountRepo.findById(userId);
     const roles = await accountRepo.rolesOf(userId);
     ok(ctx, user ? { ...user, password_hash: undefined, roles } : null);
+  },
+
+  resetPassword: async (ctx: Context) => {
+    const { phone } = await parseBody(ctx, resetPasswordSchema);
+    await authService.resetPassword(phone);
+    ok(ctx, null, "If the number is registered, a temporary password has been sent");
+  },
+
+  updateMe: async (ctx: Context) => {
+    const { userId } = currentUser(ctx);
+    const v = await parseBody(ctx, updateProfileSchema);
+    await authService.updateProfile(userId, v.display_name, v.email === "" ? null : v.email);
+    ok(ctx, null, "Profile updated");
+  },
+
+  changePassword: async (ctx: Context) => {
+    const { userId } = currentUser(ctx);
+    const v = await parseBody(ctx, changePasswordSchema);
+    await authService.changePassword(userId, v.current, v.next);
+    ok(ctx, null, "Password changed");
   },
 };
 

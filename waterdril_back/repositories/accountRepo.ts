@@ -10,6 +10,7 @@ export interface UserRow {
   phone: string;
   email: string | null;
   password_hash: string | null;
+  must_change_password: number;
   display_name: string;
   avatar_url: string | null;
   status: "active" | "suspended" | "pending";
@@ -82,6 +83,34 @@ const accountRepo = {
       `UPDATE users SET phone_verified_at = CURRENT_TIMESTAMP WHERE id = ?`,
       [userId],
     );
+  },
+
+  async setPassword(userId: number, passwordHash: string): Promise<void> {
+    await client.query(`UPDATE users SET password_hash = ? WHERE id = ?`, [passwordHash, userId]);
+  },
+
+  async setMustChangePassword(userId: number, value: boolean): Promise<void> {
+    await client.query(`UPDATE users SET must_change_password = ? WHERE id = ?`, [value ? 1 : 0, userId]);
+  },
+
+  async updateProfile(
+    userId: number,
+    { displayName, email }: { displayName?: string; email?: string | null },
+  ): Promise<void> {
+    const sets: string[] = [];
+    // deno-lint-ignore no-explicit-any
+    const params: any[] = [];
+    if (displayName !== undefined) {
+      sets.push("display_name = ?");
+      params.push(displayName);
+    }
+    if (email !== undefined) {
+      sets.push("email = ?");
+      params.push(email);
+    }
+    if (!sets.length) return;
+    params.push(userId);
+    await client.query(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`, params);
   },
 
   // --- OTP -------------------------------------------------------------------

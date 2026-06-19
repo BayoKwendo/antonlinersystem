@@ -53,6 +53,27 @@ export interface BookingDetail extends Booking {
   provider_availability: string | null;
 }
 
+export interface StaffUser {
+  id: number;
+  display_name: string;
+  phone: string;
+  email: string | null;
+  status: string;
+  roles: string | null;
+  created_at: string;
+}
+
+export interface ProviderLocation {
+  id: number;
+  display_name: string;
+  phone: string;
+  category: string;
+  availability: string;
+  lat: string;
+  lng: string;
+  location_updated_at: string | null;
+}
+
 export interface AuditEntry {
   id: number;
   action: string;
@@ -70,6 +91,7 @@ export interface User {
   display_name: string;
   avatar_url: string | null;
   roles: Role[];
+  must_change_password?: boolean;
 }
 
 export interface AuthResult {

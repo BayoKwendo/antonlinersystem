@@ -11,13 +11,19 @@ import adminRepo from "../../repositories/adminRepo.ts";
 import authService from "../../services/authService.ts";
 import accountRepo from "../../repositories/accountRepo.ts";
 import { audit } from "../../services/audit.ts";
+import { sendSms } from "../../services/smsService.ts";
 import { normalizePhone } from "../../utils/phone.ts";
 import { conflict, notFound } from "../../utils/errors.ts";
 import {
   complaintUpdateSchema,
+  createCustomerSchema,
+  createUserSchema,
+  editProviderSchema,
   onboardProviderSchema,
   reviewHiddenSchema,
-  updateProviderSchema,
+  sendSmsSchema,
+  updateCustomerSchema,
+  updateUserSchema,
 } from "../../validators/schemas.ts";
 
 function page(ctx: Context) {
@@ -75,10 +81,92 @@ const adminController = {
   updateProvider: async (ctx: Context) => {
     const me = currentUser(ctx);
     const id = numericId(ctx);
-    const v = await parseBody(ctx, updateProviderSchema);
-    await adminRepo.updateProvider(id, v);
+    const v = await parseBody(ctx, editProviderSchema);
+    await adminRepo.editProvider(id, {
+      ...v,
+      phone: v.phone ? normalizePhone(v.phone) : undefined,
+    });
     await audit(me.userId, "provider.update", "user", id, v);
     ok(ctx, null, "Updated");
+  },
+
+  providerLocations: async (ctx: Context) => ok(ctx, await adminRepo.providerLocations()),
+
+  // --- staff / owners / agents ---
+  listUsers: async (ctx: Context) => {
+    const url = ctx.request.url.searchParams;
+    ok(ctx, await adminRepo.listUsers({ role: url.get("role") ?? undefined, q: url.get("q") ?? undefined, ...page(ctx) }));
+  },
+
+  createUser: async (ctx: Context) => {
+    const me = currentUser(ctx);
+    const v = await parseBody(ctx, createUserSchema);
+    const phone = normalizePhone(v.phone);
+    if (await accountRepo.findByPhone(phone)) throw conflict("Phone already registered");
+    const id = await adminRepo.createUser({
+      phone,
+      displayName: v.display_name,
+      passwordHash: await authService.hashPassword(v.password),
+      roleKey: v.role,
+      email: v.email ?? null,
+    });
+    await audit(me.userId, "user.create", "user", id, { role: v.role });
+    ok(ctx, { id }, "User created");
+  },
+
+  updateUser: async (ctx: Context) => {
+    const me = currentUser(ctx);
+    const id = numericId(ctx);
+    const v = await parseBody(ctx, updateUserSchema);
+    await adminRepo.updateUser(id, {
+      displayName: v.display_name,
+      email: v.email === "" ? null : v.email,
+      suspended: v.suspended,
+      roleKey: v.role,
+      passwordHash: v.password ? await authService.hashPassword(v.password) : undefined,
+    });
+    await audit(me.userId, "user.update", "user", id, { ...v, password: v.password ? "***" : undefined });
+    ok(ctx, null, "Updated");
+  },
+
+  // --- customers ---
+  createCustomer: async (ctx: Context) => {
+    const me = currentUser(ctx);
+    const v = await parseBody(ctx, createCustomerSchema);
+    const phone = normalizePhone(v.phone);
+    if (await accountRepo.findByPhone(phone)) throw conflict("Phone already registered");
+    const id = await adminRepo.createCustomer({ phone, displayName: v.display_name, idNumber: v.id_number ?? null });
+    await audit(me.userId, "customer.create", "user", id);
+    ok(ctx, { id }, "Customer created");
+  },
+
+  updateCustomer: async (ctx: Context) => {
+    const me = currentUser(ctx);
+    const id = numericId(ctx);
+    const v = await parseBody(ctx, updateCustomerSchema);
+    await adminRepo.updateCustomer(id, { displayName: v.display_name, idNumber: v.id_number, suspended: v.suspended });
+    await audit(me.userId, "customer.update", "user", id, v);
+    ok(ctx, null, "Updated");
+  },
+
+  // --- bookings (date range) ---
+  listBookings: async (ctx: Context) => {
+    const url = ctx.request.url.searchParams;
+    ok(ctx, await adminRepo.bookingsRange({
+      from: url.get("from") ?? undefined,
+      to: url.get("to") ?? undefined,
+      status: url.get("status") ?? undefined,
+      ...page(ctx),
+    }));
+  },
+
+  // --- SMS console ---
+  sendSms: async (ctx: Context) => {
+    const me = currentUser(ctx);
+    const v = await parseBody(ctx, sendSmsSchema);
+    const sent = await sendSms({ to: normalizePhone(v.phone), text: v.text, asciiOnly: true });
+    await audit(me.userId, "sms.send", "phone", normalizePhone(v.phone));
+    ok(ctx, { sent }, sent ? "SMS sent" : "SMS gateway error");
   },
 
   listCustomers: async (ctx: Context) => {

@@ -14,6 +14,10 @@ import Categories from "./pages/Categories";
 import Complaints from "./pages/Complaints";
 import Reviews from "./pages/Reviews";
 import Audit from "./pages/Audit";
+import Team from "./pages/Team";
+import Profile from "./pages/Profile";
+import Live from "./pages/Live";
+import Sms from "./pages/Sms";
 import NotFound from "./pages/NotFound";
 
 export default function App() {
@@ -27,6 +31,11 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route element={<RequireAuth><Shell /></RequireAuth>}>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route
+          path="/live"
+          element={<RequireRole roles={["admin", "assistance", "finance", "owner"]}><Live /></RequireRole>}
+        />
         <Route
           path="/providers"
           element={<RequireRole roles={["admin", "assistance", "owner"]}><Providers /></RequireRole>}
@@ -50,6 +59,8 @@ export default function App() {
           path="/complaints"
           element={<RequireRole roles={["admin", "assistance"]}><Complaints /></RequireRole>}
         />
+        <Route path="/sms" element={<RequireRole roles={["admin", "assistance"]}><Sms /></RequireRole>} />
+        <Route path="/team" element={<RequireRole roles={["admin"]}><Team /></RequireRole>} />
         <Route path="/audit" element={<RequireRole roles={["admin"]}><Audit /></RequireRole>} />
         <Route path="*" element={<NotFound />} />
       </Route>

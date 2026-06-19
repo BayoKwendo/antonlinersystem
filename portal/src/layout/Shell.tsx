@@ -1,4 +1,5 @@
-import { AppShell, Avatar, Burger, Group, Menu, NavLink, ScrollArea, Text, Title, UnstyledButton } from "@mantine/core";
+import { AppShell, Avatar, Burger, Group, Menu, NavLink, ScrollArea, Text, UnstyledButton } from "@mantine/core";
+import { Logo } from "../components/Logo";
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconBuildingFactory2,
@@ -8,9 +9,13 @@ import {
   IconGauge,
   IconHistory,
   IconLogout,
+  IconMapPin,
+  IconMessage,
   IconMessageReport,
   IconStar,
+  IconUser,
   IconUsers,
+  IconUsersGroup,
 } from "@tabler/icons-react";
 import { NavLink as RouterLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../store/auth";
@@ -25,6 +30,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { label: "Dashboard", to: "/", icon: IconGauge },
+  { label: "Live providers", to: "/live", icon: IconMapPin, roles: ["admin", "assistance", "finance", "owner"] },
   { label: "Providers", to: "/providers", icon: IconBuildingFactory2, roles: ["admin", "assistance", "owner"] },
   { label: "Bookings", to: "/bookings", icon: IconCalendarStats },
   { label: "Customers", to: "/customers", icon: IconUsers, roles: ["admin", "assistance"] },
@@ -32,6 +38,8 @@ const NAV: NavItem[] = [
   { label: "Services", to: "/services", icon: IconCategory, roles: ["admin"] },
   { label: "Reviews", to: "/reviews", icon: IconStar, roles: ["admin", "assistance"] },
   { label: "Complaints", to: "/complaints", icon: IconMessageReport, roles: ["admin", "assistance"] },
+  { label: "SMS", to: "/sms", icon: IconMessage, roles: ["admin", "assistance"] },
+  { label: "Team", to: "/team", icon: IconUsersGroup, roles: ["admin"] },
   { label: "Audit log", to: "/audit", icon: IconHistory, roles: ["admin"] },
 ];
 
@@ -51,10 +59,9 @@ export default function Shell() {
     >
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
-          <Group gap="xs">
+          <Group gap="sm">
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-            <Title order={4} c="brand.8">AntonLiner</Title>
-            <Text size="xs" c="dimmed" visibleFrom="sm">Smart Drilling Portal</Text>
+            <Logo size="sm" />
           </Group>
           <Menu shadow="md" width={200} position="bottom-end">
             <Menu.Target>
@@ -71,6 +78,10 @@ export default function Shell() {
               </UnstyledButton>
             </Menu.Target>
             <Menu.Dropdown>
+              <Menu.Item leftSection={<IconUser size={16} />} onClick={() => navigate("/profile")}>
+                My profile
+              </Menu.Item>
+              <Menu.Divider />
               <Menu.Item
                 color="red"
                 leftSection={<IconLogout size={16} />}
