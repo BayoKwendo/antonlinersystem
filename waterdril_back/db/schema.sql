@@ -142,10 +142,13 @@ CREATE TABLE `customer_profiles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------------------------------
---  provider_profiles — current location is a generated SRID-4326 POINT (from
---  lat/lng) with a SPATIAL index for fast nearby queries.
+--  provider_profiles — one listing per (user, category): a phone/identity may
+--  offer several categories (unique per category), each an independently
+--  bookable unit with its own price, rating, availability and live location
+--  (generated SRID-4326 POINT + SPATIAL index for fast nearby queries).
 -- -----------------------------------------------------------------------------
 CREATE TABLE `provider_profiles` (
+  `id`                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id`             BIGINT UNSIGNED NOT NULL,
   `owner_id`            BIGINT UNSIGNED DEFAULT NULL,
   `category_id`         INT UNSIGNED    NOT NULL,
@@ -162,7 +165,8 @@ CREATE TABLE `provider_profiles` (
   `verified_at`         TIMESTAMP NULL DEFAULT NULL,
   `created_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`user_id`),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_provider_user_category` (`user_id`, `category_id`),
   SPATIAL INDEX `spx_provider_location` (`location`),
   KEY `idx_provider_category` (`category_id`),
   KEY `idx_provider_owner` (`owner_id`),

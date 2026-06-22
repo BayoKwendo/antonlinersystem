@@ -3,9 +3,10 @@
 // =============================================================================
 import { type Context } from "../../deps.ts";
 import { ok } from "../../utils/http.ts";
-import { numericId } from "../../utils/validate.ts";
+import { numericId, parseBody } from "../../utils/validate.ts";
 import { currentUser } from "../../middlewares/auth.ts";
 import notificationRepo from "../../repositories/notificationRepo.ts";
+import { deviceTokenSchema } from "../../validators/schemas.ts";
 
 const notificationController = {
   list: async (ctx: Context) => {
@@ -25,6 +26,14 @@ const notificationController = {
   readAll: async (ctx: Context) => {
     const { userId } = currentUser(ctx);
     await notificationRepo.markAllRead(userId);
+    ok(ctx);
+  },
+
+  /** Register (upsert) this device's push token for the current user. */
+  registerDevice: async (ctx: Context) => {
+    const { userId } = currentUser(ctx);
+    const { token, platform } = await parseBody(ctx, deviceTokenSchema);
+    await notificationRepo.saveDeviceToken(userId, token, platform ?? "android");
     ok(ctx);
   },
 };

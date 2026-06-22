@@ -30,6 +30,7 @@ data class AuthUser(
     @SerializedName("display_name") val displayName: String,
     @SerializedName("avatar_url") val avatarUrl: String?,
     val roles: List<String> = emptyList(),
+    @SerializedName("must_change_password") val mustChangePassword: Boolean = false,
 )
 
 data class AuthResult(
@@ -90,3 +91,6 @@ data class RefreshReq(@SerializedName("refresh_token") val refreshToken: String)
 data class OnlineReq(val online: Boolean)
 data class LocationReq(val lat: Double, val lng: Double)
 data class TransitionReq(val status: String, val note: String? = null)
+data class DeviceTokenReq(val token: String, val platform: String = "android")
+data class ResetPasswordReq(val phone: String)
+data class ChangePasswordReq(val current: String, val next: String)

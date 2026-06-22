@@ -25,7 +25,8 @@ const bookingController = {
   list: async (ctx: Context) => {
     const me = currentUser(ctx);
     const status = ctx.request.url.searchParams.get("status") || undefined;
-    ok(ctx, await bookings.list(me, status));
+    const scope = ctx.request.url.searchParams.get("scope") || undefined;
+    ok(ctx, await bookings.list(me, status, scope));
   },
 
   detail: async (ctx: Context) => {

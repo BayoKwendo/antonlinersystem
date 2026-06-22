@@ -22,9 +22,12 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import androidx.compose.ui.platform.LocalContext
+import com.spartons.antonis.DriverTrackService
 import com.spartons.antonis.ServiceLocator
 import com.spartons.antonis.data.Booking
-import com.spartons.antonis.tracking.trackBooking
+import com.spartons.antonis.requestIgnoreBatteryOptimizations
+import com.spartons.antonis.tracking.ActiveTracking
 import com.spartons.antonis.ui.LoadingBox
 import com.spartons.antonis.ui.money
 import com.spartons.antonis.ui.titleCase
@@ -45,10 +48,10 @@ class TrackViewModel(private val bookingId: Long) : ViewModel() {
 
     init {
         reload()
+        // The foreground DriverTrackService owns the tracking socket; observe the
+        // location it publishes so the map keeps updating in the background too.
         viewModelScope.launch {
-            trackBooking(bookingId, ServiceLocator.session.cachedAccess).collect {
-                _s.value = _s.value.copy(live = it)
-            }
+            ActiveTracking.location.collect { _s.value = _s.value.copy(live = it) }
         }
     }
 
@@ -64,6 +67,14 @@ class TrackViewModel(private val bookingId: Long) : ViewModel() {
         viewModelScope.launch {
             runCatching { repo.pay(bookingId, phone) }
                 .onSuccess { _s.value = _s.value.copy(message = "M-Pesa prompt sent to $phone") }
+                .onFailure { _s.value = _s.value.copy(message = it.message) }
+        }
+    }
+
+    fun confirmArrived() {
+        viewModelScope.launch {
+            runCatching { repo.confirmArrived(bookingId) }
+                .onSuccess { _s.value = _s.value.copy(booking = it, message = "Arrival confirmed") }
                 .onFailure { _s.value = _s.value.copy(message = it.message) }
         }
     }
@@ -90,10 +101,20 @@ fun TrackScreen(bookingId: Long, onBack: () -> Unit) {
     val vm: TrackViewModel = viewModel(factory = trackVmFactory(bookingId))
     val s by vm.s.collectAsState()
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
     var showPay by remember { mutableStateOf(false) }
     var showRate by remember { mutableStateOf(false) }
 
     LaunchedEffect(s.message) { s.message?.let { snackbar.showSnackbar(it); vm.clearMessage() } }
+
+    // Keep tracking the driver in a foreground service: it survives backgrounding
+    // and screen-off, and stops when we leave the screen. Battery-opt prompt keeps
+    // the service alive under Doze (no-op if already exempt).
+    DisposableEffect(bookingId) {
+        requestIgnoreBatteryOptimizations(context)
+        DriverTrackService.start(context, bookingId)
+        onDispose { DriverTrackService.stop(context) }
+    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Track booking #$bookingId") }, navigationIcon = { TextButton(onClick = onBack) { Text("Back") } }) },
@@ -142,6 +163,12 @@ fun TrackScreen(bookingId: Long, onBack: () -> Unit) {
                 if (b.status != "completed" && b.status != "cancelled" && balance > 0) {
                     Button(onClick = { showPay = true }, modifier = Modifier.fillMaxWidth()) {
                         Text(if (b.status == "pending_payment") "Pay deposit" else "Pay balance (${money(balance.toString())})")
+                    }
+                }
+                if (b.status == "en_route") {
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = { vm.confirmArrived() }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Confirm driver has arrived")
                     }
                 }
                 if (b.status == "completed") {

@@ -42,6 +42,23 @@ const providerRepo = {
     ]);
   },
 
+  /**
+   * Availability of a single listing (one category). Booking/cancel/complete
+   * affect only the booked unit, leaving the provider's other category
+   * listings independently bookable.
+   */
+  setListingAvailability(
+    userId: number,
+    categoryId: number,
+    availability: "available" | "booked" | "offline",
+    q?: Querier,
+  ) {
+    return db(q)(
+      `UPDATE provider_profiles SET availability = ? WHERE user_id = ? AND category_id = ?`,
+      [availability, userId, categoryId],
+    );
+  },
+
   updateLocation(userId: number, lat: number, lng: number) {
     return client.query(
       `UPDATE provider_profiles

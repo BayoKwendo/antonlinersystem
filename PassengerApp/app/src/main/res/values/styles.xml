@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Compose draws the UI; this just needs a no-action-bar window theme.
-         Framework parent => no AppCompat/Material XML dependency required. -->
+         Framework parent => no AppCompat/Material XML dependency required.
+         window_bg resolves to the values-night variant in dark mode, so the
+         launch window matches the system theme instead of flashing white. -->
     <style name="Theme.AntonLiner" parent="@android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">#007A7C</item>
-        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowBackground">@color/window_bg</item>
+        <item name="android:statusBarColor">@color/window_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>

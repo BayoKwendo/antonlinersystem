@@ -109,9 +109,11 @@ data class NearbyReq(
 )
 data class CreateBookingReq(
     @SerializedName("provider_id") val providerId: Long,
+    val category: String,
     val address: String?,
     val lat: Double?,
     val lng: Double?,
 )
 data class PayReq(val phone: String)
 data class ReviewReq(val rating: Int, val comment: String?)
+data class TransitionReq(val status: String, val note: String? = null)

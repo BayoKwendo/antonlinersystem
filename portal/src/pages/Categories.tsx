@@ -24,8 +24,8 @@ export default function Categories() {
 
   const create = useMutation({
     mutationFn: (v: typeof form.values) => api.createCategory(v),
-    onSuccess: () => {
-      notifications.show({ color: "teal", message: "Category created" });
+    onSuccess: (res) => {
+      notifications.show({ color: "teal", message: res.data?.message ?? "Category created" });
       qc.invalidateQueries({ queryKey: ["categories"] });
       form.reset();
       close();
@@ -35,7 +35,10 @@ export default function Categories() {
 
   const toggle = useMutation({
     mutationFn: ({ id, active }: { id: number; active: boolean }) => api.updateCategory(id, { active }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+    onSuccess: (res) => {
+      notifications.show({ color: "teal", message: res.data?.message ?? "Category updated" });
+      qc.invalidateQueries({ queryKey: ["categories"] });
+    },
     onError: (e) => notifications.show({ color: "red", message: apiError(e) }),
   });
 

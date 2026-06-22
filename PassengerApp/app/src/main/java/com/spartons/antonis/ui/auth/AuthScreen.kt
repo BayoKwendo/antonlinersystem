@@ -1,17 +1,21 @@
 package com.spartons.antonis.ui.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.spartons.antonis.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spartons.antonis.ServiceLocator
+import com.spartons.antonis.ui.components.PhoneField
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -23,6 +27,7 @@ data class AuthState(
     val name: String = "",
     val loading: Boolean = false,
     val error: String? = null,
+    val info: String? = null,
     val done: Boolean = false,
 )
 
@@ -40,11 +45,23 @@ class AuthViewModel : ViewModel() {
 
     fun requestOtp() {
         val phone = _state.value.phone.trim()
-        if (phone.length < 9) { _state.value = _state.value.copy(error = "Enter a valid phone number"); return }
+        if (phone.length < 12) { _state.value = _state.value.copy(error = "Enter a valid phone number"); return }
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
             runCatching { repo.requestOtp(phone) }
                 .onSuccess { _state.value = _state.value.copy(loading = false, step = 1) }
+                .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
+        }
+    }
+
+    /** Re-send the verification code while staying on the code step. */
+    fun resendOtp() {
+        val phone = _state.value.phone.trim()
+        if (phone.length < 12) { _state.value = _state.value.copy(error = "Enter a valid phone number"); return }
+        _state.value = _state.value.copy(loading = true, error = null, info = null)
+        viewModelScope.launch {
+            runCatching { repo.requestOtp(phone) }
+                .onSuccess { _state.value = _state.value.copy(loading = false, info = "Code re-sent") }
                 .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
         }
     }
@@ -71,20 +88,18 @@ fun AuthScreen(onLoggedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("AntonLiner", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+        Image(
+            painter = painterResource(R.drawable.ic_logo),
+            contentDescription = "SmartDrill",
+            modifier = Modifier.size(140.dp),
+        )
+        Spacer(Modifier.height(12.dp))
+        Text("SmartDrill", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
         Text("Smart Drilling", style = MaterialTheme.typography.bodyMedium)
         Spacer(Modifier.height(32.dp))
 
         if (s.step == 0) {
-            OutlinedTextField(
-                value = s.phone,
-                onValueChange = vm::setPhone,
-                label = { Text("Phone number") },
-                placeholder = { Text("07XX XXX XXX") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            PhoneField(onPhoneChange = vm::setPhone, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(16.dp))
             Button(onClick = vm::requestOtp, enabled = !s.loading, modifier = Modifier.fillMaxWidth()) {
                 Text(if (s.loading) "Sending..." else "Send code")
@@ -106,11 +121,16 @@ fun AuthScreen(onLoggedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
             Button(onClick = vm::verify, enabled = !s.loading, modifier = Modifier.fillMaxWidth()) {
                 Text(if (s.loading) "Verifying..." else "Verify & continue")
             }
+            TextButton(onClick = vm::resendOtp, enabled = !s.loading) { Text("Didn't get it? Resend code") }
         }
 
         s.error?.let {
             Spacer(Modifier.height(12.dp))
             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        }
+        s.info?.let {
+            Spacer(Modifier.height(8.dp))
+            Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

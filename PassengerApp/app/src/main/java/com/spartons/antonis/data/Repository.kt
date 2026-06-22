@@ -20,8 +20,8 @@ class Repository(private val api: ApiService, val session: SessionStore) {
     suspend fun nearby(category: String, lat: Double, lng: Double): List<Provider> =
         api.nearby(NearbyReq(category, lat, lng)).unwrap()
 
-    suspend fun createBooking(providerId: Long, address: String?, lat: Double?, lng: Double?): Booking =
-        api.createBooking(CreateBookingReq(providerId, address, lat, lng)).unwrap()
+    suspend fun createBooking(providerId: Long, category: String, address: String?, lat: Double?, lng: Double?): Booking =
+        api.createBooking(CreateBookingReq(providerId, category, address, lat, lng)).unwrap()
 
     suspend fun bookings(): List<Booking> = api.bookings().unwrap()
 
@@ -29,8 +29,14 @@ class Repository(private val api: ApiService, val session: SessionStore) {
 
     suspend fun pay(id: Long, phone: String): PayResult = api.pay(id, PayReq(phone)).unwrap()
 
+    /** Customer confirms the provider has arrived. */
+    suspend fun confirmArrived(id: Long): Booking =
+        api.transition(id, TransitionReq("arrived")).unwrap()
+
     suspend fun review(id: Long, rating: Int, comment: String?) {
-        api.review(id, ReviewReq(rating, comment?.ifBlank { null })).unwrap()
+        // Empty body on success ({success:true, data:null}) — check the flag, don't unwrap().
+        val res = api.review(id, ReviewReq(rating, comment?.ifBlank { null }))
+        if (!res.success) throw ApiException(res.message ?: "Could not submit review")
     }
 
     suspend fun notifications(): NotificationsPage = api.notifications().unwrap()

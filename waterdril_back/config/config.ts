@@ -101,6 +101,13 @@ export const APP = {
   DEFAULT_AVATAR_URL: optional("DEFAULT_AVATAR_URL"),
 };
 
+export const PUSH = {
+  /** Firebase service-account JSON inline (raw JSON string). Takes precedence. */
+  SERVICE_ACCOUNT_JSON: optional("FCM_SERVICE_ACCOUNT_JSON"),
+  /** ...or a path to the service-account JSON file (e.g. /etc/secrets/fcm.json). */
+  SERVICE_ACCOUNT_FILE: optional("FCM_SERVICE_ACCOUNT_FILE"),
+};
+
 /** Currency formatter shared across the app. */
 export const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",

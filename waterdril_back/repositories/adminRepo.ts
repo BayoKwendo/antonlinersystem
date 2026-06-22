@@ -89,7 +89,7 @@ const adminRepo = {
          JOIN service_categories sc ON sc.id = pp.category_id
          LEFT JOIN users o ON o.id = pp.owner_id
          ${clause}
-        ORDER BY u.id DESC LIMIT ? OFFSET ?`,
+        ORDER BY pp.id DESC LIMIT ? OFFSET ?`,
       [...params, l, o],
     );
     return { items, total: count.total };
@@ -130,6 +130,22 @@ const adminRepo = {
     return { profile, reviews, recent_bookings: recentBookings, earnings: earn.earnings, jobs: earn.jobs };
   },
 
+  /** Does this user already offer a listing in this category? */
+  async providerHasCategory(userId: number, categoryKey: string): Promise<boolean> {
+    const rows = await client.query(
+      `SELECT pp.id FROM provider_profiles pp
+         JOIN service_categories sc ON sc.id = pp.category_id
+        WHERE pp.user_id = ? AND sc.\`key\` = ? LIMIT 1`,
+      [userId, categoryKey],
+    );
+    return rows.length > 0;
+  },
+
+  /**
+   * Onboard a provider listing. A phone/identity may offer several categories,
+   * so an existing user is reused (gaining the provider role + a password if it
+   * had none); a new listing is added for the requested category.
+   */
   async onboardProvider(
     { phone, displayName, passwordHash, categoryKey, basePrice, ownerId, bio }: {
       phone: string;
@@ -142,17 +158,32 @@ const adminRepo = {
     },
   ): Promise<number> {
     return await client.withTransaction(async (query) => {
-      const uuid = crypto.randomUUID();
-      const res = await query(
-        `INSERT INTO users (uuid, phone, display_name, password_hash, phone_verified_at)
-         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-        [uuid, phone, displayName, passwordHash],
+      const existing = await query(
+        `SELECT id, password_hash FROM users WHERE phone = ? AND deleted_at IS NULL LIMIT 1`,
+        [phone],
       );
-      const userId = res.insertId as number;
-      await query(
-        `INSERT INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE \`key\`='provider'`,
-        [userId],
-      );
+      let userId: number;
+      if (existing[0]) {
+        userId = existing[0].id as number;
+        await query(
+          `INSERT IGNORE INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE \`key\`='provider'`,
+          [userId],
+        );
+        if (!existing[0].password_hash) {
+          await query(`UPDATE users SET password_hash = ? WHERE id = ?`, [passwordHash, userId]);
+        }
+      } else {
+        const res = await query(
+          `INSERT INTO users (uuid, phone, display_name, password_hash, phone_verified_at)
+           VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+          [crypto.randomUUID(), phone, displayName, passwordHash],
+        );
+        userId = res.insertId as number;
+        await query(
+          `INSERT INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE \`key\`='provider'`,
+          [userId],
+        );
+      }
       await query(
         `INSERT INTO provider_profiles (user_id, owner_id, category_id, base_price, bio, verified_at)
          SELECT ?, ?, sc.id, ?, ?, CURRENT_TIMESTAMP FROM service_categories sc WHERE sc.\`key\` = ?`,

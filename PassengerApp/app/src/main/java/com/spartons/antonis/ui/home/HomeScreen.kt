@@ -97,7 +97,7 @@ class HomeViewModel : ViewModel() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onProvider: (Long) -> Unit,
+    onProvider: (Long, String) -> Unit,
     onBookings: () -> Unit,
     onNotifications: () -> Unit,
     onLoggedOut: () -> Unit,
@@ -147,7 +147,7 @@ fun HomeScreen(
                     contentPadding = PaddingValues(12.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    items(s.providers) { p -> ProviderCard(p) { onProvider(p.id) } }
+                    items(s.providers) { p -> ProviderCard(p) { onProvider(p.id, s.selected ?: "") } }
                 }
             }
         }

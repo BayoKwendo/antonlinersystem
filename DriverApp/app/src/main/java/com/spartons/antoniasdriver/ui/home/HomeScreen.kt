@@ -85,6 +85,9 @@ class HomeViewModel : ViewModel() {
 
     fun setOnline(context: Context, online: Boolean) {
         _state.value = _state.value.copy(online = online)
+        // Going online: ask to be exempt from battery optimization so the tracking
+        // service isn't killed in the background (no-op if already exempt).
+        if (online) com.spartons.antoniasdriver.requestIgnoreBatteryOptimizations(context)
         viewModelScope.launch {
             runCatching { repo.setOnline(online) }
                 .onSuccess {
@@ -93,6 +96,9 @@ class HomeViewModel : ViewModel() {
                 .onFailure { _state.value = _state.value.copy(online = !online, error = it.message) }
         }
     }
+
+    /** Register this device's FCM token with the backend (best-effort). */
+    fun registerPush() = com.spartons.antoniasdriver.messaging.Fcm.register(viewModelScope)
 
     fun logout(context: Context, after: () -> Unit) {
         viewModelScope.launch {
@@ -121,6 +127,7 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         vm.load()
+        vm.registerPush()
         val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
         if (granted) vm.fetchLocation(context) else permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)

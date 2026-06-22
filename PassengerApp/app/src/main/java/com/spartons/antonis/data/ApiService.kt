@@ -2,8 +2,10 @@ package com.spartons.antonis.data
 
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService {
     @POST("auth/otp/request")
@@ -24,14 +26,19 @@ interface ApiService {
     @POST("bookings")
     suspend fun createBooking(@Body body: CreateBookingReq): ApiResponse<Booking>
 
+    // scope=customer → only this customer's own bookings, even for multi-role accounts.
     @GET("bookings")
-    suspend fun bookings(): ApiResponse<List<Booking>>
+    suspend fun bookings(@Query("scope") scope: String = "customer"): ApiResponse<List<Booking>>
 
     @GET("bookings/{id}")
     suspend fun booking(@Path("id") id: Long): ApiResponse<Booking>
 
     @POST("bookings/{id}/pay")
     suspend fun pay(@Path("id") id: Long, @Body body: PayReq): ApiResponse<PayResult>
+
+    // The customer confirms the provider has arrived (en_route → arrived).
+    @PATCH("bookings/{id}/status")
+    suspend fun transition(@Path("id") id: Long, @Body body: TransitionReq): ApiResponse<Booking>
 
     @POST("bookings/{id}/review")
     suspend fun review(@Path("id") id: Long, @Body body: ReviewReq): ApiResponse<Unit>

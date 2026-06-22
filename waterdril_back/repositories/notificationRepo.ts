@@ -43,6 +43,29 @@ const notificationRepo = {
       [userId],
     );
   },
+
+  /** Upsert a device's push token, (re)assigning it to this user. */
+  saveDeviceToken(userId: number, token: string, platform: string) {
+    return client.query(
+      `INSERT INTO device_tokens (user_id, token, platform) VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), platform = VALUES(platform)`,
+      [userId, token, platform],
+    );
+  },
+
+  /** All push tokens registered for a user (for fan-out). */
+  async deviceTokens(userId: number): Promise<string[]> {
+    const rows = await client.query(
+      `SELECT token FROM device_tokens WHERE user_id = ?`,
+      [userId],
+    );
+    return rows.map((r: { token: string }) => r.token);
+  },
+
+  /** Drop a token (e.g. when FCM reports it unregistered). */
+  deleteDeviceToken(token: string) {
+    return client.query(`DELETE FROM device_tokens WHERE token = ?`, [token]);
+  },
 };
 
 export default notificationRepo;

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"
+     role="img" aria-label="AntonLiner Smart Drilling">
+  <!-- transparent background (no rect) -->
+
+  <!-- reticle: thin outer ring -->
+  <circle cx="256" cy="256" r="168" fill="none" stroke="#E11414" stroke-width="10"/>
+
+  <!-- crosshair ticks -->
+  <g stroke="#E11414" stroke-width="16" stroke-linecap="round">
+    <line x1="256" y1="72"  x2="256" y2="150"/>
+    <line x1="256" y1="362" x2="256" y2="440"/>
+    <line x1="72"  y1="256" x2="150" y2="256"/>
+    <line x1="362" y1="256" x2="440" y2="256"/>
+  </g>
+
+  <!-- bold bullseye ring -->
+  <circle cx="256" cy="256" r="120" fill="none" stroke="#E11414" stroke-width="24"/>
+
+  <!-- white field inside the ring (keeps the gear red-on-white) -->
+  <circle cx="256" cy="256" r="106" fill="#FFFFFF"/>
+
+  <!-- red gear: 10 teeth -->
+  <g fill="#E11414">
+    <rect x="244" y="172" width="24" height="38" transform="rotate(0 256 256)"/>
+    <rect x="244" y="172" width="24" height="38" transform="rotate(36 256 256)"/>
+    <rect x="244" y="172" width="24" height="38" transform="rotate(72 256 256)"/>
+    <rect x="244" y="172" width="24" height="38" transform="rotate(108 256 256)"/>
+    <rect x="244" y="172" width="24" height="38" transform="rotate(144 256 256)"/>
+    <rect x="244" y="172" width="24" height="38" transform="rotate(180 256 256)"/>
+    <rect x="244" y="172" width="24" height="38" transform="rotate(216 256 256)"/>
+    <rect x="244" y="172" width="24" height="38" transform="rotate(252 256 256)"/>
+    <rect x="244" y="172" width="24" height="38" transform="rotate(288 256 256)"/>
+    <rect x="244" y="172" width="24" height="38" transform="rotate(324 256 256)"/>
+  </g>
+
+  <!-- gear body -->
+  <circle cx="256" cy="256" r="56" fill="#E11414"/>
+
+  <!-- white hub + red inward swirl -->
+  <circle cx="256" cy="256" r="28" fill="#FFFFFF"/>
+  <path d="M256,232 A21,21 0 0,1 256,274 A15,15 0 0,1 256,244 A9,9 0 0,1 256,262"
+        fill="none" stroke="#E11414" stroke-width="9" stroke-linecap="round"/>
+
+  <!-- dart -->
+  <line x1="398" y1="114" x2="274" y2="238" stroke="#E11414" stroke-width="18" stroke-linecap="round"/>
+  <path d="M250,262 L301,248 L264,211 Z" fill="#E11414"/>
+  <path d="M396,116 L454,58 L448,92 L486,86 L438,140 Z" fill="#E11414"/>
+</svg>

@@ -42,7 +42,7 @@ async function applyToBooking(query: Querier, bookingId: number, amount: number)
   ) {
     await bookingRepo.setStatus(bookingId, "booked", query);
     await bookingRepo.addEvent(bookingId, "booked", null, "deposit paid", query);
-    await providerRepo.setAvailability(booking.provider_id, "booked", query);
+    await providerRepo.setListingAvailability(booking.provider_id, booking.category_id, "booked", query);
     becameBooked = true;
   }
   return { booking, becameBooked };

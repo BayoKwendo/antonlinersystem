@@ -15,6 +15,6 @@ export { load as loadEnv } from "@std/dotenv";
 
 // --- npm packages ------------------------------------------------------------
 export { default as bcrypt } from "bcryptjs";
-export { SignJWT, jwtVerify } from "jose";
+export { importPKCS8, SignJWT, jwtVerify } from "jose";
 export { z } from "zod";
 export { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";

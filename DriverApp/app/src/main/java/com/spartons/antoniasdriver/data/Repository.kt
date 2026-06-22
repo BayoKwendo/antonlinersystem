@@ -9,6 +9,19 @@ class Repository(private val api: ApiService, val session: SessionStore) {
         return result
     }
 
+    /** Request a temporary password by SMS (forgot-password). */
+    suspend fun resetPassword(phone: String) {
+        api.resetPassword(ResetPasswordReq(phone))
+    }
+
+    /** Set a new password (used for the forced change after a reset). */
+    suspend fun changePassword(current: String, next: String) {
+        // This endpoint returns an empty body on success ({success:true, data:null}),
+        // so check the flag rather than unwrap() (which would treat null data as failure).
+        val res = api.changePassword(ChangePasswordReq(current, next))
+        if (!res.success) throw ApiException(res.message ?: "Could not set password")
+    }
+
     suspend fun logout() = session.clear()
 
     suspend fun me(): ProviderProfile = api.providerMe().unwrap()
@@ -38,5 +51,10 @@ class Repository(private val api: ApiService, val session: SessionStore) {
 
     suspend fun markAllNotificationsRead() {
         api.markAllNotificationsRead()
+    }
+
+    /** Register this device's FCM token for push (fire-and-forget at call sites). */
+    suspend fun registerDevice(token: String) {
+        api.registerDevice(DeviceTokenReq(token))
     }
 }

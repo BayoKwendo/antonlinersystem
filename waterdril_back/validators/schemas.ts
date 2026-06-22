@@ -36,6 +36,7 @@ export const nearbySchema = z.object({
 // --- bookings ----------------------------------------------------------------
 export const createBookingSchema = z.object({
   provider_id: z.coerce.number().int().positive(),
+  category: z.string().min(1),
   address: z.string().max(255).optional(),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
@@ -68,6 +69,12 @@ export const providerOnlineSchema = z.object({ online: z.boolean() });
 export const providerLocationSchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),
+});
+
+// --- push device registration ------------------------------------------------
+export const deviceTokenSchema = z.object({
+  token: z.string().min(10).max(255),
+  platform: z.enum(["android", "ios", "web"]).optional(),
 });
 
 // --- admin / portal ----------------------------------------------------------

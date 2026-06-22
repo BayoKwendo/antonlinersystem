@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#ff650304</color>
-    <color name="colorPrimaryDark">#ff650304</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimary">#E11414</color>
+    <color name="colorPrimaryDark">#A30D0D</color>
+    <color name="colorAccent">#E11414</color>
     <color name="white">#ffffffff</color>
     <color name="colorSecod">#245BC8</color>
     <color name="colorIcons">#FFFFFF</color>
+    <!-- Light launch-window background; values-night overrides it for dark mode. -->
+    <color name="window_bg">#FFFFFBFA</color>
+    <!-- Adaptive launcher tile: SmartDrill brand red (matches colorPrimary). -->
+    <color name="ic_launcher_background">#E11414</color>
 </resources>

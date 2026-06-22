@@ -21,10 +21,10 @@ class BookViewModel : ViewModel() {
 
     fun setAddress(v: String) { _s.value = _s.value.copy(address = v) }
 
-    fun book(providerId: Long) {
+    fun book(providerId: Long, category: String) {
         _s.value = _s.value.copy(loading = true, error = null)
         viewModelScope.launch {
-            runCatching { repo.createBooking(providerId, _s.value.address.ifBlank { null }, null, null) }
+            runCatching { repo.createBooking(providerId, category, _s.value.address.ifBlank { null }, null, null) }
                 .onSuccess { _s.value = _s.value.copy(loading = false, bookingId = it.id) }
                 .onFailure { _s.value = _s.value.copy(loading = false, error = it.message) }
         }
@@ -33,7 +33,7 @@ class BookViewModel : ViewModel() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BookScreen(providerId: Long, onBooked: (Long) -> Unit, onBack: () -> Unit, vm: BookViewModel = viewModel()) {
+fun BookScreen(providerId: Long, category: String, onBooked: (Long) -> Unit, onBack: () -> Unit, vm: BookViewModel = viewModel()) {
     val s by vm.s.collectAsState()
     LaunchedEffect(s.bookingId) { s.bookingId?.let(onBooked) }
 
@@ -47,7 +47,7 @@ fun BookScreen(providerId: Long, onBooked: (Long) -> Unit, onBack: () -> Unit, v
                 modifier = Modifier.fillMaxWidth(), minLines = 2,
             )
             Spacer(Modifier.height(20.dp))
-            Button(onClick = { vm.book(providerId) }, enabled = !s.loading, modifier = Modifier.fillMaxWidth()) {
+            Button(onClick = { vm.book(providerId, category) }, enabled = !s.loading, modifier = Modifier.fillMaxWidth()) {
                 Text(if (s.loading) "Creating..." else "Confirm booking")
             }
             s.error?.let { Spacer(Modifier.height(12.dp)); Text(it, color = MaterialTheme.colorScheme.error) }

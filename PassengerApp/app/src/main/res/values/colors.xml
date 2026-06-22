@@ -145,4 +145,6 @@
     <color name="tooltip_background_dark">#e6616161</color>
     <color name="tooltip_background_light">#e6ffffff</color>
     <color name="white">#ffffffff</color>
+    <!-- Light launch-window background; values-night overrides it for dark mode. -->
+    <color name="window_bg">#FFFFFBFA</color>
 </resources>

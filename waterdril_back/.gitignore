@@ -8,6 +8,11 @@
 .env.*
 !.env.example
 
+# Service-account keys / secrets (FCM, etc.) — never commit
+secrets/
+*firebase-adminsdk*.json
+*service-account*.json
+
 # Node artifact files
 node_modules/
 dist/

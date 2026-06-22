@@ -259,7 +259,11 @@ export default function Providers() {
           <TextInput label="Initial password" type="password" {...form.getInputProps("password")} mb="sm" />
           <Select
             label="Service category"
-            data={(categories.data ?? []).map((c) => ({ value: c.key, label: c.name }))}
+            data={(categories.data ?? []).map((c) => ({
+              value: c.key,
+              label: c.active ? c.name : `${c.name} (inactive)`,
+              disabled: !c.active,
+            }))}
             {...form.getInputProps("category")}
             mb="sm"
           />

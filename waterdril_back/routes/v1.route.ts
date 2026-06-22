@@ -38,7 +38,9 @@ router
 router
   .get("/notifications", requireAuth, notificationController.list)
   .post("/notifications/read-all", requireAuth, notificationController.readAll)
-  .post("/notifications/:id/read", requireAuth, notificationController.read);
+  .post("/notifications/:id/read", requireAuth, notificationController.read)
+  // push device registration (FCM token upsert for the current user)
+  .post("/devices", requireAuth, notificationController.registerDevice);
 
 // provider self-service
 router

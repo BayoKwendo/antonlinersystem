@@ -3,7 +3,8 @@
 //  Status flow:  pending_payment -> booked -> en_route -> arrived
 //                -> in_progress -> completed   (cancelled from pre-job states)
 //    * deposit payment confirms a booking (pending_payment -> booked);
-//    * the provider drives en_route..completed;
+//    * the provider drives en_route, in_progress, completed;
+//    * the customer confirms "arrived" (en_route -> arrived);
 //    * completion frees the provider.
 // =============================================================================
 import client from "../db/client.ts";
@@ -14,7 +15,10 @@ import { audit } from "./audit.ts";
 import { badRequest, forbidden, notFound } from "../utils/errors.ts";
 
 const FLOW = ["pending_payment", "booked", "en_route", "arrived", "in_progress", "completed"];
-const PROVIDER_TARGETS = ["en_route", "arrived", "in_progress", "completed"];
+// Who may drive each transition: the customer confirms arrival; the provider
+// drives the rest of the job.
+const CUSTOMER_TARGETS = ["arrived"];
+const PROVIDER_TARGETS = ["en_route", "in_progress", "completed"];
 const DEPOSIT_RATE = 0.4;
 
 interface Actor {
@@ -29,9 +33,9 @@ function isAdmin(a: Actor) {
 export const bookings = {
   async create(
     customerId: number,
-    input: { provider_id: number; address?: string; lat?: number; lng?: number },
+    input: { provider_id: number; category: string; address?: string; lat?: number; lng?: number },
   ) {
-    const provider = await bookingRepo.providerSnapshot(input.provider_id);
+    const provider = await bookingRepo.providerSnapshot(input.provider_id, input.category);
     if (!provider || provider.user_status !== "active") throw notFound("Provider not found");
     if (provider.availability === "booked") throw badRequest("Provider is currently booked");
 
@@ -75,7 +79,16 @@ export const bookings = {
     };
   },
 
-  list(actor: Actor, status?: string) {
+  list(actor: Actor, status?: string, scope?: string) {
+    // An explicit scope lets multi-role accounts (e.g. admin + provider) get a
+    // role-specific view: the DriverApp asks for "provider", the PassengerApp
+    // for "customer", so an admin sees only their own jobs in those apps.
+    if (scope === "provider" && actor.roles.includes("provider")) {
+      return bookingRepo.listForProvider(actor.userId);
+    }
+    if (scope === "customer" && actor.roles.includes("customer")) {
+      return bookingRepo.listForCustomer(actor.userId);
+    }
     if (isAdmin(actor)) return bookingRepo.listAll(status);
     if (actor.roles.includes("provider")) return bookingRepo.listForProvider(actor.userId);
     return bookingRepo.listForCustomer(actor.userId);
@@ -86,26 +99,47 @@ export const bookings = {
     const rows = await bookingRepo.byId(id);
     const booking = rows[0];
     if (!booking) throw notFound("Booking not found");
-    const provider = booking.provider_id === actor.userId;
-    if (!provider && !isAdmin(actor)) throw forbidden();
-    if (!PROVIDER_TARGETS.includes(to)) throw badRequest(`Cannot transition to ${to}`);
+    const isProvider = booking.provider_id === actor.userId;
+    const isCustomer = booking.customer_id === actor.userId;
+    const admin = isAdmin(actor);
+
+    // Authorize by who owns the transition.
+    if (CUSTOMER_TARGETS.includes(to)) {
+      if (!isCustomer && !admin) throw forbidden();
+    } else if (PROVIDER_TARGETS.includes(to)) {
+      if (!isProvider && !admin) throw forbidden();
+    } else {
+      throw badRequest(`Cannot transition to ${to}`);
+    }
+
     const fromIdx = FLOW.indexOf(booking.status);
     const toIdx = FLOW.indexOf(to);
     if (fromIdx < FLOW.indexOf("booked")) throw badRequest("Booking is not confirmed yet");
-    if (toIdx <= fromIdx) throw badRequest(`Cannot move from ${booking.status} to ${to}`);
+    if (toIdx !== fromIdx + 1) throw badRequest(`Cannot move from ${booking.status} to ${to}`);
 
     await client.withTransaction(async (query) => {
       await bookingRepo.setStatus(id, to, query);
       await bookingRepo.addEvent(id, to, actor.userId, note ?? "", query);
       if (to === "completed") {
-        await providerRepo.setAvailability(booking.provider_id, "available", query);
+        await providerRepo.setListingAvailability(booking.provider_id, booking.category_id, "available", query);
       }
     });
     await audit(actor.userId, "booking.transition", "booking", id, { to });
-    await notifyUser(booking.customer_id, "Booking update", `Your provider is now: ${to.replace("_", " ")}.`, {
-      sms: to === "arrived" || to === "completed",
-      data: { booking_id: id, status: to },
-    });
+    // Notify the counterparty: the provider when the customer confirms arrival,
+    // otherwise the customer for provider-driven status changes.
+    if (to === "arrived") {
+      await notifyUser(
+        booking.provider_id,
+        "Customer confirmed arrival",
+        "The customer confirmed you've arrived — you can start the job.",
+        { data: { booking_id: id, status: to } },
+      );
+    } else {
+      await notifyUser(booking.customer_id, "Booking update", `Your provider is now: ${to.replace("_", " ")}.`, {
+        sms: to === "completed",
+        data: { booking_id: id, status: to },
+      });
+    }
     return this.detail(id, actor);
   },
 
@@ -121,7 +155,7 @@ export const bookings = {
     await client.withTransaction(async (query) => {
       await bookingRepo.setStatus(id, "cancelled", query);
       await bookingRepo.addEvent(id, "cancelled", actor.userId, reason ?? "", query);
-      await providerRepo.setAvailability(booking.provider_id, "available", query);
+      await providerRepo.setListingAvailability(booking.provider_id, booking.category_id, "available", query);
     });
     await audit(actor.userId, "booking.cancel", "booking", id, { reason });
     await notifyUser(booking.provider_id, "Booking cancelled", `Booking #${id} was cancelled.`, {

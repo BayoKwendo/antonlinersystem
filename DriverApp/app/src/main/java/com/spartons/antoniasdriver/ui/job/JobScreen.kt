@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 /** The forward job flow and the action label for advancing out of each state. */
 private fun nextStep(status: String): Pair<String, String>? = when (status) {
     "booked" -> "en_route" to "Start — On my way"
-    "en_route" -> "arrived" to "I have arrived"
+    // "arrived" is confirmed by the customer, not the driver.
     "arrived" -> "in_progress" to "Start the job"
     "in_progress" -> "completed" to "Complete job"
     else -> null
@@ -164,7 +164,10 @@ private fun JobDetail(
                 Text(if (updating) "Updating..." else label)
             }
         } ?: Text(
-            "This job is ${titleCase(booking.status)}.",
+            if (booking.status == "en_route")
+                "Waiting for the customer to confirm your arrival…"
+            else
+                "This job is ${titleCase(booking.status)}.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary,
         )

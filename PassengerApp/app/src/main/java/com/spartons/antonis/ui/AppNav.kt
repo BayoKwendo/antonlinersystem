@@ -25,19 +25,22 @@ fun AppNav(startLoggedIn: Boolean) {
         }
         composable("home") {
             HomeScreen(
-                onProvider = { nav.navigate("book/$it") },
+                onProvider = { id, category -> nav.navigate("book/$id/$category") },
                 onBookings = { nav.navigate("bookings") },
                 onNotifications = { nav.navigate("notifications") },
                 onLoggedOut = { nav.navigate("auth") { popUpTo(0) } },
             )
         }
         composable(
-            "book/{providerId}",
-            arguments = listOf(navArgument("providerId") { type = NavType.LongType }),
+            "book/{providerId}/{category}",
+            arguments = listOf(
+                navArgument("providerId") { type = NavType.LongType },
+                navArgument("category") { type = NavType.StringType },
+            ),
         ) { entry ->
-            val id = entry.arguments!!.getLong("providerId")
             BookScreen(
-                providerId = id,
+                providerId = entry.arguments!!.getLong("providerId"),
+                category = entry.arguments!!.getString("category") ?: "",
                 onBooked = { bookingId -> nav.navigate("track/$bookingId") { popUpTo("home") } },
                 onBack = { nav.popBackStack() },
             )

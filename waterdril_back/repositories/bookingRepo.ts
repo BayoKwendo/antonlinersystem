@@ -19,15 +19,16 @@ export interface BookingRow {
 }
 
 const bookingRepo = {
-  /** Provider snapshot used when creating a booking. */
-  async providerSnapshot(providerId: number) {
+  /** Provider listing snapshot for a specific category, used when booking. */
+  async providerSnapshot(providerId: number, categoryKey: string) {
     const rows = await client.query(
       `SELECT pp.user_id, pp.category_id, pp.base_price, pp.availability,
               u.status AS user_status
          FROM provider_profiles pp
          JOIN users u ON u.id = pp.user_id
-        WHERE pp.user_id = ? LIMIT 1`,
-      [providerId],
+         JOIN service_categories sc ON sc.id = pp.category_id
+        WHERE pp.user_id = ? AND sc.\`key\` = ? LIMIT 1`,
+      [providerId, categoryKey],
     );
     return rows[0];
   },

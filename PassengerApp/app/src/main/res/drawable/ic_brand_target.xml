@@ -1,0 +1,80 @@
+<!--
+  AntonLiner brand mark: red target/reticle framing a red gear on a WHITE field,
+  with a dart striking the bullseye. 512 viewport, brand red #E11414.
+  Layer order matters: white field is painted before the red gear so the gear
+  (and the gaps between its teeth) read as red-on-white inside the ring.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Reticle: thin outer ring -->
+    <path android:fillColor="#00000000" android:strokeColor="#E11414" android:strokeWidth="10"
+        android:pathData="M88,256 a168,168 0 1,0 336,0 a168,168 0 1,0 -336,0 Z" />
+
+    <!-- Reticle: crosshair ticks (N, S, W, E) crossing the outer ring -->
+    <path android:strokeColor="#E11414" android:strokeWidth="16" android:strokeLineCap="round"
+        android:pathData="M256,72 L256,150" />
+    <path android:strokeColor="#E11414" android:strokeWidth="16" android:strokeLineCap="round"
+        android:pathData="M256,362 L256,440" />
+    <path android:strokeColor="#E11414" android:strokeWidth="16" android:strokeLineCap="round"
+        android:pathData="M72,256 L150,256" />
+    <path android:strokeColor="#E11414" android:strokeWidth="16" android:strokeLineCap="round"
+        android:pathData="M362,256 L440,256" />
+
+    <!-- Bold bullseye ring -->
+    <path android:fillColor="#00000000" android:strokeColor="#E11414" android:strokeWidth="24"
+        android:pathData="M136,256 a120,120 0 1,0 240,0 a120,120 0 1,0 -240,0 Z" />
+
+    <!-- WHITE field inside the ring (so the gear shows red-on-white) -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M150,256 a106,106 0 1,0 212,0 a106,106 0 1,0 -212,0 Z" />
+
+    <!-- Red gear: 10 teeth (every 36 degrees) -->
+    <group android:pivotX="256" android:pivotY="256" android:rotation="0">
+        <path android:fillColor="#E11414" android:pathData="M244,172 h24 v38 h-24 z" /></group>
+    <group android:pivotX="256" android:pivotY="256" android:rotation="36">
+        <path android:fillColor="#E11414" android:pathData="M244,172 h24 v38 h-24 z" /></group>
+    <group android:pivotX="256" android:pivotY="256" android:rotation="72">
+        <path android:fillColor="#E11414" android:pathData="M244,172 h24 v38 h-24 z" /></group>
+    <group android:pivotX="256" android:pivotY="256" android:rotation="108">
+        <path android:fillColor="#E11414" android:pathData="M244,172 h24 v38 h-24 z" /></group>
+    <group android:pivotX="256" android:pivotY="256" android:rotation="144">
+        <path android:fillColor="#E11414" android:pathData="M244,172 h24 v38 h-24 z" /></group>
+    <group android:pivotX="256" android:pivotY="256" android:rotation="180">
+        <path android:fillColor="#E11414" android:pathData="M244,172 h24 v38 h-24 z" /></group>
+    <group android:pivotX="256" android:pivotY="256" android:rotation="216">
+        <path android:fillColor="#E11414" android:pathData="M244,172 h24 v38 h-24 z" /></group>
+    <group android:pivotX="256" android:pivotY="256" android:rotation="252">
+        <path android:fillColor="#E11414" android:pathData="M244,172 h24 v38 h-24 z" /></group>
+    <group android:pivotX="256" android:pivotY="256" android:rotation="288">
+        <path android:fillColor="#E11414" android:pathData="M244,172 h24 v38 h-24 z" /></group>
+    <group android:pivotX="256" android:pivotY="256" android:rotation="324">
+        <path android:fillColor="#E11414" android:pathData="M244,172 h24 v38 h-24 z" /></group>
+
+    <!-- Gear body -->
+    <path android:fillColor="#E11414"
+        android:pathData="M200,256 a56,56 0 1,0 112,0 a56,56 0 1,0 -112,0 Z" />
+
+    <!-- White hub -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M228,256 a28,28 0 1,0 56,0 a28,28 0 1,0 -56,0 Z" />
+    <!-- Red inward spiral / swirl in the hub -->
+    <path android:fillColor="#00000000" android:strokeColor="#E11414"
+        android:strokeWidth="9" android:strokeLineCap="round"
+        android:pathData="M256,232 A21,21 0 0,1 256,274 A15,15 0 0,1 256,244 A9,9 0 0,1 256,262" />
+
+    <!-- Dart shaft (top-right into the bullseye) -->
+    <path android:strokeColor="#E11414" android:strokeWidth="18" android:strokeLineCap="round"
+        android:pathData="M398,114 L274,238" />
+
+    <!-- Arrowhead driving into the centre -->
+    <path android:fillColor="#E11414"
+        android:pathData="M250,262 L301,248 L264,211 Z" />
+
+    <!-- Tail: bold swallowtail pennant -->
+    <path android:fillColor="#E11414"
+        android:pathData="M396,116 L454,58 L448,92 L486,86 L438,140 Z" />
+</vector>

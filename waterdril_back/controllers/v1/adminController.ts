@@ -61,7 +61,11 @@ const adminController = {
     const me = currentUser(ctx);
     const v = await parseBody(ctx, onboardProviderSchema);
     const phone = normalizePhone(v.phone);
-    if (await accountRepo.findByPhone(phone)) throw conflict("Phone already registered");
+    // A phone may offer multiple categories; only reject a duplicate in the SAME category.
+    const existing = await accountRepo.findByPhone(phone);
+    if (existing && await adminRepo.providerHasCategory(existing.id, v.category)) {
+      throw conflict("This number already offers that service category");
+    }
     const ownerId = me.roles.includes("owner") && !me.roles.includes("admin")
       ? me.userId
       : (v.owner_id ?? null);
