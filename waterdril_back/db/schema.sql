@@ -77,20 +77,21 @@ CREATE TABLE `service_categories` (
   `name`        VARCHAR(100) NOT NULL,
   `description` VARCHAR(255) DEFAULT NULL,
   `active`      TINYINT(1)   NOT NULL DEFAULT 1,
+  `code_prefix` VARCHAR(8)   DEFAULT NULL,  -- provider code prefix, e.g. SDBDS -> SDBDS0001
   `created_at`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_service_categories_key` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `service_categories` (`key`, `name`, `active`) VALUES
-  ('drillers',          'Borehole Drilling',     1),
-  ('test_pump',         'Test Pumping',          1),
-  ('pump_installer',    'Pump Installation',     1),
-  ('geologist',         'Hydrogeological Survey',1),
-  ('tank_installation', 'Tank Installation',     1),
-  ('surveys',           'Surveys',               1),
-  ('other_services',    'Other Services',        1);
+INSERT INTO `service_categories` (`key`, `name`, `active`, `code_prefix`) VALUES
+  ('drillers',          'Borehole Drilling',     1, 'SDBDS'),
+  ('test_pump',         'Test Pumping',          1, 'SDTPU'),
+  ('pump_installer',    'Pump Installation',     1, 'SDPLOW'),
+  ('geologist',         'Hydrogeological Survey',1, 'SDGE'),
+  ('tank_installation', 'Tank Installation',     1, 'SDBCAM'),
+  ('surveys',           'Surveys',               1, 'SDSV'),
+  ('other_services',    'Other Services',        1, 'SDOS');
 
 -- -----------------------------------------------------------------------------
 --  users — identity + authentication only. Role-specific data lives in the
@@ -152,6 +153,7 @@ CREATE TABLE `provider_profiles` (
   `user_id`             BIGINT UNSIGNED NOT NULL,
   `owner_id`            BIGINT UNSIGNED DEFAULT NULL,
   `category_id`         INT UNSIGNED    NOT NULL,
+  `code`                VARCHAR(16)     DEFAULT NULL,  -- e.g. SDBDS0001 (per category listing)
   `bio`                 VARCHAR(500)    DEFAULT NULL,
   `base_price`          DECIMAL(12,2)   NOT NULL DEFAULT 0.00,
   `rating_avg`          DECIMAL(3,2)    NOT NULL DEFAULT 0.00,
@@ -167,6 +169,7 @@ CREATE TABLE `provider_profiles` (
   `updated_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_provider_user_category` (`user_id`, `category_id`),
+  UNIQUE KEY `uq_provider_code` (`code`),
   SPATIAL INDEX `spx_provider_location` (`location`),
   KEY `idx_provider_category` (`category_id`),
   KEY `idx_provider_owner` (`owner_id`),
