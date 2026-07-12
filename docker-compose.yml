@@ -1,33 +1,31 @@
 # =============================================================================
 #  AntonLiner deployment stack — Deno API + Vite/nginx portal.
-#  MySQL is EXTERNAL (installed on the server / managed) — NOT containerised here.
-#  Point the backend at it via DB_HOST/DB_PORT below.
+#  MySQL is EXTERNAL (installed on the server host) — NOT containerised here.
 #
 #    docker compose --env-file waterdril_back/.env up -d --build
 #
-#  The portal's nginx serves the SPA and reverse-proxies /api + /ws to the
-#  backend (same origin → no CORS).
+#  The backend runs on the HOST network so it reaches the host's MySQL on
+#  127.0.0.1 directly (no bind-address change, no bridge grant). It also binds
+#  :5002 on the host, which Apache's api. vhost proxies to. The portal container
+#  reaches that backend via the 'backend' host alias (extra_hosts below).
 # =============================================================================
 services:
   backend:
     build: ./waterdril_back
     restart: unless-stopped
+    # Share the host's network stack: 127.0.0.1 inside the container == the host's
+    # loopback, so MySQL on 127.0.0.1:3306 (waterdril@127.0.0.1) just works. This
+    # also publishes :5002 on the host — no `ports:` / `extra_hosts` needed.
+    network_mode: host
     env_file: ./waterdril_back/.env          # DB_USER/DB_PASSWORD/DB_NAME, JWT, M-Pesa, SMS, AWS…
     environment:
       PORT: "5002"
-      # --- External MySQL --------------------------------------------------
-      # MySQL on THIS server's host  → keep host.docker.internal (see extra_hosts).
-      # MySQL on a SEPARATE host/RDS → put its hostname/IP here, and remove extra_hosts.
-      DB_HOST: host.docker.internal
+      DB_HOST: 127.0.0.1                      # host MySQL over loopback
       DB_PORT: "3306"
       # FCM key mounted read-only below (overrides the .env path).
       FCM_SERVICE_ACCOUNT_FILE: /app/secrets/waterdril-firebase-adminsdk.json
-    extra_hosts:
-      - "host.docker.internal:host-gateway"  # lets the container reach host MySQL on Linux
     volumes:
       - ./waterdril_back/secrets:/app/secrets:ro
-    # Expose only for direct debugging; the portal proxies /api + /ws otherwise.
-    # ports: ["5002:5002"]
 
   portal:
     build:
@@ -42,5 +40,10 @@ services:
     restart: unless-stopped
     ports:
       - "${PORTAL_PORT:-8080}:80"
+    # The backend runs on the HOST network (not this bridge), so nginx's
+    # `proxy_pass http://backend:5002` can't use Docker DNS. Point the 'backend'
+    # hostname at the host gateway, where the backend's :5002 is listening.
+    extra_hosts:
+      - "backend:host-gateway"
     depends_on:
       - backend
