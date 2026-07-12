@@ -1,6 +1,10 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5002/api/v1";
+// Same-origin by default: the portal is served behind a reverse proxy (Apache /
+// nginx) that forwards /api to the backend, so a relative base works on any host
+// without a rebuild. Set VITE_API_URL only for a cross-origin API (e.g. local dev
+// hitting a remote server); an absolute value there is honored as-is.
+const BASE_URL = import.meta.env.VITE_API_URL ?? "/api/v1";
 
 // localStorage is the single source of truth for tokens (avoids store<->client
 // import cycles); the auth store mirrors it for reactive UI.
