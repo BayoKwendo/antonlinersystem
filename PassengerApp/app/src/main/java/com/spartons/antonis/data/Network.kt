@@ -1,5 +1,6 @@
 package com.spartons.antonis.data
 
+import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -7,7 +8,6 @@ import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 
 /** Thrown when the API returns an envelope without data. */
@@ -18,7 +18,8 @@ fun <T> ApiResponse<T>.unwrap(): T = data ?: throw ApiException(message ?: "Requ
 object Network {
     // Production. For the Android emulator against a local server use:
     //   http://10.0.2.2:5002/api/v1/
-    const val BASE_URL = "https://api.antonlinersystems.co.ke/api/v1/"
+    //const val BASE_URL = "https://api.antonlinersystems.co.ke/api/v1/"
+    const val BASE_URL = "http://localhost:5002/api/v1/"
 
     fun create(session: SessionStore): ApiService {
         val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }

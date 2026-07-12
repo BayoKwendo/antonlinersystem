@@ -7,7 +7,6 @@ import { logger, responseTime } from "./middlewares/logger.ts";
 import errorHandler from "./middlewares/errorHandler.ts";
 import cors from "./middlewares/cors.ts";
 import notFound from "./middlewares/notFound.ts";
-import userRouter from "./routes/user.route.ts";
 import healthRouter from "./routes/connect.route.ts";
 import trackRouter from "./routes/track.route.ts";
 import v1Router from "./routes/v1.route.ts";
@@ -21,12 +20,11 @@ app.use(responseTime);
 app.use(logger);
 
 // Feature routes.
-// v1 — the redesigned, secured API.
+// v1 — the redesigned, secured API (all auth/RBAC lives here).
 app.use(v1Router.routes());
 app.use(v1Router.allowedMethods());
-// Legacy routes (kept mounted during client migration; will be retired).
-app.use(userRouter.routes());
-app.use(userRouter.allowedMethods());
+// Health probe (GET /) and the token-authenticated tracking socket (GET /ws).
+// The legacy unauthenticated user router was retired — every client is on /api/v1.
 app.use(healthRouter.routes());
 app.use(healthRouter.allowedMethods());
 app.use(trackRouter.routes());

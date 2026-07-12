@@ -12,6 +12,7 @@
 import { type Context } from "../deps.ts";
 import { verifyAccessToken } from "../services/tokenService.ts";
 import { forbidden, unauthorized } from "../utils/errors.ts";
+import accountRepo from "../repositories/accountRepo.ts";
 
 export interface AuthState {
   userId: number;
@@ -25,12 +26,18 @@ export async function requireAuth(ctx: Context, next: Next) {
   const token = header.replace(/^Bearer\s+/i, "").trim();
   if (!token) throw unauthorized("Access token missing");
 
+  let userId: number;
   try {
     const claims = await verifyAccessToken(token);
-    (ctx.state as { auth?: AuthState }).auth = { userId: claims.sub, roles: claims.roles };
+    userId = claims.sub;
   } catch {
     throw unauthorized("Invalid or expired token");
   }
+  // Resolve roles fresh from the DB (the token's roles claim is only a snapshot
+  // at login). This way role grants/revocations take effect on the next request
+  // without forcing the user to re-login.
+  const roles = await accountRepo.rolesOf(userId);
+  (ctx.state as { auth?: AuthState }).auth = { userId, roles };
   await next();
 }
 

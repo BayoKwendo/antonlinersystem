@@ -50,6 +50,7 @@ function ProviderDrawer({ id, onClose }: { id: number | null; onClose: () => voi
           <Group justify="space-between">
             <div>
               <Text fz="xl" fw={800}>{data.profile.display_name}</Text>
+              {data.profile.code && <Text ff="monospace" fw={600} c="brand">{data.profile.code}</Text>}
               <Text c="dimmed">{titleCase(data.profile.category)} · {data.profile.phone}</Text>
             </div>
             <Badge color={statusColor(data.profile.availability)} variant="light" size="lg">
@@ -190,6 +191,7 @@ export default function Providers() {
           <Table striped highlightOnHover verticalSpacing="sm">
             <Table.Thead>
               <Table.Tr>
+                <Table.Th>Code</Table.Th>
                 <Table.Th>Name</Table.Th>
                 <Table.Th>Phone</Table.Th>
                 <Table.Th>Category</Table.Th>
@@ -203,6 +205,7 @@ export default function Providers() {
             <Table.Tbody>
               {items.map((p: Provider) => (
                 <Table.Tr key={p.id} style={{ cursor: "pointer" }} onClick={() => setDetailId(p.id)}>
+                  <Table.Td><Text ff="monospace" fw={600}>{p.code ?? "—"}</Text></Table.Td>
                   <Table.Td>
                     <Text fw={600}>{p.display_name}</Text>
                     {p.status === "suspended" && <Badge color="red" size="xs">Suspended</Badge>}

@@ -78,6 +78,15 @@ const accountRepo = {
     );
   },
 
+  /** Idempotently grant a role (by key) to an existing user. */
+  async ensureRole(userId: number, roleKey: string): Promise<void> {
+    await client.query(
+      `INSERT IGNORE INTO user_roles (user_id, role_id)
+       SELECT ?, id FROM roles WHERE \`key\` = ?`,
+      [userId, roleKey],
+    );
+  },
+
   async markPhoneVerified(userId: number): Promise<void> {
     await client.query(
       `UPDATE users SET phone_verified_at = CURRENT_TIMESTAMP WHERE id = ?`,

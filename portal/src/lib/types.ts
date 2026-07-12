@@ -111,6 +111,7 @@ export interface Stats {
 
 export interface Provider {
   id: number;
+  code: string | null;
   display_name: string;
   phone: string;
   status: string;

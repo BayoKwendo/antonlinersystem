@@ -118,7 +118,12 @@ const bookingRepo = {
     return client.query(`${LIST_SELECT} WHERE b.customer_id = ? ORDER BY b.id DESC`, [customerId]);
   },
   listForProvider(providerId: number) {
-    return client.query(`${LIST_SELECT} WHERE b.provider_id = ? ORDER BY b.id DESC`, [providerId]);
+    // Providers only see confirmed jobs — a booking the customer hasn't paid the
+    // deposit on yet (pending_payment) is not a job and must not appear here.
+    return client.query(
+      `${LIST_SELECT} WHERE b.provider_id = ? AND b.status <> 'pending_payment' ORDER BY b.id DESC`,
+      [providerId],
+    );
   },
   listAll(status?: string) {
     if (status) return client.query(`${LIST_SELECT} WHERE b.status = ? ORDER BY b.id DESC`, [status]);

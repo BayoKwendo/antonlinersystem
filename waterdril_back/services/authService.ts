@@ -83,8 +83,13 @@ export const authService = {
       });
       await accountRepo.ensureCustomerProfile(id);
       user = await accountRepo.findById(id);
-    } else if (!user.phone_verified_at) {
-      await accountRepo.markPhoneVerified(user.id);
+    } else {
+      // An existing user (e.g. admin/provider) signing in via the passenger app
+      // also becomes a customer so they can book — one phone, many roles.
+      await accountRepo.ensureRole(user.id, "customer");
+      await accountRepo.ensureCustomerProfile(user.id);
+      if (!user.phone_verified_at) await accountRepo.markPhoneVerified(user.id);
+      user = await accountRepo.findById(user.id) ?? user;
     }
     if (!user) throw badRequest("Could not create account");
     if (user.status === "suspended") throw forbidden("Account suspended");

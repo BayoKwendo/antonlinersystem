@@ -36,12 +36,14 @@ const catalogController = {
   },
 
   nearby: async (ctx: Context) => {
+    const me = currentUser(ctx);
     const { category, lat, lng, radius_km } = await parseBody(ctx, nearbySchema);
     const providers = await catalogRepo.nearbyProviders({
       categoryKey: category,
       lat,
       lng,
       radiusKm: radius_km ?? DEFAULT_RADIUS_KM,
+      excludeUserId: me.userId, // never show the customer their own listings
     });
     ok(ctx, providers);
   },

@@ -1,12 +1,14 @@
 package com.spartons.antonis.ui.auth
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -94,8 +96,16 @@ fun AuthScreen(onLoggedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
             modifier = Modifier.size(140.dp),
         )
         Spacer(Modifier.height(12.dp))
-        Text("SmartDrill", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-        Text("Smart Drilling", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            "SmartDrill",
+            style = MaterialTheme.typography.headlineMedium,
+            color = if (isSystemInDarkTheme()) Color.White else MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            "Client",
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (isSystemInDarkTheme()) Color.White else Color.Unspecified,
+        )
         Spacer(Modifier.height(32.dp))
 
         if (s.step == 0) {

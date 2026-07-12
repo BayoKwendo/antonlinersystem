@@ -1,0 +1,27 @@
+# AntonLiner Deno API — systemd unit
+# Install: sudo cp deploy/systemd/antoliner-api.service /etc/systemd/system/
+#          sudo systemctl daemon-reload && sudo systemctl enable --now antoliner-api
+
+[Unit]
+Description=AntonLiner Deno API (Oak, port 5002)
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/antoliner/waterdril_back
+EnvironmentFile=/opt/antoliner/waterdril_back/.env
+ExecStart=/usr/local/bin/deno run --allow-net --allow-env --allow-read --allow-sys server.ts
+Restart=always
+RestartSec=3
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

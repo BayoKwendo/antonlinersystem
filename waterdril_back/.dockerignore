@@ -1,0 +1,23 @@
+# Secrets — never bake into an image layer (injected at runtime instead)
+.env
+.env.*
+!.env.example
+secrets/
+*firebase-adminsdk*.json
+*service-account*.json
+
+# VCS / editor / OS
+.git/
+.gitignore
+.idea/
+.vscode/
+.DS_Store
+
+# Local-only data / docs
+db/backups/
+*.md
+
+# Not needed in the Deno image
+node_modules/
+Dockerfile
+.dockerignore

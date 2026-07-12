@@ -42,11 +42,12 @@ const catalogRepo = {
    * using ST_Distance_Sphere on the spatial index. Returns distance_km.
    */
   nearbyProviders(
-    { categoryKey, lat, lng, radiusKm }: {
+    { categoryKey, lat, lng, radiusKm, excludeUserId }: {
       categoryKey: string;
       lat: number;
       lng: number;
       radiusKm: number;
+      excludeUserId?: number;
     },
   ) {
     return client.query(
@@ -59,10 +60,11 @@ const catalogRepo = {
          JOIN service_categories sc ON sc.id = pp.category_id
         WHERE sc.\`key\` = ?
           AND pp.availability <> 'offline'
+          AND (? IS NULL OR pp.user_id <> ?)
        HAVING distance_km <= ?
         ORDER BY distance_km ASC
         LIMIT 100`,
-      [lng, lat, categoryKey, radiusKm],
+      [lng, lat, categoryKey, excludeUserId ?? null, excludeUserId ?? null, radiusKm],
     );
   },
 };

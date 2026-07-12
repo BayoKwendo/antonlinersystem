@@ -82,7 +82,7 @@ const adminRepo = {
     );
     const items = await client.query(
       `SELECT u.id, u.display_name, u.phone, u.status, u.avatar_url,
-              sc.\`key\` AS category, pp.base_price, pp.rating_avg, pp.rating_count,
+              sc.\`key\` AS category, pp.code, pp.base_price, pp.rating_avg, pp.rating_count,
               pp.availability, pp.verified_at, pp.owner_id, o.display_name AS owner_name
          FROM provider_profiles pp
          JOIN users u ON u.id = pp.user_id
@@ -98,7 +98,7 @@ const adminRepo = {
   async providerDetail(id: number) {
     const [profile] = await client.query(
       `SELECT u.id, u.display_name, u.phone, u.email, u.status, u.avatar_url, u.created_at,
-              sc.\`key\` AS category, pp.base_price, pp.bio, pp.rating_avg, pp.rating_count,
+              sc.\`key\` AS category, pp.code, pp.base_price, pp.bio, pp.rating_avg, pp.rating_count,
               pp.availability, pp.verified_at, pp.lat, pp.lng, pp.location_updated_at,
               o.display_name AS owner_name
          FROM provider_profiles pp
@@ -184,10 +184,25 @@ const adminRepo = {
           [userId],
         );
       }
+      // Resolve the category + its code prefix, then mint the next sequential
+      // provider code for that prefix (e.g. SDBDS0001, SDBDS0002, …).
+      const catRows = await query(
+        `SELECT id, code_prefix FROM service_categories WHERE \`key\` = ? LIMIT 1`,
+        [categoryKey],
+      );
+      if (!catRows[0]) throw new Error(`Unknown service category: ${categoryKey}`);
+      const categoryId = catRows[0].id as number;
+      const prefix = (catRows[0].code_prefix as string | null) ?? "SDOS";
+      const seqRows = await query(
+        `SELECT COALESCE(MAX(CAST(SUBSTRING(code, ?) AS UNSIGNED)), 0) AS maxseq
+           FROM provider_profiles WHERE code LIKE CONCAT(?, '%')`,
+        [prefix.length + 1, prefix],
+      );
+      const code = prefix + String(Number(seqRows[0].maxseq) + 1).padStart(4, "0");
       await query(
-        `INSERT INTO provider_profiles (user_id, owner_id, category_id, base_price, bio, verified_at)
-         SELECT ?, ?, sc.id, ?, ?, CURRENT_TIMESTAMP FROM service_categories sc WHERE sc.\`key\` = ?`,
-        [userId, ownerId, basePrice, bio, categoryKey],
+        `INSERT INTO provider_profiles (user_id, owner_id, category_id, base_price, bio, code, verified_at)
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [userId, ownerId, categoryId, basePrice, bio, code],
       );
       return userId;
     });

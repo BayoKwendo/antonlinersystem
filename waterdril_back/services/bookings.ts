@@ -35,6 +35,7 @@ export const bookings = {
     customerId: number,
     input: { provider_id: number; category: string; address?: string; lat?: number; lng?: number },
   ) {
+    if (input.provider_id === customerId) throw badRequest("You cannot book your own service");
     const provider = await bookingRepo.providerSnapshot(input.provider_id, input.category);
     if (!provider || provider.user_status !== "active") throw notFound("Provider not found");
     if (provider.availability === "booked") throw badRequest("Provider is currently booked");
