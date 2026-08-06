@@ -18,10 +18,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -34,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -42,7 +42,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spartons.antoniasdriver.DriverLocationService
 import com.spartons.antoniasdriver.ServiceLocator
-import com.spartons.antoniasdriver.data.ProviderProfile
+import com.spartons.antoniasdriver.data.ProviderDashboard
 import com.spartons.antoniasdriver.data.ProviderService
 import com.spartons.antoniasdriver.ui.components.IconCircle
 import com.spartons.antoniasdriver.ui.components.MiniHeading
@@ -51,6 +51,7 @@ import com.spartons.antoniasdriver.ui.components.ReadinessRow
 import com.spartons.antoniasdriver.ui.components.ServiceCatalog
 import com.spartons.antoniasdriver.ui.components.SmartCard
 import com.spartons.antoniasdriver.ui.initials
+import com.spartons.antoniasdriver.ui.titleCase
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
 import com.spartons.antoniasdriver.ui.theme.DangerRed
 import com.spartons.antoniasdriver.ui.theme.InkBlack
@@ -64,11 +65,11 @@ import kotlinx.coroutines.launch
 
 class ProfileViewModel : ViewModel() {
     private val repo = ServiceLocator.repo
-    private val _profile = MutableStateFlow<ProviderProfile?>(null)
-    val profile = _profile.asStateFlow()
+    private val _dashboard = MutableStateFlow<ProviderDashboard?>(null)
+    val dashboard = _dashboard.asStateFlow()
 
     fun load() {
-        viewModelScope.launch { runCatching { repo.me() }.onSuccess { _profile.value = it } }
+        viewModelScope.launch { runCatching { repo.dashboard() }.onSuccess { _dashboard.value = it } }
     }
 
     fun logout(context: Context, after: () -> Unit) {
@@ -83,18 +84,18 @@ class ProfileViewModel : ViewModel() {
 
 @Composable
 fun ProfileScreen(onLoggedOut: () -> Unit, vm: ProfileViewModel = viewModel()) {
-    val p by vm.profile.collectAsState()
+    val d by vm.dashboard.collectAsState()
     val context = LocalContext.current
     LaunchedEffect(Unit) { vm.load() }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        IdentityCard(p)
+        IdentityCard(d)
         Spacer(Modifier.height(16.dp))
 
         SmartCard {
             MiniHeading("MY SERVICES")
             Spacer(Modifier.height(8.dp))
-            val services = p?.services.orEmpty()
+            val services = d?.services.orEmpty()
             if (services.isEmpty()) {
                 Text("No services registered.", style = MaterialTheme.typography.bodySmall, color = MutedGrey)
             } else {
@@ -109,29 +110,27 @@ fun ProfileScreen(onLoggedOut: () -> Unit, vm: ProfileViewModel = viewModel()) {
         SmartCard {
             MiniHeading("VERIFICATION")
             Spacer(Modifier.height(8.dp))
-            val r = p?.readiness
+            val r = d?.readiness
             ReadinessRow("Profile complete", r?.profileComplete == true)
-            ReadinessRow("Documents verified", r?.documentsVerified == true)
-            ReadinessRow("Accreditation valid", r?.accreditationValid == true)
+            ReadinessRow("Statutory documents verified", r?.documentsVerified == true)
             ReadinessRow("Bank details verified", r?.bankVerified == true)
+            ReadinessRow("Accepting new requests", r?.acceptingRequests == true)
         }
         Spacer(Modifier.height(16.dp))
 
         SmartCard {
             MiniHeading("CONTACT")
             Spacer(Modifier.height(8.dp))
-            ContactRow(Icons.Filled.Phone, p?.phone ?: "—")
+            ContactRow(Icons.Filled.Phone, d?.phone ?: "—")
             Spacer(Modifier.height(8.dp))
-            ContactRow(Icons.Filled.Email, p?.email ?: "—")
-            Spacer(Modifier.height(8.dp))
-            ContactRow(Icons.Filled.Receipt, p?.kraPin?.let { "KRA PIN · $it" } ?: "KRA PIN · —")
+            ContactRow(Icons.Filled.VerifiedUser, "Status · ${titleCase(d?.verificationStatus ?: "pending")}")
         }
         Spacer(Modifier.height(24.dp))
 
         OutlinedButton(
             onClick = { vm.logout(context, onLoggedOut) },
             modifier = Modifier.fillMaxWidth(),
-            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
         ) {
             Icon(Icons.AutoMirrored.Filled.Logout, null); Spacer(Modifier.width(8.dp)); Text("Log out")
         }
@@ -140,7 +139,7 @@ fun ProfileScreen(onLoggedOut: () -> Unit, vm: ProfileViewModel = viewModel()) {
 }
 
 @Composable
-private fun IdentityCard(p: ProviderProfile?) {
+private fun IdentityCard(d: ProviderDashboard?) {
     SmartCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
@@ -148,19 +147,19 @@ private fun IdentityCard(p: ProviderProfile?) {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    initials(p?.businessName ?: p?.displayName),
+                    initials(d?.businessName ?: d?.name),
                     color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
                 )
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text(p?.businessName ?: p?.displayName ?: "Service Provider", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = InkBlack)
-                p?.displayName?.takeIf { it != p.businessName }?.let {
+                Text(d?.businessName ?: d?.name ?: "Service Provider", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = InkBlack)
+                d?.name?.takeIf { it != d.businessName }?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MutedGrey)
                 }
-                val available = p?.availability == "available"
+                val accepting = d?.acceptingRequests == true
                 Spacer(Modifier.height(6.dp))
-                Pill(if (available) "Accepting Requests" else "Paused", if (available) SuccessGreen else WarningAmber)
+                Pill(if (accepting) "Accepting Requests" else "Paused", if (accepting) SuccessGreen else WarningAmber)
             }
         }
     }
@@ -169,19 +168,18 @@ private fun IdentityCard(p: ProviderProfile?) {
 @Composable
 private fun ServiceIdRow(svc: ProviderService) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        IconCircle(ServiceCatalog.icon(svc.code), tint = BrandBlue, diameter = 38)
+        IconCircle(ServiceCatalog.icon(svc.key), tint = BrandBlue, diameter = 38)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(ServiceCatalog.label(svc.code, svc.name), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = InkBlack)
-            svc.providerId?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MutedGrey) }
+            Text(ServiceCatalog.label(svc.key, svc.name), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = InkBlack)
+            Text(svc.code ?: "Awaiting verification", style = MaterialTheme.typography.labelSmall, color = MutedGrey)
         }
-        val active = (svc.status ?: "active").equals("active", ignoreCase = true)
-        Pill(if (active) "Active" else (svc.status ?: "").replaceFirstChar { it.uppercase() }, if (active) SuccessGreen else WarningAmber)
+        Pill(if (svc.active) "Active" else "Pending", if (svc.active) SuccessGreen else WarningAmber)
     }
 }
 
 @Composable
-private fun ContactRow(icon: androidx.compose.ui.graphics.vector.ImageVector, value: String) {
+private fun ContactRow(icon: ImageVector, value: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, null, tint = MutedGrey, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(10.dp))

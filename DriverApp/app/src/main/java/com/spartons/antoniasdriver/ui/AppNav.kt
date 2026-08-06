@@ -8,7 +8,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.spartons.antoniasdriver.ui.auth.LoginScreen
 import com.spartons.antoniasdriver.ui.auth.SignUpScreen
-import com.spartons.antoniasdriver.ui.chat.ChatScreen
 import com.spartons.antoniasdriver.ui.jobs.JobDetailScreen
 import com.spartons.antoniasdriver.ui.jobs.PaymentRequestedScreen
 import com.spartons.antoniasdriver.ui.main.MainScaffold
@@ -27,7 +26,6 @@ private object Routes {
     const val REQUEST_ACCEPTED = "request_accepted" // request_accepted/{bookingId}
     const val JOB = "job"                  // job/{bookingId}
     const val PAYMENT_REQUESTED = "payment_requested" // payment_requested/{bookingId}
-    const val CHAT = "chat"                // chat/{bookingId}
 }
 
 @Composable
@@ -102,12 +100,10 @@ fun AppNav(startLoggedIn: Boolean) {
             "${Routes.JOB}/{id}",
             arguments = listOf(navArgument("id") { type = NavType.LongType }),
         ) { entry ->
-            val id = entry.arguments!!.getLong("id")
             JobDetailScreen(
-                bookingId = id,
+                bookingId = entry.arguments!!.getLong("id"),
                 onBack = { nav.popBackStack() },
                 onPromptPayment = { jobId -> nav.navigate("${Routes.PAYMENT_REQUESTED}/$jobId") },
-                onChat = { jobId -> nav.navigate("${Routes.CHAT}/$jobId") },
             )
         }
 
@@ -119,16 +115,6 @@ fun AppNav(startLoggedIn: Boolean) {
                 bookingId = entry.arguments!!.getLong("id"),
                 onViewJob = { jobId -> nav.navigate("${Routes.JOB}/$jobId") { popUpTo(Routes.MAIN) } },
                 onDone = { nav.popBackStack(Routes.MAIN, inclusive = false) },
-            )
-        }
-
-        composable(
-            "${Routes.CHAT}/{id}",
-            arguments = listOf(navArgument("id") { type = NavType.LongType }),
-        ) { entry ->
-            ChatScreen(
-                bookingId = entry.arguments!!.getLong("id"),
-                onBack = { nav.popBackStack() },
             )
         }
     }

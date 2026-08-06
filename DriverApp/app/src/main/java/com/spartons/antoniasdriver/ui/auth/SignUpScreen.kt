@@ -21,14 +21,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Engineering
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -79,17 +79,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** One statutory document required at sign-up (field name matches the multipart part). */
+/** One statutory document required at sign-up ([field] is the backend document kind). */
 data class DocSpec(val field: String, val title: String, val icon: ImageVector)
 
-/** The six statutory documents a borehole service provider must submit. */
+/** The six statutory documents a borehole service provider must submit (per the journey). */
 val REQUIRED_DOCUMENTS = listOf(
     DocSpec("certificate_of_incorporation", "Certificate of Incorporation", Icons.Filled.Business),
+    DocSpec("cr12", "CR12", Icons.Filled.Description),
     DocSpec("kra_pin_certificate", "KRA PIN Certificate", Icons.Filled.Badge),
-    DocSpec("tax_compliance_certificate", "Tax Compliance Certificate", Icons.Filled.VerifiedUser),
-    DocSpec("nca_certificate", "NCA Registration Certificate", Icons.Filled.Engineering),
-    DocSpec("wra_license", "WRA Drilling License / Permit", Icons.Filled.WaterDrop),
-    DocSpec("indemnity_insurance", "Professional Indemnity Insurance", Icons.Filled.Shield),
+    DocSpec("director_id", "Director National ID (or Passport)", Icons.Filled.Person),
+    DocSpec("regulator_accreditation", "Regulator Accreditation Certificate(s)", Icons.Filled.WorkspacePremium),
+    DocSpec("bank_details", "Bank Details (Proof of Banking)", Icons.Filled.AccountBalance),
 )
 
 data class SignUpState(
@@ -139,14 +139,15 @@ class SignUpViewModel : ViewModel() {
         _state.value = s.copy(loading = true, error = null)
         viewModelScope.launch {
             runCatching {
-                repo.register(
+                repo.signup(
                     fullName = s.fullName.trim(),
                     businessName = s.businessName.trim(),
                     phone = s.phone.trim(),
                     email = s.email.trim(),
                     kraPin = s.kraPin.trim(),
                     password = s.password,
-                    serviceCodes = s.services.toList(),
+                    bankDetails = null,
+                    services = s.services.toList(),
                     documents = REQUIRED_DOCUMENTS.mapNotNull { s.documents[it.field] },
                 )
             }
