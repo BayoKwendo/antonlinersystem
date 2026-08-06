@@ -33,6 +33,77 @@ export const nearbySchema = z.object({
   radius_km: z.coerce.number().positive().max(500).optional(),
 });
 
+// --- public service requests -------------------------------------------------
+export const createRequestSchema = z.object({
+  service_key: z.string().min(1).max(40),
+  full_name: z.string().min(1).max(120),
+  phone,
+  otp_code: z.string().regex(/^\d{4,8}$/), // 6-digit phone verification code
+
+  email: z.string().email().max(160).optional(),
+  location: z.object({
+    lat: z.coerce.number().min(-90).max(90),
+    lng: z.coerce.number().min(-180).max(180),
+  }).nullable().optional(),
+  // Per-service form fields (arbitrary string values); server strips `__mode`.
+  details: z.record(z.string(), z.string()).optional().default({}),
+  documents: z.array(z.string().max(255)).max(20).optional().default([]),
+});
+
+export const complaintSchema = z.object({ message: z.string().min(3).max(1000) });
+
+// Ops-assigned provider rating for a completed job.
+export const providerRatingSchema = z.object({
+  rating: z.coerce.number().min(1).max(5),
+  feedback: z.coerce.number().int().min(1).max(5).optional(),
+  timeliness: z.coerce.number().int().min(1).max(5).optional(),
+  quality: z.coerce.number().int().min(1).max(5).optional(),
+  note: z.string().max(1000).optional(),
+});
+
+// Look up a request by its order number + the phone it was placed with (the
+// phone is the second factor, since request numbers are guessable).
+export const lookupRequestSchema = z.object({
+  request_no: z.string().min(3).max(40),
+  phone,
+});
+
+// Step 2 of the lookup — verify the OTP sent to the phone.
+export const lookupVerifyRequestSchema = z.object({
+  request_no: z.string().min(3).max(40),
+  phone,
+  otp_code: z.string().regex(/^\d{4,8}$/),
+});
+
+// --- provider signup / verification / jobs -----------------------------------
+export const providerSignupSchema = z.object({
+  full_name: z.string().min(1).max(120),
+  business_name: z.string().min(1).max(160),
+  phone,
+  email: z.string().email().max(150),
+  kra_pin: z.string().min(4).max(20),
+  password: z.string().min(6).max(200),
+  bank_details: z.string().max(255).optional(),
+  services: z.array(z.string().min(1).max(40)).min(1).max(10),
+  documents: z.array(z.object({ kind: z.string().min(1).max(40), url: z.string().min(1).max(500) })).max(12).optional().default([]),
+});
+export const providerVerifySchema = z.object({ approve: z.boolean(), note: z.string().max(500).optional() });
+export const jobAcceptSchema = z.object({ scheduled_at: z.string().min(4).max(40), note: z.string().max(500).optional() });
+export const jobStatusSchema = z.object({ to: z.enum(["en_route", "arrived", "in_progress", "completed"]), note: z.string().max(500).optional() });
+
+export const uploadSignSchema = z.object({
+  filename: z.string().min(1).max(200),
+  content_type: z.string().min(1).max(100),
+  size: z.coerce.number().int().positive().optional(),
+});
+
+// --- journey admin ops -------------------------------------------------------
+export const assignSchema = z.object({ provider_id: z.coerce.number().int().positive() });
+export const invoiceSchema = z.object({ amount: z.coerce.number().positive().optional() });
+export const quoteSchema = z.object({ amount: z.coerce.number().positive() });
+export const documentSchema = z.object({ kind: z.string().min(1).max(40), url: z.string().min(1).max(500) });
+export const markPaidSchema = z.object({ ref: z.string().max(64).optional() });
+
 // --- bookings ----------------------------------------------------------------
 export const createBookingSchema = z.object({
   provider_id: z.coerce.number().int().positive(),

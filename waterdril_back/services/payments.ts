@@ -11,8 +11,11 @@
 import client, { type Querier } from "../db/client.ts";
 import bookingRepo from "../repositories/bookingRepo.ts";
 import providerRepo from "../repositories/providerRepo.ts";
+import invoiceRepo from "../repositories/invoiceRepo.ts";
+import escrow from "./escrow.ts";
 import { initiateStkPush } from "./mpesaService.ts";
 import { notifyUser } from "./notify.ts";
+import { notifyQualifiedProviders } from "./jobs.ts";
 import { normalizePhone } from "../utils/phone.ts";
 import { AppError, badRequest, forbidden, notFound } from "../utils/errors.ts";
 
@@ -35,7 +38,18 @@ async function applyToBooking(query: Querier, bookingId: number, amount: number)
   await bookingRepo.addPaid(bookingId, amount, query);
 
   let becameBooked = false;
-  if (
+  if (booking.request_no != null) {
+    // Public SMART Drill request: full payment of the invoiced amount confirms it
+    // and opens escrow (the provider accepted before payment).
+    const target = Number(booking.quoted_amount ?? booking.total_amount);
+    if (booking.status === "pending_payment" && target > 0 && paidAfter >= target) {
+      await bookingRepo.setStatus(bookingId, "booked", query);
+      await bookingRepo.addEvent(bookingId, "booked", null, "payment received", query);
+      await query(`UPDATE invoices SET status = 'paid', paid_at = NOW() WHERE booking_id = ? AND party = 'customer' AND status = 'issued'`, [bookingId]);
+      if (booking.provider_id) await escrow.onAssigned(bookingId, booking.provider_id as number, target, query);
+      becameBooked = true;
+    }
+  } else if (
     booking.status === "pending_payment" &&
     Number(booking.deposit_amount) > 0 &&
     paidAfter >= Number(booking.deposit_amount)
@@ -76,6 +90,25 @@ export const payments = {
       checkoutId: res.checkoutId,
     });
     return { checkout_id: res.checkoutId, amount: due, kind };
+  },
+
+  /** Public: customer pays a request's invoice via STK (token-authorized). */
+  async initiateRequestPayment(token: string, rawPhone: string) {
+    const b = await bookingRepo.rawByTrackingToken(token);
+    if (!b) throw notFound("Request not found");
+    if (b.status !== "pending_payment") throw badRequest("This request isn't awaiting payment yet.");
+    const inv = await invoiceRepo.byBooking(b.id);
+    const target = inv ? Number(inv.amount) : Number(b.quoted_amount ?? b.total_amount);
+    if (!target || target <= 0) throw badRequest("No invoice has been issued for this request yet.");
+    const full = (await bookingRepo.byId(b.id))[0];
+    const due = Math.max(0, target - Number(full.amount_paid));
+    if (due <= 0) throw badRequest("This request is already paid.");
+
+    const phone = normalizePhone(rawPhone);
+    const res = await initiateStkPush({ amount: due, msisdn: phone, accountReference: `SR${b.id}` });
+    if (!res) throw new AppError(502, "Payment provider unavailable");
+    await bookingRepo.insertPendingPayment({ bookingId: b.id, phone, amount: due, kind: "deposit", checkoutId: res.checkoutId });
+    return { checkout_id: res.checkoutId, amount: due };
   },
 
   /** Safaricom STK result callback (CallBackURL). Idempotent. */
@@ -174,6 +207,17 @@ export const payments = {
 
   /** Post-commit notifications. */
   async afterApplied(bookingId: number, becameBooked: boolean, amount: number) {
+    // Public request that just got paid → confirm to customer + open the job to providers.
+    const b = (await bookingRepo.byId(bookingId))[0];
+    if (b?.request_no != null) {
+      if (becameBooked) {
+        await notifyUser(b.customer_id, "Payment confirmed", "Your payment is confirmed and held securely. We're notifying providers now.", { push: false });
+        await notifyQualifiedProviders(b.category_id);
+      } else {
+        await notifyUser(b.customer_id, "Payment received", `We received KES ${amount} for your request.`, { push: false });
+      }
+      return;
+    }
     const parties = await bookingRepo.parties(bookingId);
     if (!parties) return;
     if (becameBooked) {

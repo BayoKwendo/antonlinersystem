@@ -1,0 +1,64 @@
+.sd-phone {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+/* Country selector — self-styled so it renders identically inside the request
+   form and the tracking modal (higher specificity than any generic form rule). */
+.sd-phone .sd-phone__cc {
+  width: auto;
+  flex: 0 0 auto;
+  max-width: 42%;
+  min-width: 0;
+  cursor: pointer;
+  border: 1px solid var(--sd-line);
+  border-radius: 9px;
+  padding: 11px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--sd-ink);
+  background: #fff;
+}
+.sd-phone .sd-phone__cc:focus {
+  outline: none;
+  border-color: var(--accent, #1656c7);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #1656c7) 18%, transparent);
+}
+
+/* Number box: a fixed "+dial" prefix followed by the national-number input. */
+.sd-phone__num {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--sd-line);
+  border-radius: 9px;
+  background: #fff;
+  overflow: hidden;
+}
+.sd-phone__dial {
+  flex: none;
+  padding: 0 8px 0 12px;
+  color: var(--sd-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+.sd-phone .sd-phone__num input {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  padding: 11px 12px 11px 4px;
+  background: transparent;
+}
+.sd-phone .sd-phone__num input:focus { outline: none; box-shadow: none; }
+.sd-phone__num:focus-within {
+  border-color: var(--accent, #1656c7);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #1656c7) 18%, transparent);
+}
+
+@media (max-width: 480px) {
+  .sd-phone .sd-phone__cc { max-width: 38%; }
+}

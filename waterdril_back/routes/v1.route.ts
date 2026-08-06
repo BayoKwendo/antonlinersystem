@@ -11,6 +11,10 @@ import paymentController from "../controllers/v1/paymentController.ts";
 import providerController from "../controllers/v1/providerController.ts";
 import adminController from "../controllers/v1/adminController.ts";
 import notificationController from "../controllers/v1/notificationController.ts";
+import requestController from "../controllers/v1/requestController.ts";
+import adminOpsController from "../controllers/v1/adminOpsController.ts";
+import jobController from "../controllers/v1/jobController.ts";
+import uploadController from "../controllers/v1/uploadController.ts";
 
 const router = new Router({ prefix: "/api/v1" });
 
@@ -23,6 +27,19 @@ router
   .post("/auth/logout", authController.logout)
   .post("/auth/password/reset", authController.resetPassword)
   .get("/services", catalogController.listCategories)
+  // Public provider self-signup (Android) — returns auth tokens.
+  .post("/providers/signup", providerController.signup)
+  // Public service requests (frictionless — no auth) + read-only tracking.
+  .post("/uploads/sign", uploadController.sign)
+  .post("/requests", requestController.create)
+  .post("/requests/lookup", requestController.lookup)
+  .post("/requests/lookup/verify", requestController.lookupVerify)
+  .get("/track/:token", requestController.track)
+  // Token-authorized customer journey actions (the tracking token is the credential).
+  .post("/track/:token/pay", requestController.pay)
+  .post("/track/:token/confirm-arrival", requestController.confirmArrival)
+  .post("/track/:token/confirm-completion", requestController.confirmCompletion)
+  .post("/track/:token/complaint", requestController.complaint)
   // M-Pesa callbacks (Safaricom posts here; no user auth).
   .post("/payments/mpesa/stk-callback", paymentController.stkCallback)
   .post("/payments/mpesa/c2b", paymentController.c2bCallback);
@@ -45,8 +62,20 @@ router
 // provider self-service
 router
   .get("/providers/me", requireAuth, requireRole("provider"), providerController.me)
+  .get("/providers/dashboard", requireAuth, requireRole("provider"), providerController.dashboard)
+  .get("/providers/earnings", requireAuth, requireRole("provider"), providerController.earnings)
   .post("/providers/me/online", requireAuth, requireRole("provider"), providerController.setOnline)
   .post("/providers/me/location", requireAuth, requireRole("provider"), providerController.updateLocation);
+
+// provider job marketplace + delivery (driver app)
+router
+  .get("/jobs", requireAuth, requireRole("provider"), jobController.available)
+  .get("/jobs/mine", requireAuth, requireRole("provider"), jobController.mine)
+  .post("/jobs/:id/accept", requireAuth, requireRole("provider"), jobController.accept)
+  .post("/jobs/:id/prompt-payment", requireAuth, requireRole("provider"), jobController.promptPayment)
+  .post("/jobs/:id/status", requireAuth, requireRole("provider"), jobController.status)
+  .post("/jobs/:id/documents", requireAuth, requireRole("provider"), jobController.addDocument)
+  .post("/jobs/:id/decline", requireAuth, requireRole("provider"), jobController.decline);
 
 // bookings
 router
@@ -90,6 +119,23 @@ router
   .get("/admin/reviews", requireAuth, requireRole("admin", "assistance"), adminController.listReviews)
   .patch("/admin/reviews/:id", requireAuth, requireRole("admin", "assistance"), adminController.setReviewHidden)
   .get("/admin/audit", requireAuth, requireRole("admin"), adminController.listAudit);
+
+// --- SMART Drill journey ops (staff) -----------------------------------------
+router
+  .get("/admin/requests", requireAuth, requireRole(...STAFF), adminOpsController.listRequests)
+  .get("/admin/invoices", requireAuth, requireRole(...STAFF), adminOpsController.listInvoices)
+  .get("/admin/payouts", requireAuth, requireRole(...STAFF), adminOpsController.listPayouts)
+  .get("/admin/requests/:id/payouts", requireAuth, requireRole(...STAFF), adminOpsController.payouts)
+  .get("/admin/requests/:id/documents", requireAuth, requireRole(...STAFF), adminOpsController.documents)
+  .post("/admin/requests/:id/invoice", requireAuth, requireRole("admin", "assistance", "finance"), adminOpsController.issueInvoice)
+  .post("/admin/requests/:id/quote", requireAuth, requireRole("admin", "assistance"), adminOpsController.setQuote)
+  .post("/admin/requests/:id/payment", requireAuth, requireRole("admin", "finance"), adminOpsController.confirmPayment)
+  .post("/admin/requests/:id/assign", requireAuth, requireRole("admin", "assistance", "owner"), adminOpsController.assign)
+  .post("/admin/requests/:id/documents", requireAuth, requireRole(...STAFF), adminOpsController.addDocument)
+  .post("/admin/requests/:id/verify", requireAuth, requireRole("admin", "assistance", "finance"), adminOpsController.verifyCompletion)
+  .post("/admin/requests/:id/rating", requireAuth, requireRole("admin", "assistance", "owner"), adminOpsController.rateProvider)
+  .post("/admin/providers/:id/verify", requireAuth, requireRole("admin", "assistance", "owner"), adminOpsController.verifyProvider)
+  .post("/admin/payouts/:id/mark-paid", requireAuth, requireRole("admin", "finance"), adminOpsController.markPayoutPaid);
 
 // service-category management (admin)
 router

@@ -6,10 +6,11 @@ import client from "../db/client.ts";
 const catalogRepo = {
   listCategories(activeOnly = true) {
     return client.query(
-      `SELECT id, \`key\`, name, description, active
+      `SELECT id, \`key\`, name, description, active,
+              price, price_unit, price_note, pricing_mode, icon, cta_label, accent, sort_order
          FROM service_categories
         ${activeOnly ? "WHERE active = 1" : ""}
-        ORDER BY name`,
+        ORDER BY sort_order, name`,
     );
   },
 

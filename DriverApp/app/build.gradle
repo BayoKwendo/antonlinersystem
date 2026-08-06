@@ -13,8 +13,8 @@ android {
         applicationId "com.spartons.antoniasdriver"
         minSdk 26
         targetSdk 35
-        versionCode 17
-        versionName "2.0.0"
+        versionCode 32
+        versionName "3.0.2"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         vectorDrawables { useSupportLibrary true }
     }
@@ -58,7 +58,7 @@ dependencies {
 
     // Maps (Compose) + location
     implementation 'com.google.maps.android:maps-compose:6.2.1'
-    implementation 'com.google.android.gms:play-services-maps:19.0.0'
+    implementation 'com.google.android.gms:play-services-maps:20.0.0'
     implementation 'com.google.android.gms:play-services-location:21.3.0'
 
     // Firebase Cloud Messaging (BoM-managed; project driller-3a61b)

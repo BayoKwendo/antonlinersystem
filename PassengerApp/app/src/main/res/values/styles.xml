@@ -5,8 +5,11 @@
          window_bg resolves to the values-night variant in dark mode, so the
          launch window matches the system theme instead of flashing white. -->
     <style name="Theme.AntonLiner" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <!-- Edge-to-edge (targetSdk 35): the Activity calls enableEdgeToEdge() and
+             the Compose theme sets the bar icon appearance at runtime. Do NOT set
+             android:statusBarColor/navigationBarColor here — they're deprecated in
+             API 35, ignored under enforced edge-to-edge, and flagged by Play. -->
         <item name="android:windowBackground">@color/window_bg</item>
-        <item name="android:statusBarColor">@color/window_bg</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>

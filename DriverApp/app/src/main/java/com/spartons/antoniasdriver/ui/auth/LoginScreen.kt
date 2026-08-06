@@ -3,6 +3,9 @@ package com.spartons.antoniasdriver.ui.auth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -10,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.spartons.antoniasdriver.R
 import androidx.lifecycle.ViewModel
@@ -112,7 +116,7 @@ class LoginViewModel : ViewModel() {
 }
 
 @Composable
-fun LoginScreen(onLoggedIn: () -> Unit, vm: LoginViewModel = viewModel()) {
+fun LoginScreen(onLoggedIn: () -> Unit, onSignUp: () -> Unit = {}, vm: LoginViewModel = viewModel()) {
     val s by vm.state.collectAsState()
     val snackbar = remember { SnackbarHostState() }
     var showReset by remember { mutableStateOf(false) }
@@ -132,19 +136,21 @@ fun LoginScreen(onLoggedIn: () -> Unit, vm: LoginViewModel = viewModel()) {
                 modifier = Modifier.size(140.dp),
             )
             Spacer(Modifier.height(12.dp))
-            Text("SmartDrill", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-            Text("Driver", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary)
+            Text("SMART DRILL", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.secondary)
+            Text("Service Provider", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(32.dp))
 
             PhoneField(onPhoneChange = vm::setPhone, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(12.dp))
+            var passwordVisible by remember { mutableStateOf(false) }
             OutlinedTextField(
                 value = s.password,
                 onValueChange = vm::setPassword,
                 label = { Text("Password") },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = { PasswordVisibilityToggle(passwordVisible) { passwordVisible = !passwordVisible } },
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(16.dp))
@@ -156,6 +162,16 @@ fun LoginScreen(onLoggedIn: () -> Unit, vm: LoginViewModel = viewModel()) {
             s.error?.let {
                 Spacer(Modifier.height(4.dp))
                 Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+
+            Spacer(Modifier.height(24.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "New service provider?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(onClick = onSignUp) { Text("Create account") }
             }
         }
     }
@@ -197,6 +213,8 @@ fun LoginScreen(onLoggedIn: () -> Unit, vm: LoginViewModel = viewModel()) {
     if (s.mustChange) {
         var next by remember { mutableStateOf("") }
         var confirm by remember { mutableStateOf("") }
+        var newVisible by remember { mutableStateOf(false) }
+        var confirmVisible by remember { mutableStateOf(false) }
         AlertDialog(
             onDismissRequest = { if (!s.loading) vm.cancelPasswordChange() },
             title = { Text("Set a new password") },
@@ -206,13 +224,17 @@ fun LoginScreen(onLoggedIn: () -> Unit, vm: LoginViewModel = viewModel()) {
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = next, onValueChange = { next = it }, label = { Text("New password") },
-                        singleLine = true, visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        visualTransformation = if (newVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = { PasswordVisibilityToggle(newVisible) { newVisible = !newVisible } },
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = confirm, onValueChange = { confirm = it }, label = { Text("Re-enter new password") },
-                        singleLine = true, visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = { PasswordVisibilityToggle(confirmVisible) { confirmVisible = !confirmVisible } },
                         modifier = Modifier.fillMaxWidth(),
                     )
                     s.error?.let {
@@ -229,6 +251,17 @@ fun LoginScreen(onLoggedIn: () -> Unit, vm: LoginViewModel = viewModel()) {
             dismissButton = {
                 TextButton(onClick = { vm.cancelPasswordChange() }, enabled = !s.loading) { Text("Cancel") }
             },
+        )
+    }
+}
+
+/** Trailing eye button that shows/hides the password in a field. */
+@Composable
+private fun PasswordVisibilityToggle(visible: Boolean, onToggle: () -> Unit) {
+    IconButton(onClick = onToggle) {
+        Icon(
+            imageVector = if (visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+            contentDescription = if (visible) "Hide password" else "Show password",
         )
     }
 }

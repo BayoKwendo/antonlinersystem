@@ -6,12 +6,29 @@ import { ok } from "../../utils/http.ts";
 import { parseBody } from "../../utils/validate.ts";
 import { currentUser } from "../../middlewares/auth.ts";
 import providerRepo from "../../repositories/providerRepo.ts";
-import { providerLocationSchema, providerOnlineSchema } from "../../validators/schemas.ts";
+import { providerService } from "../../services/providerService.ts";
+import { providerLocationSchema, providerOnlineSchema, providerSignupSchema } from "../../validators/schemas.ts";
 
 const providerController = {
+  // Public self-signup (Android). Returns auth tokens (logs the provider in).
+  signup: async (ctx: Context) => {
+    const input = await parseBody(ctx, providerSignupSchema);
+    ok(ctx, await providerService.signup(input), "Account created — pending verification");
+  },
+
   me: async (ctx: Context) => {
     const me = currentUser(ctx);
     ok(ctx, await providerRepo.profile(me.userId));
+  },
+
+  dashboard: async (ctx: Context) => {
+    const me = currentUser(ctx);
+    ok(ctx, await providerService.dashboard(me.userId));
+  },
+
+  earnings: async (ctx: Context) => {
+    const me = currentUser(ctx);
+    ok(ctx, await providerService.earnings(me.userId));
   },
 
   setOnline: async (ctx: Context) => {

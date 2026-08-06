@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SMART Drill">
+  <rect width="512" height="512" fill="#eaf1fc"/>
+  <g transform="translate(96 84) scale(0.62)">
+    <path fill="#1656c7"
+      d="M256 44 C256 44 108 232 108 340 a148 148 0 1 0 296 0 C404 232 256 44 256 44 Z"/>
+    <path fill="#ffffff" opacity="0.9"
+      d="M300 300 C300 300 232 386 232 430 a34 34 0 1 0 68 0 C300 386 300 300 300 300 Z"/>
+  </g>
+</svg>

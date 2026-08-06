@@ -1,0 +1,127 @@
+.sd-footer {
+  background: var(--sd-ink);
+  color: rgba(255, 255, 255, 0.72);
+  margin-top: 30px;
+}
+
+/* Higher specificity than .sd-container (also on this element) so the vertical
+   padding wins regardless of CSS bundle order. */
+.sd-footer .sd-footer__grid {
+  display: grid;
+  grid-template-columns: 1.7fr 1.1fr 1.1fr 1.1fr 1fr 1.1fr;
+  gap: 3px;
+  padding: 30px 24px 52px;
+}
+
+/* Column headings: uppercase, letter-spaced, muted — as in the design. */
+.sd-footer h4 {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 16px;
+}
+
+.sd-footer a {
+  display: block;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 14px;
+  padding: 6px 0;
+  text-decoration: none;
+}
+
+.sd-footer a:hover {
+  color: #fff;
+}
+
+/* ---- Brand column ---- */
+.sd-footer__brand p {
+  font-size: 14px;
+  margin-top: 16px;
+  max-width: 210px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+}
+
+.sd-footer__social {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.sd-footer__social a {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.sd-footer__social a:hover {
+  background: var(--sd-blue-600);
+  border-color: var(--sd-blue-600);
+  color: #fff;
+}
+
+/* ---- Contact column: icon + text ---- */
+.sd-footer__contact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  padding: 6px 0;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.sd-footer__contact svg {
+  flex: none;
+  color: var(--sd-blue-300);
+}
+
+/* ---- Bottom bar: centered, three lines ---- */
+.sd-footer__bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 22px 0;
+  font-size: 13px;
+}
+
+.sd-footer__bottom .sd-container {
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+.sd-footer__bottom p {
+  margin: 3px 0;
+}
+
+@media (max-width: 1000px) {
+  .sd-footer .sd-footer__grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .sd-footer__brand {
+    grid-column: 1 / -1;
+  }
+
+  .sd-footer__brand p {
+    max-width: 340px;
+  }
+}
+
+@media (max-width: 640px) {
+  .sd-footer .sd-footer__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .sd-footer .sd-footer__grid {
+    grid-template-columns: 1fr;
+  }
+}

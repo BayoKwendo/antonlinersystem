@@ -1,0 +1,40 @@
+/* =============================================================================
+   SMART Drill design tokens. Blue primary (droplet/brand) + rust-orange accent
+   (carried over from AntonLiner), navy ink, neutral surfaces.
+   ============================================================================= */
+:root {
+  /* brand blue */
+  --sd-blue-050: #eaf1fc;
+  --sd-blue-100: #d6e4fb;
+  --sd-blue-300: #7fa8ee;
+  --sd-blue-500: #2f7be6;
+  --sd-blue-600: #1656c7; /* primary */
+  --sd-blue-700: #0e3e93;
+  --sd-blue-900: #0a2b66;
+
+  /* accent (rust orange) */
+  --sd-accent: #e14d16;
+  --sd-accent-600: #c8410d;
+  --sd-accent-050: #fff0e8;
+
+  /* ink / navy + neutrals */
+  --sd-ink: #0c2436;
+  --sd-ink-700: #14384f;
+  --sd-text: #33414d;
+  --sd-muted: #6b7a87;
+  --sd-line: #e4e9f0;
+  --sd-surface: #ffffff;
+  --sd-bg: #f6f9fd;
+
+  /* status */
+  --sd-green: #1a9e6a;
+  --sd-amber: #e0952a;
+
+  /* system */
+  --sd-radius: 12px;
+  --sd-radius-sm: 8px;
+  --sd-shadow: 0 1px 2px rgba(12, 36, 54, 0.06), 0 8px 24px rgba(12, 36, 54, 0.06);
+  --sd-shadow-lg: 0 12px 40px rgba(12, 36, 54, 0.12);
+  --sd-container: 1200px;
+  --sd-font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}

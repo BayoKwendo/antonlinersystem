@@ -24,13 +24,13 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- Seed the prefixes (safe to re-run; only sets the known categories).
 UPDATE `service_categories` SET `code_prefix` = CASE `key`
-  WHEN 'drillers'          THEN 'SDBDS'
+  WHEN 'drillers'          THEN 'SDBD'
   WHEN 'test_pump'         THEN 'SDTPU'
-  WHEN 'pump_installer'    THEN 'SDPLOW'
-  WHEN 'geologist'         THEN 'SDGE'
-  WHEN 'tank_installation' THEN 'SDBCAM'
-  WHEN 'surveys'           THEN 'SDSV'
-  WHEN 'other_services'    THEN 'SDOS'
+  WHEN 'pump_installer'    THEN 'SDBEQ'
+  WHEN 'geologist'         THEN 'SDGEO'
+  WHEN 'tank_installation' THEN 'SDBM'
+  WHEN 'surveys'           THEN 'SDWQC'
+  WHEN 'other_services'    THEN 'SDBCONS'
   ELSE `code_prefix` END
 WHERE `key` IN ('drillers','test_pump','pump_installer','geologist','tank_installation','surveys','other_services');
 

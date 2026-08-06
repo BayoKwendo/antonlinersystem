@@ -47,3 +47,17 @@ services:
       - "backend:host-gateway"
     depends_on:
       - backend
+
+  customer-web:
+    build:
+      context: ./customer-web
+      args:
+        # Same-origin /api + /ws proxy → relative default works on any host.
+        VITE_API_URL: ${CUSTOMER_API_URL:-/api/v1}
+    restart: unless-stopped
+    ports:
+      - "${CUSTOMER_PORT:-8096}:80"
+    extra_hosts:
+      - "backend:host-gateway"
+    depends_on:
+      - backend

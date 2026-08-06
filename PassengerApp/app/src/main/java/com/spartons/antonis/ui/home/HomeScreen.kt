@@ -1,6 +1,7 @@
 package com.spartons.antonis.ui.home
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -18,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
@@ -26,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spartons.antonis.ServiceLocator
 import com.spartons.antonis.data.Category
 import com.spartons.antonis.data.Provider
+import com.spartons.antonis.location.checkLocationEnabled
 import com.spartons.antonis.location.currentLatLng
 import com.spartons.antonis.ui.notifications.NotificationBell
 import com.spartons.antonis.ui.LoadingBox
@@ -106,15 +109,28 @@ fun HomeScreen(
     val s by vm.state.collectAsState()
     val context = LocalContext.current
 
-    val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) vm.fetchLocation(context)
+    // One-tap "Turn on location" system dialog result → fetch once enabled.
+    val settingsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) vm.fetchLocation(context)
     }
-
-    LaunchedEffect(Unit) {
+    // Permission granted → make sure device location is on, then fetch.
+    fun ensureEnabledThenFetch() = checkLocationEnabled(
+        context,
+        onEnabled = { vm.fetchLocation(context) },
+        onResolutionRequired = { settingsLauncher.launch(it) },
+        onUnavailable = { vm.fetchLocation(context) },
+    )
+    val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) ensureEnabledThenFetch()
+    }
+    // Full flow: request permission if needed, then prompt to enable location.
+    fun requestLocation() {
         val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
-        if (granted) vm.fetchLocation(context) else permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (granted) ensureEnabledThenFetch() else permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
+
+    LaunchedEffect(Unit) { requestLocation() }
 
     Scaffold(
         topBar = {
@@ -139,7 +155,7 @@ fun HomeScreen(
             }
 
             when {
-                s.lat == null -> MessageBox("Enable location to find nearby providers")
+                s.lat == null -> EnableLocationBox(onEnable = { requestLocation() })
                 s.loadingProviders -> LoadingBox()
                 s.providers.isEmpty() -> MessageBox(s.error ?: "No providers nearby. Try another service.")
                 else -> LazyColumn(
@@ -150,6 +166,21 @@ fun HomeScreen(
                     items(s.providers) { p -> ProviderCard(p) { onProvider(p.id, s.selected ?: "") } }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EnableLocationBox(onEnable: () -> Unit) {
+    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                "Turn on location to find nearby providers",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = onEnable) { Text("Turn on location") }
         }
     }
 }

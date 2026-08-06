@@ -34,6 +34,13 @@ function page(ctx: Context) {
   };
 }
 
+/** Search term, with any leading "+" stripped so a "+254…" query still matches
+ *  the "+"-free stored phone (names never contain "+", so this is safe). */
+function searchQ(ctx: Context) {
+  const s = (ctx.request.url.searchParams.get("q") ?? "").replace(/\+/g, "").trim();
+  return s || undefined;
+}
+
 const adminController = {
   stats: async (ctx: Context) => ok(ctx, await adminRepo.stats()),
   analytics: async (ctx: Context) => ok(ctx, await adminRepo.analytics()),
@@ -46,7 +53,7 @@ const adminController = {
     ok(ctx, await adminRepo.listProviders({
       ownerId: onlyOwner ? me.userId : undefined,
       category: url.get("category") ?? undefined,
-      q: url.get("q") ?? undefined,
+      q: searchQ(ctx),
       ...page(ctx),
     }));
   },
@@ -99,7 +106,7 @@ const adminController = {
   // --- staff / owners / agents ---
   listUsers: async (ctx: Context) => {
     const url = ctx.request.url.searchParams;
-    ok(ctx, await adminRepo.listUsers({ role: url.get("role") ?? undefined, q: url.get("q") ?? undefined, ...page(ctx) }));
+    ok(ctx, await adminRepo.listUsers({ role: url.get("role") ?? undefined, q: searchQ(ctx), ...page(ctx) }));
   },
 
   createUser: async (ctx: Context) => {
@@ -174,7 +181,7 @@ const adminController = {
   },
 
   listCustomers: async (ctx: Context) => {
-    ok(ctx, await adminRepo.listCustomers({ q: ctx.request.url.searchParams.get("q") ?? undefined, ...page(ctx) }));
+    ok(ctx, await adminRepo.listCustomers({ q: searchQ(ctx), ...page(ctx) }));
   },
 
   listPayments: async (ctx: Context) => {

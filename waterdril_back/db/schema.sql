@@ -77,21 +77,32 @@ CREATE TABLE `service_categories` (
   `name`        VARCHAR(100) NOT NULL,
   `description` VARCHAR(255) DEFAULT NULL,
   `active`      TINYINT(1)   NOT NULL DEFAULT 1,
-  `code_prefix` VARCHAR(8)   DEFAULT NULL,  -- provider code prefix, e.g. SDBDS -> SDBDS0001
+  `code_prefix` VARCHAR(8)   DEFAULT NULL,  -- provider code prefix, e.g. SDBD -> SDBD00001
+  -- card-display fields (customer web/app render straight from GET /services)
+  `price`        DECIMAL(12,2) NULL,
+  `price_unit`   VARCHAR(40)  NULL,         -- "Flat Rate" / "Per Meter" / "Guided by Survey"
+  `price_note`   VARCHAR(120) NULL,         -- quote-card sub-line
+  `pricing_mode` ENUM('fixed','quote') NOT NULL DEFAULT 'fixed',
+  `icon`         VARCHAR(24)  NULL,         -- client icon key
+  `cta_label`    VARCHAR(60)  NULL,
+  `accent`       VARCHAR(9)   NULL,         -- card accent hex
+  `sort_order`   INT          NOT NULL DEFAULT 0,
   `created_at`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_service_categories_key` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `service_categories` (`key`, `name`, `active`, `code_prefix`) VALUES
-  ('drillers',          'Borehole Drilling',     1, 'SDBDS'),
-  ('test_pump',         'Test Pumping',          1, 'SDTPU'),
-  ('pump_installer',    'Pump Installation',     1, 'SDPLOW'),
-  ('geologist',         'Hydrogeological Survey',1, 'SDGE'),
-  ('tank_installation', 'Tank Installation',     1, 'SDBCAM'),
-  ('surveys',           'Surveys',               1, 'SDSV'),
-  ('other_services',    'Other Services',        1, 'SDOS');
+-- The 7 SMART Drill services (keys stable for apps/bookings; display data drives the cards).
+INSERT INTO `service_categories`
+  (`key`, `name`, `active`, `code_prefix`, `price`, `price_unit`, `price_note`, `pricing_mode`, `icon`, `cta_label`, `accent`, `sort_order`, `description`) VALUES
+  ('geologist','Hydrogeological Survey',1,'SDGEO',55000,'Flat Rate',NULL,'fixed','survey','Get a Survey','#4e9d2d',1,'Assess the underground water potential of your property and identify the best drilling point and depth.'),
+  ('drillers','Borehole Drilling',1,'SDBD',6000,'Per Meter',NULL,'fixed','drill','Find a Driller','#1656c7',2,'Professional drilling services to access reliable underground water for your home, farm or business.'),
+  ('test_pump','Test Pumping',1,'SDTPU',60000,'Flat Rate',NULL,'fixed','pump','Book Test Pumping','#0f8a8a',3,'Evaluate your borehole''s yield, water level and performance before installing your pumping system.'),
+  ('surveys','Water Quality Analysis',1,'SDWQC',6000,'Per Sample',NULL,'fixed','water','Request Testing','#7a3fb0',4,'Laboratory testing to determine if your water is safe and suitable for drinking, irrigation or industrial use.'),
+  ('pump_installer','Borehole Equipping',1,'SDBEQ',NULL,'Guided by Survey','Pricing based on survey recommendations','quote','equip','Equip My Borehole','#ef8a1e',5,'Install pumps, pipes, solar systems, tanks and all equipment needed to get your borehole running.'),
+  ('tank_installation','Borehole Maintenance',1,'SDBM',NULL,'Request a Quote','Tell us your needs and we''ll provide a quote','quote','maintenance','Request Maintenance','#4e9d2d',6,'Keep your borehole and pumping system in top condition with routine maintenance and repairs.'),
+  ('other_services','Consultancy in Borehole',1,'SDBCONS',NULL,'Request a Quote','Tell us your challenge and we''ll guide you','quote','consult','Talk to an Expert','#1656c7',7,'Not sure what''s wrong with your borehole? Get expert advice and recommendations for the right solution.');
 
 -- -----------------------------------------------------------------------------
 --  users — identity + authentication only. Role-specific data lives in the
@@ -153,7 +164,7 @@ CREATE TABLE `provider_profiles` (
   `user_id`             BIGINT UNSIGNED NOT NULL,
   `owner_id`            BIGINT UNSIGNED DEFAULT NULL,
   `category_id`         INT UNSIGNED    NOT NULL,
-  `code`                VARCHAR(16)     DEFAULT NULL,  -- e.g. SDBDS0001 (per category listing)
+  `code`                VARCHAR(16)     DEFAULT NULL,  -- e.g. SDBD00001 (per category listing)
   `bio`                 VARCHAR(500)    DEFAULT NULL,
   `base_price`          DECIMAL(12,2)   NOT NULL DEFAULT 0.00,
   `rating_avg`          DECIMAL(3,2)    NOT NULL DEFAULT 0.00,
@@ -180,27 +191,64 @@ CREATE TABLE `provider_profiles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------------------------------
+--  provider_accounts — account-level provider info + verification (self-signup).
+--  provider_documents — statutory documents uploaded for verification.
+-- -----------------------------------------------------------------------------
+CREATE TABLE `provider_accounts` (
+  `user_id`             BIGINT UNSIGNED NOT NULL,
+  `business_name`       VARCHAR(160) DEFAULT NULL,
+  `kra_pin`             VARCHAR(20)  DEFAULT NULL,
+  `bank_details`        VARCHAR(255) DEFAULT NULL,
+  `verification_status` ENUM('pending','verified','rejected') NOT NULL DEFAULT 'pending',
+  `verification_note`   VARCHAR(500) DEFAULT NULL,
+  `created_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`),
+  KEY `idx_provider_accounts_status` (`verification_status`),
+  CONSTRAINT `fk_provider_accounts_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `provider_documents` (
+  `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id`    BIGINT UNSIGNED NOT NULL,
+  `kind`       VARCHAR(40) NOT NULL,
+  `url`        VARCHAR(500) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_provider_documents_user` (`user_id`, `kind`),
+  CONSTRAINT `fk_provider_documents_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- -----------------------------------------------------------------------------
 --  bookings — a customer's booking of a provider, through its lifecycle.
 -- -----------------------------------------------------------------------------
 CREATE TABLE `bookings` (
   `id`             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `uuid`           CHAR(36) NOT NULL,
+  `request_no`     VARCHAR(24) DEFAULT NULL,          -- public request number, e.g. SR00001
+  `tracking_token` CHAR(64) DEFAULT NULL,             -- frictionless read-only tracking link token
   `customer_id`    BIGINT UNSIGNED NOT NULL,
-  `provider_id`    BIGINT UNSIGNED NOT NULL,
+  `provider_id`    BIGINT UNSIGNED DEFAULT NULL,      -- NULL until a provider is assigned
   `category_id`    INT UNSIGNED    NOT NULL,
-  `status`         ENUM('pending_payment','booked','en_route','arrived','in_progress','completed','cancelled')
+  `pricing_mode`   ENUM('fixed','quote') NOT NULL DEFAULT 'fixed',
+  `status`         ENUM('submitted','pending_payment','quoted','booked','en_route','arrived','in_progress','completed','confirmed','cancelled','disputed')
                      NOT NULL DEFAULT 'pending_payment',
   `deposit_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `total_amount`   DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `quoted_amount`  DECIMAL(12,2) DEFAULT NULL,
   `amount_paid`    DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `address`        VARCHAR(255) DEFAULT NULL,
   `lat`            DECIMAL(10,7) DEFAULT NULL,
   `lng`            DECIMAL(10,7) DEFAULT NULL,
   `scheduled_at`   DATETIME DEFAULT NULL,
+  `customer_confirmed_at` DATETIME DEFAULT NULL,
+  `details`        JSON DEFAULT NULL,                 -- per-service request form fields
   `created_at`     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_bookings_uuid` (`uuid`),
+  UNIQUE KEY `uq_bookings_request_no` (`request_no`),
+  UNIQUE KEY `uq_bookings_tracking_token` (`tracking_token`),
   KEY `idx_bookings_customer` (`customer_id`),
   KEY `idx_bookings_provider` (`provider_id`),
   KEY `idx_bookings_status` (`status`),
@@ -213,7 +261,7 @@ CREATE TABLE `bookings` (
 CREATE TABLE `booking_events` (
   `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `booking_id` BIGINT UNSIGNED NOT NULL,
-  `status`     ENUM('pending_payment','booked','en_route','arrived','in_progress','completed','cancelled') NOT NULL,
+  `status`     ENUM('submitted','pending_payment','quoted','booked','en_route','arrived','in_progress','completed','confirmed','cancelled','disputed') NOT NULL,
   `actor_id`   BIGINT UNSIGNED DEFAULT NULL,
   `note`       VARCHAR(255) DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -221,6 +269,57 @@ CREATE TABLE `booking_events` (
   KEY `idx_booking_events_booking` (`booking_id`),
   CONSTRAINT `fk_booking_events_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_booking_events_actor`   FOREIGN KEY (`actor_id`)   REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- -----------------------------------------------------------------------------
+--  invoices / documents / provider_payouts — SMART Drill journey (escrow).
+-- -----------------------------------------------------------------------------
+CREATE TABLE `invoices` (
+  `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `booking_id` BIGINT UNSIGNED NOT NULL,
+  `party`      ENUM('customer','provider') NOT NULL DEFAULT 'customer',  -- customer invoice vs provider pro-forma
+  `number`     VARCHAR(24) NOT NULL,
+  `amount`     DECIMAL(12,2) NOT NULL,
+  `status`     ENUM('issued','paid','void') NOT NULL DEFAULT 'issued',
+  `paid_at`    DATETIME DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_invoices_number` (`number`),
+  KEY `idx_invoices_booking` (`booking_id`),
+  KEY `idx_invoices_status` (`status`),
+  CONSTRAINT `fk_invoices_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `documents` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `booking_id`  BIGINT UNSIGNED NOT NULL,
+  `kind`        VARCHAR(40) NOT NULL,
+  `url`         VARCHAR(500) NOT NULL,
+  `uploaded_by` BIGINT UNSIGNED DEFAULT NULL,
+  `created_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_documents_booking_kind` (`booking_id`, `kind`),
+  CONSTRAINT `fk_documents_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_documents_uploader` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `provider_payouts` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `booking_id`  BIGINT UNSIGNED NOT NULL,
+  `provider_id` BIGINT UNSIGNED DEFAULT NULL,
+  `kind`        ENUM('advance','final') NOT NULL,
+  `amount`      DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `status`      ENUM('held','released','paid') NOT NULL DEFAULT 'held',
+  `paid_ref`    VARCHAR(64) DEFAULT NULL,
+  `created_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_payout_booking_kind` (`booking_id`, `kind`),
+  KEY `idx_payouts_status` (`status`),
+  KEY `idx_payouts_provider` (`provider_id`),
+  CONSTRAINT `fk_payouts_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_payouts_provider` FOREIGN KEY (`provider_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------------------------------
@@ -356,4 +455,31 @@ CREATE TABLE `audit_logs` (
   PRIMARY KEY (`id`),
   KEY `idx_audit_actor` (`actor_id`),
   KEY `idx_audit_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id`               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `booking_id`       BIGINT UNSIGNED NOT NULL,
+  `provider_id`      BIGINT UNSIGNED NOT NULL,
+  `category_id`      BIGINT UNSIGNED DEFAULT NULL,
+  `rating`           DECIMAL(2,1)    NOT NULL,          -- overall 1.0–5.0
+  `score_feedback`   TINYINT UNSIGNED DEFAULT NULL,     -- customer feedback
+  `score_timeliness` TINYINT UNSIGNED DEFAULT NULL,     -- arrived/finished on time
+  `score_quality`    TINYINT UNSIGNED DEFAULT NULL,     -- long-term service quality
+  `note`             TEXT            DEFAULT NULL,
+  `rated_by`         BIGINT UNSIGNED DEFAULT NULL,
+  `created_at`       TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`       TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_rating_booking` (`booking_id`),
+  KEY `idx_rating_provider` (`provider_id`, `category_id`),
+  CONSTRAINT `fk_rating_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `job_declines` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `booking_id`  BIGINT UNSIGNED NOT NULL,
+  `provider_id` BIGINT UNSIGNED NOT NULL,
+  `created_at`  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_decline` (`booking_id`, `provider_id`),
+  CONSTRAINT `fk_decline_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

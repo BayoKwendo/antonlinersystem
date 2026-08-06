@@ -1,0 +1,128 @@
+/* ---- Modal (opened from the header "Track Order" button) ---- */
+.sd-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(12, 36, 54, 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;      /* vertically centered on every screen size */
+  justify-content: center;
+  padding: 24px 20px;
+  overflow-y: auto;
+}
+
+.sd-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 34px 28px 28px;
+  box-shadow: 0 24px 60px rgba(12, 36, 54, 0.28);
+  text-align: center;
+  animation: sd-modal-in 0.18s ease-out;
+}
+@keyframes sd-modal-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.sd-modal__close {
+  position: absolute;
+  top: 12px; right: 14px;
+  width: 34px; height: 34px;
+  border: none; background: transparent;
+  font-size: 24px; line-height: 1;
+  color: var(--sd-muted); cursor: pointer;
+  border-radius: 8px;
+}
+.sd-modal__close:hover { background: var(--sd-blue-050); color: var(--sd-ink); }
+
+.sd-modal__panel h2 { font-size: 24px; margin: 0 0 6px; }
+.sd-modal__sub { color: var(--sd-muted); font-size: 14.5px; margin: 0 auto 18px; max-width: 440px; }
+.sd-modal__link { display: inline-block; margin-top: 14px; color: var(--sd-blue-600); font-weight: 600; font-size: 14px; }
+.sd-modal__link:hover { text-decoration: underline; }
+
+/* ---- Lookup icon badge (shared) ---- */
+.sd-tl__icon {
+  width: 46px; height: 46px;
+  border-radius: 12px;
+  margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--sd-blue-050);
+  color: var(--sd-blue-600);
+  border: 1px solid var(--sd-blue-100);
+}
+
+/* ---- Form (vertical stack inside the modal) ---- */
+.sd-tl__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sd-tl__input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  font-size: 15px;
+  border: 1px solid var(--sd-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sd-ink);
+}
+.sd-tl__input:focus {
+  outline: none;
+  border-color: var(--sd-blue-400, #4f8bf0);
+  box-shadow: 0 0 0 3px var(--sd-blue-050);
+}
+.sd-tl__form .sd-btn { width: 100%; height: 48px; margin-top: 2px; }
+
+.sd-tl__input--otp {
+  text-align: center;
+  letter-spacing: 0.3em;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.sd-tl__err {
+  color: #c0392b;
+  font-size: 13.5px;
+  margin-top: 12px;
+}
+
+.sd-tl__info {
+  color: var(--sd-muted);
+  font-size: 13.5px;
+  margin: 0 0 2px;
+}
+
+.sd-tl__count {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sd-blue-600);
+  font-variant-numeric: tabular-nums;
+}
+.sd-tl__count--expired { color: #c0392b; }
+
+.sd-tl__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  gap: 12px;
+}
+
+.sd-tl__linkbtn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--sd-blue-600);
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.sd-tl__linkbtn:hover { text-decoration: underline; }
+.sd-tl__linkbtn:disabled { color: var(--sd-muted); cursor: default; text-decoration: none; }

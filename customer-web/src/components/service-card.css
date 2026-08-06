@@ -1,0 +1,28 @@
+.sd-card {
+  display: flex; flex-direction: column;
+  background: var(--sd-surface); border: 1px solid var(--sd-line);
+  border-radius: 16px; padding: 22px;
+  box-shadow: var(--sd-shadow); transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.sd-card:hover { transform: translateY(-4px); box-shadow: var(--sd-shadow-lg); border-color: var(--sd-blue-300); }
+/* icon sits to the LEFT of the title (matches the design) */
+.sd-card__head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.sd-card__icon {
+  flex: none; width: 48px; height: 48px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+/* reserve two title lines so single- and two-line titles keep cards aligned */
+.sd-card__title { font-size: 17px; line-height: 1.2; min-height: 2.4em; display: flex; align-items: center; }
+.sd-card__blurb { color: var(--sd-muted); font-size: 14px; flex: 1; margin-bottom: 14px; }
+.sd-card__price {
+  display: flex; flex-direction: column; gap: 1px;
+  border: 1px solid; border-radius: var(--sd-radius-sm);
+  padding: 9px 14px; margin-bottom: 14px; background: #fbfdff;
+}
+.sd-card__price-main { font-weight: 800; font-size: 17px; }
+.sd-card__price-note { font-size: 12px; color: var(--sd-muted); }
+
+/* per-card accent CTA (color set via --c inline); thinner than the base button */
+.sd-card__cta { background: var(--c, var(--sd-blue-600)); color: #fff; }
+.sd-btn.sd-card__cta { padding: 9px 16px; font-size: 14px; }
+.sd-card__cta:hover { filter: brightness(0.93); }

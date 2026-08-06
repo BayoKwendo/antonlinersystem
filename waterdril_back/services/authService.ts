@@ -52,11 +52,28 @@ async function issueTokens(user: UserRow): Promise<AuthResult> {
 
 export const authService = {
   /** Generate + SMS an OTP. Always succeeds silently (no account enumeration). */
-  async requestOtp(rawPhone: string): Promise<void> {
+  async requestOtp(rawPhone: string): Promise<{ expiresIn: number }> {
     const phone = normalizePhone(rawPhone);
     const code = randomOtp(AUTH.OTP_LENGTH);
     await accountRepo.insertOtp(phone, await sha256hex(code), AUTH.OTP_TTL_SECONDS);
-    await sendSms({ to: phone, text: `Your AntonLiner verification code is ${code}.`, asciiOnly: true });
+    await sendSms({ to: phone, text: `Your SMART Drill verification code is ${code}. It expires in 5 minutes.`, asciiOnly: true });
+    return { expiresIn: AUTH.OTP_TTL_SECONDS };
+  },
+
+  /**
+   * Validate + consume an OTP for a phone WITHOUT logging in. Throws on an
+   * expired/incorrect/exhausted code. Used to gate the public request submit.
+   */
+  async assertOtp(rawPhone: string, code: string): Promise<void> {
+    const phone = normalizePhone(rawPhone);
+    const otp = await accountRepo.latestValidOtp(phone);
+    if (!otp) throw badRequest("Code expired or not found. Request a new one.");
+    if (otp.attempts >= MAX_OTP_ATTEMPTS) throw badRequest("Too many attempts. Request a new code.");
+    if (otp.code_hash !== await sha256hex(code)) {
+      await accountRepo.bumpOtpAttempts(otp.id);
+      throw badRequest("Incorrect code");
+    }
+    await accountRepo.consumeOtp(otp.id);
   },
 
   /** Verify an OTP and log in, creating a customer account on first use. */

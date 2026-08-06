@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SMART Drill">
+  <defs>
+    <linearGradient id="drop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f7be6"/>
+      <stop offset="1" stop-color="#1247a8"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#drop)"
+    d="M256 44 C256 44 108 232 108 340 a148 148 0 1 0 296 0 C404 232 256 44 256 44 Z"/>
+  <!-- glossy highlight -->
+  <path fill="#ffffff" opacity="0.28"
+    d="M212 236 C176 286 168 330 180 372 c-30 -44 -18 -108 32 -136 Z"/>
+  <!-- inner drop mark -->
+  <path fill="#ffffff" opacity="0.9"
+    d="M300 300 C300 300 232 386 232 430 a34 34 0 1 0 68 0 C300 386 300 300 300 300 Z"/>
+</svg>

@@ -3,7 +3,6 @@
     <!-- Dark-mode launch window: dark background + light status bar icons. -->
     <style name="Theme.AntonLiner" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/window_bg</item>
-        <item name="android:statusBarColor">@color/window_bg</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

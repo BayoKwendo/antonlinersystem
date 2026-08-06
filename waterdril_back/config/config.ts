@@ -99,6 +99,9 @@ export const AWS = {
 export const APP = {
   HOTLINE: optional("HOTLINE", "0111051030"),
   DEFAULT_AVATAR_URL: optional("DEFAULT_AVATAR_URL"),
+  /** Public customer-web origin (e.g. https://smartdrill.co.ke) used to build
+   *  the /track/:token link included in confirmation SMS. Empty → link omitted. */
+  WEB_URL: optional("WEB_URL"),
 };
 
 export const PUSH = {

@@ -18,8 +18,8 @@ fun <T> ApiResponse<T>.unwrap(): T = data ?: throw ApiException(message ?: "Requ
 object Network {
     // Production. For the Android emulator against a local server use:
     //   http://10.0.2.2:5002/api/v1/
-    //const val BASE_URL = "https://api.antonlinersystems.co.ke/api/v1/"
-    const val BASE_URL = "http://localhost:5002/api/v1/"
+//    const val BASE_URL = "https://api.antonlinersystems.co.ke/api/v1/"
+    const val BASE_URL = "http://178.128.32.32:5002/api/v1/"
 
     fun create(session: SessionStore): ApiService {
         val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
