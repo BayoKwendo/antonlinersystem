@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 const ServiceRequest = lazy(() => import("./pages/ServiceRequest"));
 const Track = lazy(() => import("./pages/Track"));
 const MyRequests = lazy(() => import("./pages/MyRequests"));
+const ExpertAdvice = lazy(() => import("./pages/ExpertAdvice"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/request/:key" element={<ServiceRequest />} />
         <Route path="/track/:token" element={<Track />} />
         <Route path="/my-requests" element={<MyRequests />} />
+        <Route path="/expert-advice" element={<ExpertAdvice />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

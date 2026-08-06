@@ -138,7 +138,7 @@ export default function Home() {
             <h2>Not Sure Where to Begin?</h2>
             <p>Tell us what you're trying to achieve or describe the problem you're experiencing. We'll guide you towards the right borehole service.</p>
           </div>
-          <Link to="/request/other_services" className="sd-btn sd-btn--primary sd-btn--lg">Get Expert Guidance</Link>
+          <Link to="/expert-advice" className="sd-btn sd-btn--primary sd-btn--lg">Get Expert Guidance</Link>
           <svg className="sd-cta-banner__wave" viewBox="0 0 120 60" aria-hidden="true">
             <path d="M4 40 Q24 16 44 40 T84 40 T124 40" fill="none" stroke="#2f7be6" stroke-width="4" opacity="0.35" stroke-linecap="round"/>
             <path d="M4 52 Q24 30 44 52 T84 52 T124 52" fill="none" stroke="#2f7be6" stroke-width="4" opacity="0.2" stroke-linecap="round"/>
