@@ -1,8 +1,11 @@
 package com.spartons.antoniasdriver.ui.jobs
 
 import android.content.Context
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,31 +13,53 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.SupportAgent
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,24 +76,25 @@ import com.spartons.antoniasdriver.ServiceLocator
 import com.spartons.antoniasdriver.data.Job
 import com.spartons.antoniasdriver.ui.LoadingBox
 import com.spartons.antoniasdriver.ui.MessageBox
-import com.spartons.antoniasdriver.ui.components.CountdownTimer
-import com.spartons.antoniasdriver.ui.components.InfoRow
+import com.spartons.antoniasdriver.ui.components.IconCircle
 import com.spartons.antoniasdriver.ui.components.JobStatus
-import com.spartons.antoniasdriver.ui.components.MiniHeading
 import com.spartons.antoniasdriver.ui.components.ProgressStepper
 import com.spartons.antoniasdriver.ui.components.ServiceCatalog
-import com.spartons.antoniasdriver.ui.components.SmartCard
 import com.spartons.antoniasdriver.ui.components.StatusChip
 import com.spartons.antoniasdriver.ui.components.jobProgressIndex
-import com.spartons.antoniasdriver.ui.components.parseIsoToMillis
 import com.spartons.antoniasdriver.ui.dial
 import com.spartons.antoniasdriver.ui.money
+import com.spartons.antoniasdriver.ui.openMap
 import com.spartons.antoniasdriver.ui.prettyDate
 import com.spartons.antoniasdriver.ui.prettyTime
+import com.spartons.antoniasdriver.ui.sms
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
 import com.spartons.antoniasdriver.ui.theme.BrandBlueLight
+import com.spartons.antoniasdriver.ui.theme.DangerRed
+import com.spartons.antoniasdriver.ui.theme.HairlineGrey
 import com.spartons.antoniasdriver.ui.theme.InkBlack
 import com.spartons.antoniasdriver.ui.theme.MutedGrey
+import com.spartons.antoniasdriver.ui.theme.Navy
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.SuccessGreenLight
 import com.spartons.antoniasdriver.ui.theme.WarningAmber
@@ -101,19 +127,29 @@ class JobDetailViewModel : ViewModel() {
         }
     }
 
-    private fun transition(id: Long, to: String, onDone: (Context) -> Unit = {}, context: Context? = null) {
+    fun headedToSite(context: Context, id: Long) = advance(id) {
+        repo.jobStatus(id, JobStatus.EN_ROUTE); startTracking(context, id)
+    }
+
+    fun arrived(context: Context, id: Long) = advance(id) {
+        repo.jobStatus(id, JobStatus.ARRIVED); stopTracking(context, id)
+    }
+
+    /** Complete the job — chains arrived → in_progress → completed as needed. */
+    fun completeJob(context: Context, id: Long) = advance(id) {
+        if (_state.value.job?.status == JobStatus.ARRIVED) repo.jobStatus(id, JobStatus.IN_PROGRESS)
+        repo.jobStatus(id, JobStatus.COMPLETED)
+        stopTracking(context, id)
+    }
+
+    private fun advance(id: Long, block: suspend () -> Unit) {
         _state.value = _state.value.copy(working = true, error = null)
         viewModelScope.launch {
-            runCatching { repo.jobStatus(id, to) }
-                .onSuccess { context?.let(onDone); load(id) }
+            runCatching { block() }
+                .onSuccess { load(id) }
                 .onFailure { _state.value = _state.value.copy(working = false, error = it.message) }
         }
     }
-
-    fun headedToSite(context: Context, id: Long) = transition(id, JobStatus.EN_ROUTE, { startTracking(it, id) }, context)
-    fun arrived(context: Context, id: Long) = transition(id, JobStatus.ARRIVED, { stopTracking(it, id) }, context)
-    fun startJob(id: Long) = transition(id, JobStatus.IN_PROGRESS)
-    fun completeJob(context: Context, id: Long) = transition(id, JobStatus.COMPLETED, { stopTracking(it, id) }, context)
 
     fun promptPayment(id: Long) {
         _state.value = _state.value.copy(working = true, error = null)
@@ -135,14 +171,26 @@ fun JobDetailScreen(
 ) {
     val s by vm.state.collectAsState()
     val context = LocalContext.current
+    var menuOpen by remember { mutableStateOf(false) }
     LaunchedEffect(bookingId) { vm.load(bookingId) }
     LaunchedEffect(s.promptDone) { if (s.promptDone) onPromptPayment(bookingId) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Job Details") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Navy, titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White, actionIconContentColor = Color.White,
+                ),
+                title = { Text("Job Details", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+                actions = {
+                    IconButton(onClick = { menuOpen = true }) { Icon(Icons.Filled.MoreVert, "More") }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        DropdownMenuItem(text = { Text("Contact Support") }, onClick = { menuOpen = false; dial(context, SUPPORT_PHONE) })
+                    }
+                },
             )
         },
     ) { pad ->
@@ -157,199 +205,433 @@ fun JobDetailScreen(
 }
 
 // ---------------------------------------------------------------------------
-// Awaiting-payment mode (pending_payment)
+// Awaiting-payment mode
 // ---------------------------------------------------------------------------
 @Composable
-private fun AwaitingPaymentBody(
-    modifier: Modifier,
-    b: Job,
-    working: Boolean,
-    error: String?,
-    context: Context,
-    vm: JobDetailViewModel,
-) {
+private fun AwaitingPaymentBody(modifier: Modifier, b: Job, working: Boolean, error: String?, context: Context, vm: JobDetailViewModel) {
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        Header(b)
+        HeaderCard(b, showServiceDate = false)
+        Spacer(Modifier.height(14.dp))
+        CustomerDetailsCard(b, context)
+        Spacer(Modifier.height(14.dp))
+        AgreedDateCard(b)
+        Spacer(Modifier.height(14.dp))
+        FeeSummaryCard(b)
         Spacer(Modifier.height(16.dp))
-        CustomerCard(b, context)
-        Spacer(Modifier.height(12.dp))
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall); Spacer(Modifier.height(8.dp)) }
+        Button(
+            onClick = { vm.promptPayment(b.id) },
+            enabled = !working,
+            modifier = Modifier.fillMaxWidth().height(54.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = BrandBlue),
+        ) { Text(if (working) "Requesting..." else "Prompt Payment", fontWeight = FontWeight.SemiBold) }
+        Text(
+            "This generates the proforma invoices and asks the customer to pay to confirm the booking.",
+            style = MaterialTheme.typography.labelSmall, color = MutedGrey, modifier = Modifier.padding(top = 8.dp),
+        )
+        Spacer(Modifier.height(24.dp))
+    }
+}
 
-        SmartCard {
-            MiniHeading("AGREED SERVICE DATE")
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.CalendarMonth, null, tint = BrandBlue)
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(prettyDate(b.scheduledAt) ?: "Not set", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = InkBlack)
-                    prettyTime(b.scheduledAt)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MutedGrey) }
+// ---------------------------------------------------------------------------
+// Progress mode (confirmed and beyond)
+// ---------------------------------------------------------------------------
+@Composable
+private fun ProgressBody(modifier: Modifier, b: Job, working: Boolean, error: String?, context: Context, vm: JobDetailViewModel) {
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+        HeaderCard(b, showServiceDate = true)
+        Spacer(Modifier.height(14.dp))
+
+        WhiteCard {
+            MiniLabel("JOB PROGRESS")
+            Spacer(Modifier.height(16.dp))
+            ProgressStepper(jobProgressIndex(b.status))
+        }
+        Spacer(Modifier.height(14.dp))
+
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall); Spacer(Modifier.height(8.dp)) }
+
+        StageCard(b, working, context, vm)
+        Spacer(Modifier.height(14.dp))
+
+        JobSummaryCard(b)
+        Spacer(Modifier.height(14.dp))
+
+        ContactSupportCard(context)
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun StageCard(b: Job, working: Boolean, context: Context, vm: JobDetailViewModel) {
+    var showUpdate by remember { mutableStateOf(false) }
+    val s = b.status
+    val onSite = s == JobStatus.ARRIVED || s == JobStatus.IN_PROGRESS
+    val stage1Done = s in setOf(JobStatus.ARRIVED, JobStatus.IN_PROGRESS, JobStatus.COMPLETED, JobStatus.CONFIRMED)
+    val stage3Done = s in setOf(JobStatus.COMPLETED, JobStatus.CONFIRMED)
+
+    WhiteCard {
+        // Stage 1 — Arrival on Site
+        StageBlock(
+            index = "1",
+            icon = Icons.Filled.Place,
+            title = if (s == JobStatus.BOOKED) "Head to Site" else "Arrival on Site",
+            accent = BrandBlue,
+            done = stage1Done,
+            desc = "Once you arrive at the customer's location, let us know.",
+            detail = { DetailBox("Site Location", b.address ?: "Shared", BrandBlueLight) { MapLink(b, context) } },
+            action = {
+                when {
+                    s == JobStatus.BOOKED -> StageButton("Headed to Site", BrandBlue, !working) { vm.headedToSite(context, b.id) }
+                    s == JobStatus.EN_ROUTE -> StageButton("I've Arrived", BrandBlue, !working) { vm.arrived(context, b.id) }
+                    else -> DoneTag()
+                }
+            },
+            note = "This will notify the customer and Smart Drill that you are on site.",
+            noteBg = BrandBlueLight, noteTint = BrandBlue,
+        )
+        StageDivider()
+        // Stage 2 — Job in Progress
+        StageBlock(
+            index = "2",
+            icon = Icons.Filled.Assignment,
+            title = "Job in Progress",
+            accent = WarningAmber,
+            done = stage3Done,
+            desc = "Carry out the ${ServiceCatalog.label(b.category, b.serviceName).lowercase()} as agreed with the customer.",
+            detail = { DetailBox("Time on Site", "-- : --", WarningAmberLight) {} },
+            action = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    OutlinedButton(
+                        onClick = { showUpdate = true },
+                        enabled = onSite,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
+                        border = BorderStroke(1.dp, if (onSite) DangerRed else HairlineGrey),
+                    ) { Text("Add Update") }
+                    Text("Add notes (optional)", style = MaterialTheme.typography.labelSmall, color = MutedGrey, modifier = Modifier.padding(top = 4.dp))
+                }
+            },
+            note = "You can add updates or notes during the job.",
+            noteBg = WarningAmberLight, noteTint = WarningAmber,
+        )
+        StageDivider()
+        // Stage 3 — Job Completed
+        StageBlock(
+            index = "3",
+            icon = Icons.Filled.CheckCircle,
+            title = "Job Completed",
+            accent = SuccessGreen,
+            done = stage3Done,
+            desc = "Once the work is complete, submit the job for review.",
+            detail = { DetailBox("Deliverables", deliverableFor(b.category), SuccessGreenLight) {} },
+            action = {
+                if (stage3Done) DoneTag()
+                else StageButton("Job Completed", SuccessGreen, onSite && !working) { vm.completeJob(context, b.id) }
+            },
+            note = "Smart Drill will review and confirm with the customer.",
+            noteBg = SuccessGreenLight, noteTint = SuccessGreen,
+        )
+    }
+
+    if (showUpdate) {
+        var note by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showUpdate = false },
+            title = { Text("Add progress update") },
+            text = {
+                OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("What's the latest?") }, modifier = Modifier.fillMaxWidth())
+            },
+            // No notes endpoint on the backend yet — captured locally for now.
+            confirmButton = { TextButton(onClick = { showUpdate = false }) { Text("Done") } },
+            dismissButton = { TextButton(onClick = { showUpdate = false }) { Text("Cancel") } },
+        )
+    }
+}
+
+@Composable
+private fun StageBlock(
+    index: String,
+    icon: ImageVector,
+    title: String,
+    accent: Color,
+    done: Boolean,
+    desc: String,
+    detail: @Composable () -> Unit,
+    action: @Composable () -> Unit,
+    note: String,
+    noteBg: Color,
+    noteTint: Color,
+) {
+    Column {
+        Row(verticalAlignment = Alignment.Top) {
+            Box(
+                Modifier.size(38.dp).clip(CircleShape).background((if (done) SuccessGreen else accent).copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center,
+            ) { Icon(if (done) Icons.Filled.CheckCircle else icon, null, tint = if (done) SuccessGreen else accent, modifier = Modifier.size(20.dp)) }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text("$index. $title", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = if (done) SuccessGreen else accent)
+                Text(desc, style = MaterialTheme.typography.bodySmall, color = MutedGrey)
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.weight(1f)) { detail() }
+            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { action() }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(noteBg).padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Outlined.Info, null, tint = noteTint, modifier = Modifier.size(14.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(note, style = MaterialTheme.typography.labelSmall, color = InkBlack)
+        }
+    }
+}
+
+@Composable
+private fun DetailBox(label: String, value: String, bg: Color, extra: @Composable () -> Unit) {
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(bg).padding(10.dp)) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MutedGrey)
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = InkBlack, maxLines = 1)
+        extra()
+    }
+}
+
+@Composable
+private fun MapLink(b: Job, context: Context) {
+    if (b.lat?.toDoubleOrNull() != null && b.lng?.toDoubleOrNull() != null) {
+        Text(
+            "View on Map",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = BrandBlue,
+            modifier = Modifier.clickable { openMap(context, b.lat!!.toDouble(), b.lng!!.toDouble(), b.address) },
+        )
+    }
+}
+
+@Composable
+private fun StageButton(label: String, color: Color, enabled: Boolean, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.fillMaxWidth().height(44.dp),
+        shape = RoundedCornerShape(10.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = color),
+    ) { Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, maxLines = 1) }
+}
+
+@Composable
+private fun DoneTag() {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Filled.CheckCircle, null, tint = SuccessGreen, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(6.dp))
+        Text("Done", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = SuccessGreen)
+    }
+}
+
+@Composable
+private fun StageDivider() {
+    HorizontalDivider(Modifier.padding(vertical = 14.dp), color = HairlineGrey)
+}
+
+// ---------------------------------------------------------------------------
+// Shared cards
+// ---------------------------------------------------------------------------
+@Composable
+private fun WhiteCard(content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+    Surface(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, HairlineGrey),
+    ) { Column(Modifier.padding(16.dp), content = content) }
+}
+
+@Composable
+private fun MiniLabel(text: String) {
+    Text(text, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MutedGrey)
+}
+
+@Composable
+private fun HeaderCard(b: Job, showServiceDate: Boolean) {
+    WhiteCard {
+        Row(verticalAlignment = Alignment.Top) {
+            IconCircle(ServiceCatalog.icon(b.category), tint = BrandBlue, diameter = 52)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(ServiceCatalog.label(b.category, b.serviceName), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = InkBlack)
+                b.requestNo?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MutedGrey) }
+                b.address?.let {
+                    Spacer(Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.LocationOn, null, tint = BrandBlue, modifier = Modifier.size(15.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text(it, style = MaterialTheme.typography.bodySmall, color = InkBlack)
+                    }
+                }
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                StatusChip(b.status)
+                if (showServiceDate) {
+                    prettyDate(b.scheduledAt)?.let { d ->
+                        Spacer(Modifier.height(10.dp))
+                        Text("Service Date", style = MaterialTheme.typography.labelSmall, color = MutedGrey)
+                        Text(d, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
+                        prettyTime(b.scheduledAt)?.let { t ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.AccessTime, null, tint = MutedGrey, modifier = Modifier.size(13.dp))
+                                Spacer(Modifier.width(3.dp))
+                                Text(t, style = MaterialTheme.typography.bodySmall, color = InkBlack)
+                            }
+                        }
+                    }
                 }
             }
         }
-        Spacer(Modifier.height(12.dp))
-
-        FeeSummary(b)
-        Spacer(Modifier.height(16.dp))
-
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall); Spacer(Modifier.height(8.dp)) }
-
-        Button(onClick = { vm.promptPayment(b.id) }, enabled = !working, modifier = Modifier.fillMaxWidth().height(52.dp)) {
-            Text(if (working) "Requesting..." else "Prompt Payment")
-        }
-        Text(
-            "This generates the proforma invoices and asks the customer to pay SmartDrill to confirm the booking.",
-            style = MaterialTheme.typography.labelSmall, color = MutedGrey,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        Spacer(Modifier.height(24.dp))
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Progress mode (booked and beyond)
-// ---------------------------------------------------------------------------
-@Composable
-private fun ProgressBody(
-    modifier: Modifier,
-    b: Job,
-    working: Boolean,
-    error: String?,
-    context: Context,
-    vm: JobDetailViewModel,
-) {
-    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        Header(b)
-        Spacer(Modifier.height(16.dp))
-
-        SmartCard {
-            MiniHeading("JOB PROGRESS")
-            Spacer(Modifier.height(14.dp))
-            ProgressStepper(jobProgressIndex(b.status))
-        }
-        Spacer(Modifier.height(12.dp))
-
-        val target = parseIsoToMillis(b.scheduledAt)
-        if (target != null && b.status in setOf(JobStatus.BOOKED, JobStatus.EN_ROUTE)) {
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(BrandBlueLight).padding(16.dp)) {
-                Text("Service starts in", style = MaterialTheme.typography.labelMedium, color = BrandBlue, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(8.dp))
-                CountdownTimer(target)
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-
-        CustomerCard(b, context)
-        Spacer(Modifier.height(12.dp))
-
-        SmartCard {
-            MiniHeading("JOB SUMMARY")
-            Spacer(Modifier.height(8.dp))
-            InfoRow("Service", ServiceCatalog.label(b.category, b.serviceName))
-            b.requestNo?.let { InfoRow("Reference", it) }
-            prettyDate(b.scheduledAt)?.let { d -> InfoRow("Scheduled", d + (prettyTime(b.scheduledAt)?.let { t -> " · $t" } ?: "")) }
-            b.address?.let { InfoRow("Location", it) }
-            InfoRow("You earn", money(b.earningsAmount.toString()), valueColor = SuccessGreen, valueWeight = FontWeight.Bold)
-        }
-        Spacer(Modifier.height(16.dp))
-
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall); Spacer(Modifier.height(8.dp)) }
-
-        StageActions(b, working, context, vm)
-
-        Spacer(Modifier.height(12.dp))
-        OutlinedButton(onClick = { dial(context, SUPPORT_PHONE) }, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Filled.SupportAgent, null); Spacer(Modifier.width(8.dp)); Text("Contact Support")
-        }
-        Spacer(Modifier.height(24.dp))
     }
 }
 
 @Composable
-private fun StageActions(b: Job, working: Boolean, context: Context, vm: JobDetailViewModel) {
-    when (b.status) {
-        JobStatus.BOOKED -> PrimaryAction("Headed to Site", Icons.Filled.DirectionsCar, working) { vm.headedToSite(context, b.id) }
-        JobStatus.EN_ROUTE -> PrimaryAction("I've Arrived", Icons.Filled.Place, working) { vm.arrived(context, b.id) }
-        JobStatus.ARRIVED -> PrimaryAction("Start the Job", Icons.Filled.DirectionsCar, working) { vm.startJob(b.id) }
-        JobStatus.IN_PROGRESS -> Button(
-            onClick = { vm.completeJob(context, b.id) }, enabled = !working,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
-        ) { Text(if (working) "Submitting..." else "Mark Job Completed") }
-        JobStatus.COMPLETED -> NoticeCard(
-            "Under review", "SmartDrill Ops is verifying your submission. Payment is released once verified.",
-            WarningAmber, WarningAmberLight,
-        )
-        else -> NoticeCard(
-            "Job complete", "This job has been verified and completed. Thank you!",
-            SuccessGreen, SuccessGreenLight,
-        )
-    }
-}
-
-@Composable
-private fun PrimaryAction(label: String, icon: ImageVector, working: Boolean, onClick: () -> Unit) {
-    Button(onClick = onClick, enabled = !working, modifier = Modifier.fillMaxWidth().height(52.dp)) {
-        Icon(icon, null); Spacer(Modifier.width(8.dp)); Text(if (working) "Please wait..." else label)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Shared pieces
-// ---------------------------------------------------------------------------
-@Composable
-private fun Header(b: Job) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(ServiceCatalog.label(b.category, b.serviceName), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = InkBlack)
-            b.requestNo?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = MutedGrey) }
-        }
-        StatusChip(b.status)
-    }
-}
-
-@Composable
-private fun CustomerCard(b: Job, context: Context) {
-    SmartCard {
-        MiniHeading("CUSTOMER")
-        Spacer(Modifier.height(8.dp))
+private fun CustomerDetailsCard(b: Job, context: Context) {
+    WhiteCard {
+        MiniLabel("CUSTOMER DETAILS")
+        Spacer(Modifier.height(10.dp))
         Text(b.customerName ?: "Customer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = InkBlack)
-        b.address?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MutedGrey) }
-        b.customerPhone?.let { phone ->
-            Spacer(Modifier.height(10.dp))
-            OutlinedButton(onClick = { dial(context, phone) }, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Filled.Call, null); Spacer(Modifier.width(6.dp)); Text("Call Customer")
+        Spacer(Modifier.height(8.dp))
+        b.customerPhone?.let { ContactLine(Icons.Filled.Call, "Phone", it) { dial(context, it) } }
+        (b.address)?.let {
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column {
+                    Text("Location", style = MaterialTheme.typography.labelSmall, color = MutedGrey)
+                    Text(it, style = MaterialTheme.typography.bodyMedium, color = InkBlack)
+                }
+                MapLink(b, context)
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        OutlinedButton(
+            onClick = { b.customerPhone?.let { sms(context, it) } },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, BrandBlue),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = BrandBlue),
+        ) { Icon(Icons.AutoMirrored.Filled.Chat, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Chat with Customer") }
+    }
+}
+
+@Composable
+private fun ContactLine(icon: ImageVector, label: String, value: String, onCall: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Column {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MutedGrey)
+            Text(value, style = MaterialTheme.typography.bodyMedium, color = InkBlack)
+        }
+        IconButton(onClick = onCall, modifier = Modifier.size(34.dp)) {
+            Box(Modifier.size(34.dp).clip(CircleShape).background(BrandBlueLight), contentAlignment = Alignment.Center) {
+                Icon(icon, "Call", tint = BrandBlue, modifier = Modifier.size(18.dp))
             }
         }
     }
 }
 
 @Composable
-private fun FeeSummary(b: Job) {
-    SmartCard {
-        MiniHeading("FEE SUMMARY")
+private fun AgreedDateCard(b: Job) {
+    WhiteCard {
+        MiniLabel("AGREED SERVICE DATE & TIME")
+        Spacer(Modifier.height(10.dp))
+        InlineRow("Service Date", prettyDate(b.scheduledAt) ?: "Not set")
         Spacer(Modifier.height(8.dp))
-        InfoRow("Customer pays", money(b.feeAmount))
-        InfoRow("SmartDrill commission (10%)", "- ${money(b.commissionAmount.toString())}", valueColor = MutedGrey)
+        InlineRow("Service Time", prettyTime(b.scheduledAt) ?: "Not set")
+    }
+}
+
+@Composable
+private fun InlineRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MutedGrey)
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = InkBlack)
+    }
+}
+
+@Composable
+private fun FeeSummaryCard(b: Job) {
+    WhiteCard {
+        MiniLabel("SERVICE FEE SUMMARY")
+        Spacer(Modifier.height(10.dp))
+        FeeRow("Service Fee (Rate Card)", ServiceCatalog.label(b.category, b.serviceName), money(b.feeAmount), InkBlack)
         Spacer(Modifier.height(8.dp))
-        Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SuccessGreenLight).padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("You earn", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = InkBlack)
-            Text(money(b.earningsAmount.toString()), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = SuccessGreen)
+        FeeRow("Your Earnings (After Commission)", null, money(b.earningsAmount.toString()), SuccessGreen)
+        Spacer(Modifier.height(8.dp))
+        FeeRow("Smart Drill Commission (10%)", null, money(b.commissionAmount.toString()), MutedGrey)
+    }
+}
+
+@Composable
+private fun FeeRow(label: String, sub: String?, amount: String, amountColor: Color) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = InkBlack, fontWeight = FontWeight.Medium)
+            sub?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MutedGrey) }
+        }
+        Text(amount, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = amountColor)
+    }
+}
+
+@Composable
+private fun JobSummaryCard(b: Job) {
+    WhiteCard {
+        MiniLabel("JOB SUMMARY")
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            SummaryItem(Icons.Filled.Person, "Customer", b.customerName ?: "—", Modifier.weight(1f))
+            SummaryItem(Icons.Filled.LocationOn, "Location", b.address ?: "—", Modifier.weight(1f))
+            SummaryItem(Icons.Filled.Sell, "Service Fee", money(b.feeAmount), Modifier.weight(1f))
+            SummaryItem(Icons.Filled.AccountBalanceWallet, "Your Earnings", money(b.earningsAmount.toString()), Modifier.weight(1f), SuccessGreen)
         }
     }
 }
 
 @Composable
-private fun NoticeCard(title: String, body: String, accent: Color, bg: Color) {
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(bg).padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.CheckCircle, null, tint = accent)
-            Spacer(Modifier.width(8.dp))
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = accent)
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(body, style = MaterialTheme.typography.bodySmall, color = InkBlack)
+private fun SummaryItem(icon: ImageVector, label: String, value: String, modifier: Modifier, valueColor: Color = InkBlack) {
+    Column(modifier) {
+        Icon(icon, null, tint = MutedGrey, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.height(4.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MutedGrey, maxLines = 1)
+        Text(value, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = valueColor, maxLines = 1)
     }
+}
+
+@Composable
+private fun ContactSupportCard(context: Context) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(BrandBlueLight).padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Filled.SupportAgent, null, tint = Navy, modifier = Modifier.size(26.dp))
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text("Need Help?", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
+            Text("Contact Smart Drill Support", style = MaterialTheme.typography.bodySmall, color = MutedGrey)
+        }
+        OutlinedButton(
+            onClick = { dial(context, SUPPORT_PHONE) },
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, BrandBlue),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = BrandBlue),
+        ) { Text("Contact Support") }
+    }
+}
+
+private fun deliverableFor(category: String?): String = when (category) {
+    "geologist" -> "Survey Report"
+    "drillers" -> "Drilling Report"
+    "test_pump" -> "Test Pumping Report"
+    "surveys" -> "Water Analysis Report"
+    else -> "Service Report"
 }

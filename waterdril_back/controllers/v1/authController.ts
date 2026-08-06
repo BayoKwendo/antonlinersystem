@@ -48,8 +48,20 @@ const authController = {
   me: async (ctx: Context) => {
     const { userId } = currentUser(ctx);
     const user = await accountRepo.findById(userId);
+    if (!user) return ok(ctx, null);
     const roles = await accountRepo.rolesOf(userId);
-    ok(ctx, user ? { ...user, password_hash: undefined, roles } : null);
+    // Return the same clean shape as login (AuthUser) — notably must_change_password
+    // as a real boolean, not the raw 0/1 int, and no password_hash leak.
+    ok(ctx, {
+      id: user.id,
+      uuid: user.uuid,
+      phone: user.phone,
+      display_name: user.display_name,
+      avatar_url: user.avatar_url,
+      email: user.email ?? null,
+      roles,
+      must_change_password: Number(user.must_change_password) === 1,
+    });
   },
 
   resetPassword: async (ctx: Context) => {

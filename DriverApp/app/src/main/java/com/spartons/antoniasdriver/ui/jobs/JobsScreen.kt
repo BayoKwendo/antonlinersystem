@@ -1,7 +1,7 @@
 package com.spartons.antoniasdriver.ui.jobs
 
 import android.content.Context
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,13 +18,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,18 +50,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spartons.antoniasdriver.ServiceLocator
 import com.spartons.antoniasdriver.data.Job
 import com.spartons.antoniasdriver.ui.components.CountdownTimer
-import com.spartons.antoniasdriver.ui.components.IconCircle
 import com.spartons.antoniasdriver.ui.components.JobStatus
 import com.spartons.antoniasdriver.ui.components.ServiceCatalog
-import com.spartons.antoniasdriver.ui.components.SmartCard
-import com.spartons.antoniasdriver.ui.components.StatusChip
 import com.spartons.antoniasdriver.ui.components.parseIsoToMillis
-import com.spartons.antoniasdriver.ui.money
+import com.spartons.antoniasdriver.ui.prettyDate
+import com.spartons.antoniasdriver.ui.prettyTime
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
-import com.spartons.antoniasdriver.ui.theme.BrandBlueLight
+import com.spartons.antoniasdriver.ui.theme.HairlineGrey
 import com.spartons.antoniasdriver.ui.theme.InkBlack
 import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
+import com.spartons.antoniasdriver.ui.theme.WarningAmber
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -92,8 +95,6 @@ class JobsViewModel : ViewModel() {
     }
 }
 
-private val TABS = listOf("All", "Upcoming", "Completed")
-
 @Composable
 fun JobsScreen(onOpenJob: (Long) -> Unit, vm: JobsViewModel = viewModel()) {
     val s by vm.state.collectAsState()
@@ -101,17 +102,21 @@ fun JobsScreen(onOpenJob: (Long) -> Unit, vm: JobsViewModel = viewModel()) {
     var tab by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { vm.load() }
 
-    val filtered = remember(s.jobs, tab) {
-        when (tab) {
-            1 -> s.jobs.filter { it.status in JobStatus.UPCOMING }
-            2 -> s.jobs.filter { it.status in JobStatus.DONE }
-            else -> s.jobs
-        }
-    }
+    val upcoming = remember(s.jobs) { s.jobs.filter { it.status in JobStatus.UPCOMING } }
+    val completed = remember(s.jobs) { s.jobs.filter { it.status in JobStatus.DONE } }
+    val filtered = when (tab) { 1 -> upcoming; 2 -> completed; else -> s.jobs }
+    val tabs = listOf("All (${s.jobs.size})", "Upcoming (${upcoming.size})", "Completed (${completed.size})")
 
     Column(Modifier.fillMaxSize()) {
+        Text(
+            "My Jobs",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = InkBlack,
+            modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
+        )
         ScrollableTabRow(selectedTabIndex = tab, edgePadding = 16.dp) {
-            TABS.forEachIndexed { i, title ->
+            tabs.forEachIndexed { i, title ->
                 Tab(selected = tab == i, onClick = { tab = i }, text = { Text(title) })
             }
         }
@@ -126,11 +131,7 @@ fun JobsScreen(onOpenJob: (Long) -> Unit, vm: JobsViewModel = viewModel()) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(filtered) { job ->
-                    JobCard(
-                        job = job,
-                        onClick = { onOpenJob(job.id) },
-                        onHeadedToSite = { vm.headedToSite(context, job.id) },
-                    )
+                    JobCard(job, onClick = { onOpenJob(job.id) }, onHeadedToSite = { vm.headedToSite(context, job.id) })
                 }
             }
         }
@@ -139,55 +140,65 @@ fun JobsScreen(onOpenJob: (Long) -> Unit, vm: JobsViewModel = viewModel()) {
 
 @Composable
 private fun JobCard(job: Job, onClick: () -> Unit, onHeadedToSite: () -> Unit) {
-    SmartCard(modifier = Modifier.clickable(onClick = onClick)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconCircle(ServiceCatalog.icon(job.category), tint = BrandBlue, diameter = 44)
-            Spacer(Modifier.width(12.dp))
+    val (label, color) = cardLabel(job.status)
+    Surface(
+        Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, HairlineGrey),
+    ) {
+        Row(Modifier.padding(14.dp)) {
             Column(Modifier.weight(1f)) {
-                Text(ServiceCatalog.label(job.category, job.serviceName), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = InkBlack)
-                job.requestNo?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MutedGrey) }
+                Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = color)
+                Spacer(Modifier.height(3.dp))
+                Text(job.customerName ?: "Customer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = InkBlack)
+                Text(ServiceCatalog.label(job.category, job.serviceName), style = MaterialTheme.typography.bodyMedium, color = InkBlack)
+                prettyDate(job.scheduledAt)?.let { d ->
+                    Spacer(Modifier.height(6.dp))
+                    IconLine(Icons.Filled.CalendarMonth, d + (prettyTime(job.scheduledAt)?.let { " · $it" } ?: ""))
+                }
+                job.address?.let { IconLine(Icons.Filled.LocationOn, it) }
             }
-            StatusChip(job.status)
-        }
-        val where = job.customerName ?: job.address
-        if (where != null) {
-            Spacer(Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.LocationOn, null, tint = MutedGrey, modifier = Modifier.height(16.dp))
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    buildString { append(where); job.address?.takeIf { it != where }?.let { append(" · $it") } },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MutedGrey,
-                )
-            }
-        }
-
-        val target = parseIsoToMillis(job.scheduledAt)
-        if (target != null && job.status in JobStatus.COUNTDOWN) {
-            Spacer(Modifier.height(12.dp))
-            Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(BrandBlueLight).padding(12.dp),
-            ) {
-                Text("Service starts in", style = MaterialTheme.typography.labelSmall, color = BrandBlue, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(6.dp))
-                CountdownTimer(target, compact = true)
-            }
-        }
-
-        Spacer(Modifier.height(12.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column {
-                Text("You earn", style = MaterialTheme.typography.labelSmall, color = MutedGrey)
-                Text(money(job.earningsAmount.toString()), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = SuccessGreen)
-            }
-            if (job.status == JobStatus.BOOKED) {
-                Button(onClick = onHeadedToSite) {
-                    Icon(Icons.Filled.DirectionsCar, null, modifier = Modifier.height(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("Headed to Site")
+            Spacer(Modifier.width(10.dp))
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                val target = parseIsoToMillis(job.scheduledAt)
+                when {
+                    job.status in JobStatus.DONE -> {
+                        Text("Completed", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = SuccessGreen)
+                        prettyDate(job.scheduledAt)?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MutedGrey) }
+                    }
+                    target != null && job.status in JobStatus.COUNTDOWN -> CountdownTimer(target, compact = true)
+                    else -> {}
+                }
+                if (job.status == JobStatus.BOOKED) {
+                    Button(
+                        onClick = onHeadedToSite,
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = WarningAmber),
+                    ) {
+                        Icon(Icons.Filled.DirectionsCar, null, modifier = Modifier.height(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Headed to Site", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun IconLine(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
+        Icon(icon, null, tint = MutedGrey, modifier = Modifier.height(15.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(text, style = MaterialTheme.typography.labelMedium, color = MutedGrey)
+    }
+}
+
+private fun cardLabel(status: String): Pair<String, Color> = when {
+    status in JobStatus.DONE -> "Completed" to SuccessGreen
+    status == JobStatus.ARRIVED || status == JobStatus.IN_PROGRESS -> "In Progress" to WarningAmber
+    status == JobStatus.PENDING_PAYMENT -> "Awaiting Payment" to WarningAmber
+    else -> "Upcoming" to BrandBlue
 }

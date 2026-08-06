@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DrillDriver</string>
+    <string name="app_name">SmartDrill</string>
     <string name="fcm_channel_id">driver_push</string>
     <string name="continues">Continue</string>
     <string name="error_icon_content_description">Error</string>

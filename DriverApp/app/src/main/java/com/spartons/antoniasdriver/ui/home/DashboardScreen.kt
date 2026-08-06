@@ -1,9 +1,12 @@
 package com.spartons.antoniasdriver.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,30 +15,47 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AssignmentTurnedIn
-import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.BusinessCenter
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.PersonAddAlt1
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.WorkspacePremium
+import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.TrackChanges
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -47,17 +67,11 @@ import com.spartons.antoniasdriver.data.ProviderMetrics
 import com.spartons.antoniasdriver.data.ProviderReadiness
 import com.spartons.antoniasdriver.data.ProviderService
 import com.spartons.antoniasdriver.ui.components.IconCircle
-import com.spartons.antoniasdriver.ui.components.InfoRow
-import com.spartons.antoniasdriver.ui.components.MetricTile
-import com.spartons.antoniasdriver.ui.components.MiniHeading
-import com.spartons.antoniasdriver.ui.components.Pill
-import com.spartons.antoniasdriver.ui.components.ReadinessRow
-import com.spartons.antoniasdriver.ui.components.SectionHeader
 import com.spartons.antoniasdriver.ui.components.ServiceCatalog
-import com.spartons.antoniasdriver.ui.components.SmartCard
-import com.spartons.antoniasdriver.ui.initials
 import com.spartons.antoniasdriver.ui.money
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
+import com.spartons.antoniasdriver.ui.theme.BrandBlueLight
+import com.spartons.antoniasdriver.ui.theme.HairlineGrey
 import com.spartons.antoniasdriver.ui.theme.InkBlack
 import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.Navy
@@ -67,6 +81,8 @@ import com.spartons.antoniasdriver.ui.theme.WarningAmber
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+private val Purple = Color(0xFF7C4DFF)
 
 data class DashboardState(
     val loading: Boolean = true,
@@ -89,7 +105,6 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
-    /** "Accepting New Requests" toggle — availability only; live tracking is decoupled. */
     fun setAccepting(accepting: Boolean) {
         _state.value = _state.value.copy(accepting = accepting)
         viewModelScope.launch {
@@ -117,195 +132,344 @@ fun DashboardScreen(
             .padding(16.dp),
     ) {
         val d = s.dashboard
-        GreetingHeader(d, s.accepting)
+        GreetingRow(d, s.accepting)
         Spacer(Modifier.height(16.dp))
 
         when {
             s.loading && d == null -> Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            d == null -> SmartCard { Text(s.error ?: "Could not load your dashboard.", color = MutedGrey) }
+            d == null -> Card { Text(s.error ?: "Could not load your dashboard.", color = MutedGrey) }
             else -> {
                 MetricsRow(d.metrics)
-                Spacer(Modifier.height(16.dp))
-                MyServicesCard(d.services, onSeeAll = onSeeAllServices)
+                Spacer(Modifier.height(20.dp))
+                MyServices(d.services, onSeeAll = onSeeAllServices)
                 Spacer(Modifier.height(16.dp))
                 AcceptingCard(accepting = s.accepting, onToggle = vm::setAccepting)
                 Spacer(Modifier.height(16.dp))
-                EarningsSnapshotCard(d.earnings, onSeeEarnings)
-                Spacer(Modifier.height(16.dp))
-                ReadinessCard(d.readiness)
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    EarningsCard(d.earnings, onSeeEarnings, Modifier.weight(1f))
+                    ReadinessCard(d.readiness, Modifier.weight(1f))
+                }
                 Spacer(Modifier.height(16.dp))
                 PerformanceCard(d.metrics)
+                if ((d.metrics?.activeRequests ?: 0) == 0) {
+                    Spacer(Modifier.height(16.dp))
+                    CaughtUpCard()
+                }
                 Spacer(Modifier.height(24.dp))
             }
         }
     }
 }
 
+// ---------------------------------------------------------------------------
 @Composable
-private fun GreetingHeader(d: ProviderDashboard?, accepting: Boolean) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier.size(48.dp).clip(CircleShape).background(Navy),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                initials(d?.businessName ?: d?.name),
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-        Spacer(Modifier.width(12.dp))
+private fun Card(content: @Composable () -> Unit) {
+    Surface(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, HairlineGrey),
+    ) { Box(Modifier.padding(16.dp)) { content() } }
+}
+
+@Composable
+private fun GreetingRow(d: ProviderDashboard?, accepting: Boolean) {
+    Row(verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f)) {
-            Text("Good day", style = MaterialTheme.typography.bodySmall, color = MutedGrey)
-            Text(
-                d?.name ?: "Service Provider",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = InkBlack,
-            )
-            d?.businessName?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MutedGrey) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("${greeting()}, ", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = InkBlack)
+                Text(firstName(d?.name), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = BrandBlue)
+                Text("  👋", style = MaterialTheme.typography.titleLarge)
+            }
+            Text(d?.businessName ?: d?.name ?: "Service Provider", style = MaterialTheme.typography.bodyLarge, color = InkBlack)
         }
-        Pill(if (accepting) "Available" else "Paused", if (accepting) SuccessGreen else WarningAmber)
+        AvailabilityBadge(accepting)
+    }
+}
+
+@Composable
+private fun AvailabilityBadge(accepting: Boolean) {
+    val tint = if (accepting) SuccessGreen else MutedGrey
+    Column(
+        Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (accepting) SuccessGreenLight else HairlineGrey.copy(alpha = 0.5f))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(8.dp).clip(CircleShape).background(tint))
+            Spacer(Modifier.width(6.dp))
+            Text(if (accepting) "Available" else "Paused", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = tint)
+        }
+        Text(if (accepting) "for New Requests" else "Not accepting", style = MaterialTheme.typography.labelSmall, color = tint)
     }
 }
 
 @Composable
 private fun MetricsRow(m: ProviderMetrics?) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        MetricTile(Icons.Filled.WorkspacePremium, (m?.servicesRegistered ?: 0).toString(), "Services", BrandBlue)
-        MetricTile(Icons.Filled.Inbox, (m?.activeRequests ?: 0).toString(), "Active", WarningAmber)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        MetricCell(Icons.Filled.BusinessCenter, (m?.servicesRegistered ?: 0).toString(), "Services Registered", BrandBlue, Modifier.weight(1f))
+        MetricCell(Icons.Filled.Description, (m?.activeRequests ?: 0).toString(), "Active Requests", Purple, Modifier.weight(1f))
+        MetricCell(Icons.Filled.CheckCircle, (m?.completedJobs ?: 0).toString(), "Completed Jobs", SuccessGreen, Modifier.weight(1f))
+        MetricCell(Icons.Filled.Star, ratingText(m?.averageRating), "Average Rating", WarningAmber, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun MetricCell(icon: ImageVector, value: String, label: String, tint: Color, modifier: Modifier) {
+    Surface(
+        modifier,
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, HairlineGrey),
+    ) {
+        Column(Modifier.padding(horizontal = 8.dp, vertical = 10.dp)) {
+            Icon(icon, null, tint = tint, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.height(6.dp))
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = InkBlack)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MutedGrey, maxLines = 2)
+        }
+    }
+}
+
+@Composable
+private fun MyServices(services: List<ProviderService>, onSeeAll: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text("My Services", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = InkBlack)
+        Text("View All  ›", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = BrandBlue, modifier = Modifier.clickable(onClick = onSeeAll))
     }
     Spacer(Modifier.height(12.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        MetricTile(Icons.Filled.AssignmentTurnedIn, (m?.completedJobs ?: 0).toString(), "Completed", SuccessGreen)
-        MetricTile(Icons.Filled.Star, ratingText(m?.averageRating), "Avg Rating", Navy)
+    if (services.isEmpty()) {
+        Card { Text("No services registered yet.", color = MutedGrey) }
+    } else {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(horizontal = 0.dp)) {
+            items(services) { svc -> ServiceCard(svc) }
+        }
+    }
+}
+
+@Composable
+private fun ServiceCard(svc: ProviderService) {
+    Surface(
+        Modifier.width(158.dp),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, HairlineGrey),
+    ) {
+        Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            IconCircle(ServiceCatalog.icon(svc.key), tint = Navy, diameter = 52)
+            Spacer(Modifier.height(10.dp))
+            Text(
+                ServiceCatalog.label(svc.key, svc.name),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = Navy,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+            )
+            Spacer(Modifier.height(8.dp))
+            Box(
+                Modifier.clip(RoundedCornerShape(50)).background(BrandBlueLight).padding(horizontal = 10.dp, vertical = 3.dp),
+            ) {
+                Text(svc.code ?: "Pending", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = BrandBlue)
+            }
+            Spacer(Modifier.height(8.dp))
+            val active = svc.active
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(7.dp).clip(CircleShape).background(if (active) SuccessGreen else MutedGrey))
+                Spacer(Modifier.width(5.dp))
+                Text(if (active) "Active" else "Pending", style = MaterialTheme.typography.labelSmall, color = if (active) SuccessGreen else MutedGrey)
+            }
+        }
     }
 }
 
 @Composable
 private fun AcceptingCard(accepting: Boolean, onToggle: (Boolean) -> Unit) {
-    SmartCard {
+    Card {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(SuccessGreenLight),
+                contentAlignment = Alignment.Center,
+            ) { Icon(Icons.Filled.PersonAddAlt1, null, tint = SuccessGreen, modifier = Modifier.size(24.dp)) }
+            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("Accepting New Requests", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = InkBlack)
-                Text(
-                    if (accepting) "You'll receive new broadcast requests." else "You're paused — no new requests.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MutedGrey,
-                )
+                Text("Accepting New Requests", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
+                Text("When turned on, you will receive new service requests", style = MaterialTheme.typography.bodySmall, color = MutedGrey)
             }
-            Switch(checked = accepting, onCheckedChange = onToggle)
+            Spacer(Modifier.width(8.dp))
+            Switch(
+                checked = accepting,
+                onCheckedChange = onToggle,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = SuccessGreen,
+                ),
+            )
         }
     }
 }
 
 @Composable
-private fun MyServicesCard(services: List<ProviderService>, onSeeAll: () -> Unit) {
-    SmartCard {
-        SectionHeader("My Services", action = {
-            if (services.size > 3) TextButton(onClick = onSeeAll) { Text("View All") }
-        })
-        Spacer(Modifier.height(8.dp))
-        if (services.isEmpty()) {
-            Text("No services registered yet.", style = MaterialTheme.typography.bodySmall, color = MutedGrey)
-        } else {
-            services.take(4).forEachIndexed { i, svc ->
-                if (i > 0) Spacer(Modifier.height(10.dp))
-                ServiceRow(svc)
+private fun EarningsCard(e: EarningsTotals?, onSeeEarnings: () -> Unit, modifier: Modifier) {
+    Surface(
+        modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, HairlineGrey),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.AccountBalanceWallet, null, tint = SuccessGreen, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Earnings Snapshot", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
             }
-        }
-    }
-}
-
-@Composable
-private fun ServiceRow(svc: ProviderService) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        IconCircle(icon = ServiceCatalog.icon(svc.key), tint = BrandBlue, diameter = 40)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
+            Spacer(Modifier.height(12.dp))
+            EarningLine("This Month", money(e?.thisMonth), SuccessGreen)
+            Spacer(Modifier.height(8.dp)); HorizontalDivider(color = HairlineGrey); Spacer(Modifier.height(8.dp))
+            EarningLine("Lifetime Earnings", money(e?.lifetime), SuccessGreen)
+            Spacer(Modifier.height(8.dp)); HorizontalDivider(color = HairlineGrey); Spacer(Modifier.height(8.dp))
+            EarningLine("Pending Payments", money(e?.pending), WarningAmber)
+            Spacer(Modifier.height(12.dp))
             Text(
-                ServiceCatalog.label(svc.key, svc.name),
-                style = MaterialTheme.typography.bodyMedium,
+                "View Earnings  ›",
+                style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = InkBlack,
+                color = SuccessGreen,
+                modifier = Modifier.align(Alignment.End).clickable(onClick = onSeeEarnings),
             )
-            Text(
-                svc.code ?: "Awaiting verification",
-                style = MaterialTheme.typography.labelSmall,
-                color = MutedGrey,
-            )
-        }
-        Pill(
-            if (svc.active) "Active" else "Pending",
-            if (svc.active) SuccessGreen else WarningAmber,
-        )
-    }
-}
-
-@Composable
-private fun EarningsSnapshotCard(e: EarningsTotals?, onSeeEarnings: () -> Unit) {
-    SmartCard {
-        SectionHeader("Earnings Snapshot", action = {
-            TextButton(onClick = onSeeEarnings) { Text("Details") }
-        })
-        Spacer(Modifier.height(8.dp))
-        Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SuccessGreenLight).padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            EarningStat("This Month", money(e?.thisMonth))
-            EarningStat("Lifetime", money(e?.lifetime))
-            EarningStat("Pending", money(e?.pending))
         }
     }
 }
 
 @Composable
-private fun EarningStat(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.Start) {
+private fun EarningLine(label: String, value: String, valueColor: Color) {
+    Column {
         Text(label, style = MaterialTheme.typography.labelSmall, color = MutedGrey)
-        Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = SuccessGreen)
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = valueColor)
     }
 }
 
 @Composable
-private fun ReadinessCard(r: ProviderReadiness?) {
-    SmartCard {
-        SectionHeader("Provider Readiness", action = {
-            Text("${r?.percent ?: 0}%", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = BrandBlue)
-        })
-        Spacer(Modifier.height(4.dp))
-        Text(
-            if (r?.ready == true) "Ready to Receive Jobs" else "Complete verification to receive jobs",
-            style = MaterialTheme.typography.bodySmall,
-            color = if (r?.ready == true) SuccessGreen else MutedGrey,
+private fun ReadinessCard(r: ProviderReadiness?, modifier: Modifier) {
+    Surface(
+        modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, HairlineGrey),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.Shield, null, tint = Navy, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Provider Readiness", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack, modifier = Modifier.weight(1f))
+                Icon(Icons.Outlined.Info, null, tint = MutedGrey, modifier = Modifier.size(15.dp))
+            }
+            Spacer(Modifier.height(10.dp))
+            Text("${r?.percent ?: 0}%", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = SuccessGreen)
+            Text(if (r?.ready == true) "Ready to Receive Jobs" else "Complete verification", style = MaterialTheme.typography.bodySmall, color = InkBlack)
+            Spacer(Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = { (r?.percent ?: 0) / 100f },
+                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)),
+                color = SuccessGreen,
+            )
+            Spacer(Modifier.height(12.dp))
+            CheckRow("Profile Complete", r?.profileComplete == true)
+            CheckRow("Statutory Documents Verified", r?.documentsVerified == true)
+            CheckRow("Accreditation Valid", r?.documentsVerified == true)
+            CheckRow("Bank Details Verified", r?.bankVerified == true)
+            CheckRow("Accepting New Requests", r?.acceptingRequests == true)
+        }
+    }
+}
+
+@Composable
+private fun CheckRow(label: String, done: Boolean) {
+    Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            if (done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
+            null,
+            tint = if (done) SuccessGreen else MutedGrey,
+            modifier = Modifier.size(16.dp),
         )
-        Spacer(Modifier.height(10.dp))
-        LinearProgressIndicator(
-            progress = { (r?.percent ?: 0) / 100f },
-            modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(50)),
-            color = if (r?.ready == true) SuccessGreen else BrandBlue,
-        )
-        Spacer(Modifier.height(12.dp))
-        ReadinessRow("Profile complete", r?.profileComplete == true)
-        ReadinessRow("Statutory documents verified", r?.documentsVerified == true)
-        ReadinessRow("Bank details verified", r?.bankVerified == true)
-        ReadinessRow("Accepting new requests", r?.acceptingRequests == true)
+        Spacer(Modifier.width(8.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = if (done) InkBlack else MutedGrey)
     }
 }
 
 @Composable
 private fun PerformanceCard(m: ProviderMetrics?) {
-    SmartCard {
-        MiniHeading("PERFORMANCE OVERVIEW")
-        Spacer(Modifier.height(10.dp))
-        InfoRow("Average rating", m?.averageRating?.takeIf { it > 0 }?.let { "${ratingText(it)} / 5" } ?: "—")
-        InfoRow("Completed jobs", (m?.completedJobs ?: 0).toString())
-        InfoRow("Active requests", (m?.activeRequests ?: 0).toString())
-        InfoRow("Services registered", (m?.servicesRegistered ?: 0).toString())
+    Surface(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, HairlineGrey),
+    ) {
+        Column {
+            Row(
+                Modifier.fillMaxWidth().background(BrandBlueLight).padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = Navy, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Performance Overview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
+            }
+            Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                PerfStat(Icons.Filled.Star, ratingText(m?.averageRating), "Customer Rating", WarningAmber, Modifier.weight(1f))
+                PerfStat(Icons.Filled.BusinessCenter, (m?.completedJobs ?: 0).toString(), "Jobs Completed", SuccessGreen, Modifier.weight(1f))
+                PerfStat(Icons.Filled.TrackChanges, "—", "Completion Rate", Purple, Modifier.weight(1f))
+                PerfStat(Icons.Filled.ThumbUp, "—", "Customer Satisfaction", WarningAmber, Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun PerfStat(icon: ImageVector, value: String, label: String, tint: Color, modifier: Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(icon, null, tint = tint, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.height(4.dp))
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = InkBlack)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MutedGrey, textAlign = TextAlign.Center, maxLines = 2)
+    }
+}
+
+@Composable
+private fun CaughtUpCard() {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(BrandBlueLight).padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(72.dp).clip(CircleShape).background(Color.White),
+            contentAlignment = Alignment.Center,
+        ) { Icon(Icons.Filled.AssignmentTurnedIn, null, tint = BrandBlue, modifier = Modifier.size(40.dp)) }
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text("You're all caught up!", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = InkBlack)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "There are currently no customer requests assigned to you. We'll notify you immediately when a new request matching your approved services becomes available.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MutedGrey,
+            )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+private fun firstName(name: String?): String =
+    name?.trim()?.split(Regex("\\s+"))?.firstOrNull()?.takeIf { it.isNotBlank() } ?: "there"
+
+private fun greeting(): String {
+    val h = runCatching { java.time.LocalTime.now().hour }.getOrDefault(9)
+    return when {
+        h < 12 -> "Good Morning"
+        h < 17 -> "Good Afternoon"
+        else -> "Good Evening"
     }
 }
 
