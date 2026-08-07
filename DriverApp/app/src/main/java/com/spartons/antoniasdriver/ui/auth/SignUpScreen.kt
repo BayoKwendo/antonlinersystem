@@ -86,6 +86,7 @@ import com.spartons.antoniasdriver.R
 import com.spartons.antoniasdriver.ServiceLocator
 import com.spartons.antoniasdriver.data.DocumentUpload
 import com.spartons.antoniasdriver.ui.components.DocumentUploadRow
+import com.spartons.antoniasdriver.ui.components.PhoneField
 import com.spartons.antoniasdriver.ui.components.ServiceCatalog
 import com.spartons.antoniasdriver.ui.components.ServiceDef
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
@@ -276,7 +277,7 @@ fun SignUpScreen(
                 Spacer(Modifier.height(12.dp))
                 IconField(Icons.Filled.Business, "Business Name", "Enter your business name", s.businessName, vm::setBusinessName)
                 Spacer(Modifier.height(12.dp))
-                IconField(Icons.Filled.Phone, "Phone Number", "07XX XXX XXX", s.phone, vm::setPhone, keyboardType = KeyboardType.Phone)
+                PhoneField(onPhoneChange = vm::setPhone, label = "Phone Number", modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(12.dp))
                 IconField(Icons.Filled.MailOutline, "Email Address", "Enter your email address", s.email, vm::setEmail, keyboardType = KeyboardType.Email)
                 Spacer(Modifier.height(12.dp))

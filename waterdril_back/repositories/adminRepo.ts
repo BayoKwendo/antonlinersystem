@@ -275,6 +275,48 @@ const adminRepo = {
     }
   },
 
+  /**
+   * Global portal search (LIKE) across requests/jobs, service providers and
+   * customers. Small capped result set for the top-bar quick-jump dropdown.
+   */
+  async search(q: string) {
+    const like = `%${q}%`;
+    const requests = await client.query(
+      `SELECT b.id, b.request_no, b.status, sc.name AS service,
+              c.display_name AS customer, c.phone AS phone
+         FROM bookings b
+         JOIN service_categories sc ON sc.id = b.category_id
+         JOIN users c ON c.id = b.customer_id
+        WHERE b.request_no LIKE ? OR c.display_name LIKE ? OR c.phone LIKE ?
+        ORDER BY b.id DESC LIMIT 6`,
+      [like, like, like],
+    );
+    const providers = await client.query(
+      `SELECT u.id, COALESCE(pa.business_name, u.display_name) AS name,
+              u.display_name AS person, u.phone, pa.verification_status AS status
+         FROM users u
+         JOIN user_roles ur ON ur.user_id = u.id
+         JOIN roles r ON r.id = ur.role_id AND r.\`key\` = 'provider'
+         LEFT JOIN provider_accounts pa ON pa.user_id = u.id
+        WHERE u.deleted_at IS NULL
+          AND (u.display_name LIKE ? OR u.phone LIKE ? OR pa.business_name LIKE ? OR pa.kra_pin LIKE ?)
+        GROUP BY u.id ORDER BY u.id DESC LIMIT 6`,
+      [like, like, like, like],
+    );
+    const customers = await client.query(
+      `SELECT u.id, u.display_name AS name, u.phone
+         FROM users u
+         JOIN user_roles ur ON ur.user_id = u.id
+         JOIN roles r ON r.id = ur.role_id AND r.\`key\` = 'customer'
+         LEFT JOIN customer_profiles cp ON cp.user_id = u.id
+        WHERE u.deleted_at IS NULL
+          AND (u.display_name LIKE ? OR u.phone LIKE ? OR cp.id_number LIKE ?)
+        GROUP BY u.id ORDER BY u.id DESC LIMIT 6`,
+      [like, like, like],
+    );
+    return { requests, providers, customers };
+  },
+
   async listCustomers({ q, limit, offset }: { q?: string } & Page) {
     const clause = q ? "AND (u.display_name LIKE ? OR u.phone LIKE ? OR cp.id_number LIKE ?)" : "";
     const filterParams = q ? [`%${q}%`, `%${q}%`, `%${q}%`] : [];

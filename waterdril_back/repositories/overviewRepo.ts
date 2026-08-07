@@ -112,7 +112,7 @@ export const overviewRepo = {
 
     // --- QA queue (completed, awaiting verification) ------------------------
     const qaQueue = await many(
-      `SELECT b.id, b.request_no, b.status, sc.name AS service,
+      `SELECT b.id, b.request_no, b.status, b.updated_at AS completed_at, sc.name AS service,
               c.display_name AS customer, pa.business_name AS provider
          FROM bookings b
          JOIN service_categories sc ON sc.id=b.category_id

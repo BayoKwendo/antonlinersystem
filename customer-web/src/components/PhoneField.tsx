@@ -99,8 +99,12 @@ export function PhoneField({ value, onChange, id, placeholder }: {
     return withoutDial.replace(/^0+/, "");
   }, [value, dial]);
 
+  // Kenyan mobiles are 9 national digits (7XXXXXXXX / 1XXXXXXXX); cap so users
+  // can't type extra digits. Other countries get a slightly looser cap.
+  const maxNat = dial === "254" ? 9 : 12;
   const emit = (dialX: string, natRaw: string) => {
-    const n = natRaw.replace(/\D/g, "").replace(/^0+/, "");
+    const cap = dialX === "254" ? 9 : 12;
+    const n = natRaw.replace(/\D/g, "").replace(/^0+/, "").slice(0, cap);
     // Emit WITHOUT a leading "+" — no plus is sent anywhere in the system
     // (e.g. 254717629732). The "+" stays a display-only prefix.
     onChange(n ? `${dialX}${n}` : "");
@@ -130,6 +134,7 @@ export function PhoneField({ value, onChange, id, placeholder }: {
           inputMode="tel"
           autoComplete="tel-national"
           value={national}
+          maxLength={maxNat}
           placeholder={placeholder ?? "712 345 678"}
           onChange={(e) => emit(dial, e.target.value)}
         />

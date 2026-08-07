@@ -47,6 +47,13 @@ const adminController = {
   analytics: async (ctx: Context) => ok(ctx, await adminRepo.analytics()),
   overview: async (ctx: Context) => ok(ctx, await overviewRepo.overview()),
 
+  // Global top-bar search across requests, providers and customers.
+  search: async (ctx: Context) => {
+    const q = searchQ(ctx);
+    if (!q || q.length < 2) return ok(ctx, { requests: [], providers: [], customers: [] });
+    ok(ctx, await adminRepo.search(q));
+  },
+
   // Provider verification queue + review detail (per provider account / user_id).
   providerApplications: async (ctx: Context) =>
     ok(ctx, await adminRepo.listProviderApplications({ status: ctx.request.url.searchParams.get("status") ?? undefined, ...page(ctx) })),

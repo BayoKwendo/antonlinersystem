@@ -117,6 +117,7 @@ router
   .get("/admin/stats", requireAuth, requireRole(...STAFF), adminController.stats)
   .get("/admin/analytics", requireAuth, requireRole(...STAFF), adminController.analytics)
   .get("/admin/overview", requireAuth, requireRole(...STAFF), adminController.overview)
+  .get("/admin/search", requireAuth, requireRole(...STAFF), adminController.search)
   .get("/admin/provider-applications", requireAuth, requireRole("admin", "assistance", "owner"), adminController.providerApplications)
   .get("/admin/provider-applications/:id", requireAuth, requireRole("admin", "assistance", "owner"), adminController.providerApplication)
   .get("/admin/providers", requireAuth, requireRole("admin", "assistance", "owner"), adminController.listProviders)
