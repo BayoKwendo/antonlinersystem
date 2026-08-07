@@ -31,11 +31,17 @@ export interface TrackResult {
   service_name: string;
   service_key: string;
   customer_name: string;
+  provider_name: string | null;
+  provider_phone: string | null;
   total_amount: number;
   quoted_amount: number | null;
   amount_paid: number;
   scheduled_at: string | null;
   created_at: string;
+  /** Customer's site pin (destination marker). */
+  site_location: { lat: number; lng: number } | null;
+  /** Provider's last-known live position (instant first paint / REST fallback). */
+  provider_location: { lat: number; lng: number; at: string | null } | null;
 }
 
 /** Read-only status for the public tracking page — GET /api/v1/track/:token. */

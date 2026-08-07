@@ -169,7 +169,7 @@ CREATE TABLE `provider_profiles` (
   `base_price`          DECIMAL(12,2)   NOT NULL DEFAULT 0.00,
   `rating_avg`          DECIMAL(3,2)    NOT NULL DEFAULT 0.00,
   `rating_count`        INT UNSIGNED    NOT NULL DEFAULT 0,
-  `availability`        ENUM('available','booked','offline') NOT NULL DEFAULT 'offline',
+  `availability`         ENUM('available','booked','offline','on_holiday','maintenance') NOT NULL DEFAULT 'offline',
   `movement_status`     ENUM('static','moving') NOT NULL DEFAULT 'static',
   `lat`                 DECIMAL(10,7)   NOT NULL DEFAULT 0,
   `lng`                 DECIMAL(10,7)   NOT NULL DEFAULT 0,
@@ -240,6 +240,9 @@ CREATE TABLE `bookings` (
   `address`        VARCHAR(255) DEFAULT NULL,
   `lat`            DECIMAL(10,7) DEFAULT NULL,
   `lng`            DECIMAL(10,7) DEFAULT NULL,
+  `provider_lat`   DECIMAL(10,7) DEFAULT NULL,         -- provider's last-known live position (written per WS fix)
+  `provider_lng`   DECIMAL(10,7) DEFAULT NULL,
+  `provider_loc_at` DATETIME DEFAULT NULL,             -- when the last live fix was recorded
   `scheduled_at`   DATETIME DEFAULT NULL,
   `customer_confirmed_at` DATETIME DEFAULT NULL,
   `details`        JSON DEFAULT NULL,                 -- per-service request form fields

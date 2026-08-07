@@ -5,7 +5,12 @@ import { RequireAuth, RequireRole } from "./auth/guards";
 import Shell from "./layout/Shell";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import Providers from "./pages/Providers";
+import ServiceProviders from "./pages/ServiceProviders";
+import CustomerRequests from "./pages/CustomerRequests";
+import ProviderPayments from "./pages/ProviderPayments";
+import QualityAssurance from "./pages/QualityAssurance";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import Bookings from "./pages/Bookings";
 import BookingDetail from "./pages/BookingDetail";
 import Customers from "./pages/Customers";
@@ -38,10 +43,24 @@ export default function App() {
         />
         <Route
           path="/providers"
-          element={<RequireRole roles={["admin", "assistance", "owner"]}><Providers /></RequireRole>}
+          element={<RequireRole roles={["admin", "assistance", "owner"]}><ServiceProviders /></RequireRole>}
+        />
+        <Route
+          path="/requests"
+          element={<RequireRole roles={["admin", "assistance", "owner"]}><CustomerRequests /></RequireRole>}
         />
         <Route path="/bookings" element={<Bookings />} />
         <Route path="/bookings/:id" element={<BookingDetail />} />
+        <Route
+          path="/provider-payments"
+          element={<RequireRole roles={["admin", "finance"]}><ProviderPayments /></RequireRole>}
+        />
+        <Route
+          path="/qa"
+          element={<RequireRole roles={["admin", "assistance"]}><QualityAssurance /></RequireRole>}
+        />
+        <Route path="/reports" element={<RequireRole roles={["admin", "assistance", "finance", "owner"]}><Reports /></RequireRole>} />
+        <Route path="/settings" element={<RequireRole roles={["admin"]}><Settings /></RequireRole>} />
         <Route
           path="/customers"
           element={<RequireRole roles={["admin", "assistance"]}><Customers /></RequireRole>}

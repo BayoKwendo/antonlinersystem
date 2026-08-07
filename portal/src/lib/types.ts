@@ -185,3 +185,62 @@ export interface Complaint {
   customer_name: string | null;
   provider_name: string | null;
 }
+
+// --- SMART Drill admin overview (GET /admin/overview) -----------------------
+export interface Overview {
+  counters: {
+    new_requests: number; new_requests_today: number;
+    awaiting_payment: number; awaiting_payment_amount: number;
+    active_jobs: number; active_jobs_today: number;
+    awaiting_qa: number; awaiting_qa_today: number;
+    received_today: number; received_yesterday: number;
+    payouts_due: number; received_total: number;
+  };
+  jobs_by_status: { booked: number; en_route: number; arrived: number; in_progress: number; completed: number; confirmed: number; total: number };
+  provider_status: {
+    available: number; scheduled: number; headed: number; on_site: number; awaiting_payment: number;
+    on_holiday: number; maintenance: number; offline: number; suspended: number; pending: number; rejected: number;
+  };
+  top_services: { key: string; name: string; jobs: number; revenue: number }[];
+  provider_performance: { provider: string; jobs: number; rating: number | null }[];
+  recent_requests: { id: number; request_no: string | null; status: string; location: string | null; created_at: string; service: string; customer: string }[];
+  recent_activity: { status: string; note: string | null; created_at: string; request_no: string | null; service: string }[];
+  qa_queue: { id: number; request_no: string | null; status: string; service: string; customer: string; provider: string | null }[];
+  alerts: { delayed_jobs: number; unmatched_requests: number; pending_providers: number };
+}
+
+// --- provider verification (applications) -----------------------------------
+export interface ProviderApplicationRow {
+  user_id: number; business_name: string | null; kra_pin: string | null;
+  display_name: string; phone: string; email: string | null;
+  verification_status: "pending" | "verified" | "rejected"; verification_note: string | null;
+  documents: number; services: number; service_names: string | null; created_at: string;
+}
+export interface ProviderApplication {
+  account: {
+    user_id: number; business_name: string | null; kra_pin: string | null; bank_details: string | null;
+    verification_status: "pending" | "verified" | "rejected"; verification_note: string | null;
+    display_name: string; phone: string; email: string | null; created_at: string;
+  };
+  documents: { id: number; kind: string; url: string; created_at: string }[];
+  services: { key: string; name: string; code: string | null; verified_at: string | null }[];
+}
+
+// --- journey ops rows (admin) -----------------------------------------------
+export interface RequestRow {
+  id: number; request_no: string | null; status: string; pricing_mode: "fixed" | "quote";
+  total_amount: string | null; quoted_amount: string | null; amount_paid: string | null;
+  created_at: string; scheduled_at: string | null;
+  customer_name: string; customer_phone: string | null; provider_name: string | null;
+  category: string; service_name: string;
+}
+export interface InvoiceRow {
+  id: number; party: "customer" | "provider"; number: string; amount: string; status: string;
+  paid_at: string | null; created_at: string; request_no: string | null;
+  service_name: string; customer_name: string; customer_phone: string | null;
+}
+export interface PayoutRow {
+  id: number; kind: "advance" | "final"; amount: string; status: "held" | "released" | "paid";
+  paid_ref: string | null; created_at: string; request_no: string | null;
+  provider_name: string | null; provider_phone: string | null;
+}

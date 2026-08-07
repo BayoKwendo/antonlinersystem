@@ -83,7 +83,15 @@ class DriverLocationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        socket = DriverSocket(ServiceLocator.session.cachedAccess)
+        // Resume publishing to the active booking after a START_STICKY / boot
+        // restart (in-memory activeBookingId is lost when the process is killed);
+        // without this the socket would degrade to REST-only.
+        if (ServiceLocator.activeBookingId == null) {
+            ServiceLocator.activeBookingId = TrackingState.activeBooking(this)
+        }
+        // Read the access token fresh at connect time (via the provider) so a
+        // mid-shift refresh doesn't leave reconnects authing with a stale token.
+        socket = DriverSocket { ServiceLocator.session.cachedAccess }
         socket?.connect()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         createNotificationChannel()

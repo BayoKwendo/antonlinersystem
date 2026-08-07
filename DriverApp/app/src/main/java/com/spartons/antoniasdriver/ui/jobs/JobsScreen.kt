@@ -28,6 +28,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -36,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -85,7 +88,7 @@ class JobsViewModel : ViewModel() {
         }
     }
 
-    /** "Headed to Site": advance to en_route and begin live tracking. */
+    /** "Start Trip": advance to en_route and begin live tracking. */
     fun headedToSite(context: Context, id: Long) {
         viewModelScope.launch {
             runCatching { repo.jobStatus(id, JobStatus.EN_ROUTE) }
@@ -100,6 +103,9 @@ fun JobsScreen(onOpenJob: (Long) -> Unit, vm: JobsViewModel = viewModel()) {
     val s by vm.state.collectAsState()
     val context = LocalContext.current
     var tab by remember { mutableIntStateOf(0) }
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val notify: (String) -> Unit = { msg -> scope.launch { snackbar.showSnackbar(msg) } }
     LaunchedEffect(Unit) { vm.load() }
 
     val upcoming = remember(s.jobs) { s.jobs.filter { it.status in JobStatus.UPCOMING } }
@@ -107,40 +113,51 @@ fun JobsScreen(onOpenJob: (Long) -> Unit, vm: JobsViewModel = viewModel()) {
     val filtered = when (tab) { 1 -> upcoming; 2 -> completed; else -> s.jobs }
     val tabs = listOf("All (${s.jobs.size})", "Upcoming (${upcoming.size})", "Completed (${completed.size})")
 
-    Column(Modifier.fillMaxSize()) {
-        Text(
-            "My Jobs",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = InkBlack,
-            modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
-        )
-        ScrollableTabRow(selectedTabIndex = tab, edgePadding = 16.dp) {
-            tabs.forEachIndexed { i, title ->
-                Tab(selected = tab == i, onClick = { tab = i }, text = { Text(title) })
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            Text(
+                "My Jobs",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = InkBlack,
+                modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
+            )
+            ScrollableTabRow(selectedTabIndex = tab, edgePadding = 16.dp) {
+                tabs.forEachIndexed { i, title ->
+                    Tab(selected = tab == i, onClick = { tab = i }, text = { Text(title) })
+                }
             }
-        }
-        when {
-            s.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            filtered.isEmpty() -> Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-                Text(s.error ?: "No jobs here yet.", color = MutedGrey)
-            }
-            else -> LazyColumn(
-                Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(filtered) { job ->
-                    JobCard(job, onClick = { onOpenJob(job.id) }, onHeadedToSite = { vm.headedToSite(context, job.id) })
+            when {
+                s.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                filtered.isEmpty() -> Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Text(s.error ?: "No jobs here yet.", color = MutedGrey)
+                }
+                else -> LazyColumn(
+                    Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(filtered) { job ->
+                        JobCard(
+                            job,
+                            onClick = { onOpenJob(job.id) },
+                            onStartTrip = { vm.headedToSite(context, job.id) },
+                            onPermissionDenied = { notify("Location permission is needed to start the trip and share your live location with the customer.") },
+                        )
+                    }
                 }
             }
         }
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
 }
 
 @Composable
-private fun JobCard(job: Job, onClick: () -> Unit, onHeadedToSite: () -> Unit) {
+private fun JobCard(job: Job, onClick: () -> Unit, onStartTrip: () -> Unit, onPermissionDenied: () -> Unit) {
     val (label, color) = cardLabel(job.status)
+    // Gate the trip start on runtime location permission so the foreground
+    // service can actually start (it self-stops without fine location).
+    val startTrip = rememberLocationPermissionRequest(onGranted = onStartTrip, onDenied = onPermissionDenied)
     Surface(
         Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
@@ -172,14 +189,14 @@ private fun JobCard(job: Job, onClick: () -> Unit, onHeadedToSite: () -> Unit) {
                 }
                 if (job.status == JobStatus.BOOKED) {
                     Button(
-                        onClick = onHeadedToSite,
+                        onClick = startTrip,
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = WarningAmber),
                     ) {
                         Icon(Icons.Filled.DirectionsCar, null, modifier = Modifier.height(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Headed to Site", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                        Text("Start Trip", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

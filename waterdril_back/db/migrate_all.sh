@@ -39,7 +39,9 @@ MIGRATIONS=(
   migrate_smartdrill_escrow.sql
   migrate_smartdrill_provider.sql
   migrate_smartdrill_provider_code_prefixes.sql   # SDGEO/SDBD/... prefixes (needs code_prefix)
+  migrate_smartdrill_provider_availability.sql
   migrate_smartdrill_ratings_declines.sql
+  migrate_smartdrill_live_tracking.sql            # bookings.provider_lat/lng/loc_at (live tracking snapshot)
 )
 
 for f in "${MIGRATIONS[@]}"; do

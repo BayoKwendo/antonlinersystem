@@ -29,6 +29,10 @@ export const escrow = {
     if (!(await documentRepo.hasReport(bookingId, q))) {
       throw badRequest("A completion report must be uploaded before the final payout can be released.");
     }
+    // eTIMS gate: the provider's eTIMS-compliant invoice must be on file too.
+    if (!(await documentRepo.hasKind(bookingId, "etims_invoice", q))) {
+      throw badRequest("The provider's eTIMS-compliant invoice must be uploaded before the final payout can be released.");
+    }
     await payoutRepo.release(bookingId, "final", q);
   },
 };

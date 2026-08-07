@@ -1,64 +1,27 @@
 /**
- * AntonLiner wordmark, drawn as an inline SVG vector.
- *  - The "a" mark and divider bar stay brand-orange in both schemes.
- *  - "anton liner" / "SYSTEMS LIMITED" use `currentColor`, which we set via
- *    CSS `light-dark()` so the text flips to a light tone in dark mode.
+ * SMART Drill admin-portal wordmark: a blue water-drop mark + "SMART DRILL"
+ * wordmark and an "ADMIN PORTAL" line. The mark is a single brand blue; the
+ * text uses currentColor (set via light-dark()) so it reads on light or dark.
  */
-const VB_W = 268;
-const VB_H = 64;
-const ORANGE = "#e14d16";
+const BLUE = "#2f7be6";
 
-export function Logo({ size = "md" }: { size?: "sm" | "md" }) {
-  const height = size === "sm" ? 28 : 40;
-  const width = (height * VB_W) / VB_H;
+export function Logo({ size = "md", onDark = false }: { size?: "sm" | "md"; onDark?: boolean }) {
+  const height = size === "sm" ? 30 : 40;
+  const textColor = onDark ? "#ffffff" : "light-dark(var(--mantine-color-ink-9), var(--mantine-color-gray-0))";
   return (
-    <svg
-      height={height}
-      width={width}
-      viewBox={`0 0 ${VB_W} ${VB_H}`}
-      role="img"
-      aria-label="AntonLiner Systems Limited"
-      style={{
-        display: "block",
-        color: "light-dark(var(--mantine-color-ink-9), var(--mantine-color-gray-0))",
-      }}
-    >
-      {/* mark */}
-      <text
-        x="0"
-        y="50"
-        fontFamily="Arial, Helvetica, sans-serif"
-        fontSize="62"
-        fontWeight="800"
-        fill={ORANGE}
-      >
-        a
-      </text>
-      <rect x="44" y="10" width="6" height="44" rx="3" fill={ORANGE} />
-
-      {/* wordmark (adapts to color scheme) */}
-      <text
-        x="62"
-        y="40"
-        fontFamily="Inter, Arial, sans-serif"
-        fontSize="34"
-        fontWeight="700"
-        letterSpacing="-0.5"
-        fill="currentColor"
-      >
-        anton liner
-      </text>
-      <text
-        x="64"
-        y="57"
-        fontFamily="Inter, Arial, sans-serif"
-        fontSize="11.5"
-        letterSpacing="4"
-        fill="currentColor"
-        opacity="0.75"
-      >
-        SYSTEMS LIMITED
-      </text>
-    </svg>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+      <svg width={height} height={height} viewBox="0 0 512 512" role="img" aria-label="SMART Drill Admin Portal" style={{ display: "block" }}>
+        <path fill={BLUE} d="M256 44 C256 44 108 232 108 340 a148 148 0 1 0 296 0 C404 232 256 44 256 44 Z" />
+        <path fill="#ffffff" opacity="0.9" d="M300 300 C300 300 232 386 232 430 a34 34 0 1 0 68 0 C300 386 300 300 300 300 Z" />
+      </svg>
+      <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1, color: textColor }}>
+        <span style={{ fontWeight: 800, fontSize: size === "sm" ? 17 : 20, letterSpacing: "-0.01em" }}>
+          SMART <span style={{ color: onDark ? "#6ea8f0" : BLUE }}>DRILL</span>
+        </span>
+        <span style={{ fontSize: size === "sm" ? 8.5 : 10, letterSpacing: "0.22em", opacity: 0.7, marginTop: 3 }}>
+          ADMIN PORTAL
+        </span>
+      </span>
+    </span>
   );
 }

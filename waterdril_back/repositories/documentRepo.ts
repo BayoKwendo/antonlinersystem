@@ -29,6 +29,12 @@ const documentRepo = {
     const rows = await db(q)(`SELECT 1 FROM documents WHERE booking_id = ? AND kind = 'report' LIMIT 1`, [bookingId]);
     return rows.length > 0;
   },
+
+  /** True if a document of the given kind exists for the booking (e.g. etims_invoice). */
+  async hasKind(bookingId: number, kind: string, q?: Querier): Promise<boolean> {
+    const rows = await db(q)(`SELECT 1 FROM documents WHERE booking_id = ? AND kind = ? LIMIT 1`, [bookingId, kind]);
+    return rows.length > 0;
+  },
 };
 
 export default documentRepo;

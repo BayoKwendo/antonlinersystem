@@ -232,6 +232,7 @@ export const editProviderSchema = z.object({
   phone: z.string().min(7).max(20).optional(),
   bio: z.string().max(500).optional(),
   owner_id: z.coerce.number().int().positive().optional(),
+  availability: z.enum(["available", "offline", "on_holiday", "maintenance"]).optional(),
 });
 
 // --- SMS console -------------------------------------------------------------

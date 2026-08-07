@@ -175,10 +175,9 @@ export const requestsService = {
     const row = await bookingRepo.byTrackingToken(token);
     if (!row) throw notFound("We couldn't find that request.");
 
-    let details: Record<string, unknown> = {};
-    try {
-      details = row.details ? (typeof row.details === "string" ? JSON.parse(row.details) : row.details) : {};
-    } catch { /* ignore malformed */ }
+    const num = (v: unknown) => (v != null && Number.isFinite(Number(v)) ? Number(v) : null);
+    const siteLat = num(row.site_lat), siteLng = num(row.site_lng);
+    const provLat = num(row.provider_lat), provLng = num(row.provider_lng);
 
     return {
       request_no: row.request_no,
@@ -187,12 +186,19 @@ export const requestsService = {
       service_name: row.service_name,
       service_key: row.service_key,
       customer_name: row.customer_name,
+      provider_name: row.provider_name ?? null,
+      provider_phone: row.provider_phone ?? null,
       total_amount: Number(row.total_amount),
       quoted_amount: row.quoted_amount != null ? Number(row.quoted_amount) : null,
       amount_paid: Number(row.amount_paid),
       scheduled_at: row.scheduled_at,
       created_at: row.created_at,
-      location: (details.__loc ?? null),
+      // The customer's site pin (destination the provider travels to).
+      site_location: siteLat != null && siteLng != null ? { lat: siteLat, lng: siteLng } : null,
+      // The provider's last-known live position (REST fallback / instant first paint).
+      provider_location: provLat != null && provLng != null
+        ? { lat: provLat, lng: provLng, at: row.provider_loc_at ?? null }
+        : null,
     };
   },
 

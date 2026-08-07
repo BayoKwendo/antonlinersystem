@@ -140,6 +140,27 @@ const bookingRepo = {
     return rows[0]?.tracking_token as string | undefined;
   },
 
+  /**
+   * Lean resolve for the WebSocket ?track= viewer path: a tracking token maps to
+   * exactly one booking. Returns its id + current status so the socket can bind
+   * an anonymous, subscribe-only viewer to that one booking's live-location room.
+   */
+  async resolveTrackingToken(token: string): Promise<{ id: number; status: string } | undefined> {
+    const rows = await client.query(
+      `SELECT id, status FROM bookings WHERE tracking_token = ? LIMIT 1`,
+      [token],
+    );
+    return rows[0];
+  },
+
+  /** Persist the provider's last-known live position (written on each WS fix). */
+  saveProviderLocation(bookingId: number, lat: number, lng: number, q?: Querier) {
+    return db(q)(
+      `UPDATE bookings SET provider_lat = ?, provider_lng = ?, provider_loc_at = NOW() WHERE id = ?`,
+      [lat, lng, bookingId],
+    );
+  },
+
   /** Internal resolve for token-authorized customer actions (ids + state). */
   async rawByTrackingToken(token: string, q?: Querier) {
     const rows = await db(q)(
@@ -240,15 +261,19 @@ const bookingRepo = {
     );
   },
 
-  /** Read-only lookup for the public tracking page (no provider JOIN — may be NULL). */
+  /** Read-only lookup for the public tracking page (LEFT JOIN provider — may be NULL). */
   async byTrackingToken(token: string) {
     const rows = await client.query(
       `SELECT b.request_no, b.status, b.pricing_mode, b.total_amount, b.quoted_amount,
               b.amount_paid, b.scheduled_at, b.created_at, b.details,
+              b.lat AS site_lat, b.lng AS site_lng,
+              b.provider_lat, b.provider_lng, b.provider_loc_at,
               c.display_name AS customer_name,
+              p.display_name AS provider_name, p.phone AS provider_phone,
               sc.name AS service_name, sc.\`key\` AS service_key
          FROM bookings b
          JOIN users c ON c.id = b.customer_id
+         LEFT JOIN users p ON p.id = b.provider_id
          JOIN service_categories sc ON sc.id = b.category_id
         WHERE b.tracking_token = ? LIMIT 1`,
       [token],

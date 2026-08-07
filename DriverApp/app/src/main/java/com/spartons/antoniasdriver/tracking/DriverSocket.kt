@@ -24,8 +24,11 @@ private fun wsUrl(token: String?): String {
  * { type: "location", bookingId, lat, lng } so the booking's customer (who has
  * subscribed) sees the live position. Reconnection is lazy: if the socket is
  * gone when [publish] is called, it reconnects before sending.
+ *
+ * [tokenProvider] is read FRESH on every [connect] (never captured once) so a
+ * mid-shift token refresh doesn't leave a reconnect authing with a stale token.
  */
-class DriverSocket(private val token: String?) {
+class DriverSocket(private val tokenProvider: () -> String?) {
 
     companion object {
         private const val TAG = "DriverSocket"
@@ -42,7 +45,7 @@ class DriverSocket(private val token: String?) {
 
     fun connect() {
         if (closed) return
-        val request = Request.Builder().url(wsUrl(token)).build()
+        val request = Request.Builder().url(wsUrl(tokenProvider())).build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {
                 Log.i(TAG, "connected")

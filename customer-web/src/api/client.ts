@@ -11,6 +11,14 @@ export async function getJson<T>(path: string): Promise<T> {
   return body as T;
 }
 
+// Same-origin WebSocket URL for the given path (defaults to the ROOT /ws
+// endpoint — NOT under /api/v1). Derived from window.location so it works
+// through the Vite dev proxy and prod nginx with no extra env var.
+export function wsUrl(path = "/ws"): string {
+  const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${proto}//${window.location.host}${path}`;
+}
+
 export async function postJson<T>(path: string, payload: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: "POST",

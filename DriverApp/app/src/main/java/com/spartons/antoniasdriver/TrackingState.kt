@@ -13,6 +13,7 @@ import android.content.Context
 object TrackingState {
     private const val PREFS = "tracking"
     private const val KEY_WANTED = "tracking_wanted"
+    private const val KEY_BOOKING = "active_booking"
 
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -22,4 +23,21 @@ object TrackingState {
     }
 
     fun isWanted(context: Context): Boolean = prefs(context).getBoolean(KEY_WANTED, false)
+
+    /**
+     * Persist the booking whose customer is being streamed, so WebSocket
+     * publishing can resume (not degrade to REST-only) after a START_STICKY /
+     * boot service restart. Pass null to clear it when tracking stops.
+     */
+    fun setActiveBooking(context: Context, bookingId: Long?) {
+        prefs(context).edit().apply {
+            if (bookingId == null) remove(KEY_BOOKING) else putLong(KEY_BOOKING, bookingId)
+        }.apply()
+    }
+
+    /** The persisted active booking id, or null if none is stored. */
+    fun activeBooking(context: Context): Long? {
+        val p = prefs(context)
+        return if (p.contains(KEY_BOOKING)) p.getLong(KEY_BOOKING, -1L).takeIf { it >= 0 } else null
+    }
 }

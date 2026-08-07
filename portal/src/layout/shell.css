@@ -1,0 +1,43 @@
+/* Dark navy sidebar (SMART Drill admin portal design). */
+.sd-navbar {
+  background: #0c1e3a;
+  border-right: none;
+}
+
+.sd-navbar .mantine-NavLink-root {
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  margin-bottom: 2px;
+}
+.sd-navbar .mantine-NavLink-label { font-size: 14px; font-weight: 500; }
+.sd-navbar .mantine-NavLink-root:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.sd-navbar .mantine-NavLink-root[data-active],
+.sd-navbar .mantine-NavLink-root[data-active]:hover {
+  background: var(--mantine-color-brand-6);
+  color: #fff;
+}
+
+/* section label */
+.sd-navbar__section {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 14px 10px 6px;
+}
+
+/* "Need help" card pinned at the bottom */
+.sd-help {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.sd-help__title { font-weight: 700; font-size: 13px; color: #fff; }
+.sd-help__sub { font-size: 12px; color: rgba(255, 255, 255, 0.6); }
+.sd-help__phone { font-size: 14px; font-weight: 700; color: #6ea8f0; margin-top: 2px; }

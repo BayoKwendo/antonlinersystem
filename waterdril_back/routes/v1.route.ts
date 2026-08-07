@@ -4,6 +4,7 @@
 // =============================================================================
 import { Router } from "../deps.ts";
 import { requireAuth, requireRole } from "../middlewares/auth.ts";
+import { rateLimit } from "../middlewares/rateLimit.ts";
 import authController from "../controllers/v1/authController.ts";
 import catalogController from "../controllers/v1/catalogController.ts";
 import bookingController from "../controllers/v1/bookingController.ts";
@@ -18,28 +19,41 @@ import uploadController from "../controllers/v1/uploadController.ts";
 
 const router = new Router({ prefix: "/api/v1" });
 
+// Rate-limit windows for the public (unauthenticated) surface. Keyed by IP.
+const MIN = 60_000;
+const rlOtp = rateLimit({ name: "otp", windowMs: 10 * MIN, max: 5 });
+const rlVerify = rateLimit({ name: "otpverify", windowMs: 10 * MIN, max: 12 });
+const rlLogin = rateLimit({ name: "login", windowMs: 5 * MIN, max: 10 });
+const rlReset = rateLimit({ name: "pwreset", windowMs: 15 * MIN, max: 5 });
+const rlSignup = rateLimit({ name: "signup", windowMs: 60 * MIN, max: 5 });
+const rlCreate = rateLimit({ name: "reqcreate", windowMs: 60 * MIN, max: 8 });
+const rlLookup = rateLimit({ name: "lookup", windowMs: 10 * MIN, max: 10 });
+const rlSign = rateLimit({ name: "uploadsign", windowMs: 10 * MIN, max: 40 });
+const rlPay = rateLimit({ name: "pay", windowMs: 10 * MIN, max: 10 });
+const rlComplaint = rateLimit({ name: "complaint", windowMs: 30 * MIN, max: 5 });
+
 // --- public ------------------------------------------------------------------
 router
-  .post("/auth/otp/request", authController.requestOtp)
-  .post("/auth/otp/verify", authController.verifyOtp)
-  .post("/auth/login", authController.login)
+  .post("/auth/otp/request", rlOtp, authController.requestOtp)
+  .post("/auth/otp/verify", rlVerify, authController.verifyOtp)
+  .post("/auth/login", rlLogin, authController.login)
   .post("/auth/refresh", authController.refresh)
   .post("/auth/logout", authController.logout)
-  .post("/auth/password/reset", authController.resetPassword)
+  .post("/auth/password/reset", rlReset, authController.resetPassword)
   .get("/services", catalogController.listCategories)
   // Public provider self-signup (Android) — returns auth tokens.
-  .post("/providers/signup", providerController.signup)
+  .post("/providers/signup", rlSignup, providerController.signup)
   // Public service requests (frictionless — no auth) + read-only tracking.
-  .post("/uploads/sign", uploadController.sign)
-  .post("/requests", requestController.create)
-  .post("/requests/lookup", requestController.lookup)
-  .post("/requests/lookup/verify", requestController.lookupVerify)
+  .post("/uploads/sign", rlSign, uploadController.sign)
+  .post("/requests", rlCreate, requestController.create)
+  .post("/requests/lookup", rlLookup, requestController.lookup)
+  .post("/requests/lookup/verify", rlLookup, requestController.lookupVerify)
   .get("/track/:token", requestController.track)
   // Token-authorized customer journey actions (the tracking token is the credential).
-  .post("/track/:token/pay", requestController.pay)
+  .post("/track/:token/pay", rlPay, requestController.pay)
   .post("/track/:token/confirm-arrival", requestController.confirmArrival)
   .post("/track/:token/confirm-completion", requestController.confirmCompletion)
-  .post("/track/:token/complaint", requestController.complaint)
+  .post("/track/:token/complaint", rlComplaint, requestController.complaint)
   // M-Pesa callbacks (Safaricom posts here; no user auth).
   .post("/payments/mpesa/stk-callback", paymentController.stkCallback)
   .post("/payments/mpesa/c2b", paymentController.c2bCallback);
@@ -100,6 +114,9 @@ const STAFF = ["admin", "assistance", "finance", "owner"];
 router
   .get("/admin/stats", requireAuth, requireRole(...STAFF), adminController.stats)
   .get("/admin/analytics", requireAuth, requireRole(...STAFF), adminController.analytics)
+  .get("/admin/overview", requireAuth, requireRole(...STAFF), adminController.overview)
+  .get("/admin/provider-applications", requireAuth, requireRole("admin", "assistance", "owner"), adminController.providerApplications)
+  .get("/admin/provider-applications/:id", requireAuth, requireRole("admin", "assistance", "owner"), adminController.providerApplication)
   .get("/admin/providers", requireAuth, requireRole("admin", "assistance", "owner"), adminController.listProviders)
   .get("/admin/providers/locations", requireAuth, requireRole(...STAFF), adminController.providerLocations)
   .get("/admin/providers/:id", requireAuth, requireRole("admin", "assistance", "owner"), adminController.providerDetail)

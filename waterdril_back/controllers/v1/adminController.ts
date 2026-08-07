@@ -8,6 +8,7 @@ import { ok } from "../../utils/http.ts";
 import { numericId, parseBody } from "../../utils/validate.ts";
 import { currentUser } from "../../middlewares/auth.ts";
 import adminRepo from "../../repositories/adminRepo.ts";
+import overviewRepo from "../../repositories/overviewRepo.ts";
 import authService from "../../services/authService.ts";
 import accountRepo from "../../repositories/accountRepo.ts";
 import { audit } from "../../services/audit.ts";
@@ -44,6 +45,16 @@ function searchQ(ctx: Context) {
 const adminController = {
   stats: async (ctx: Context) => ok(ctx, await adminRepo.stats()),
   analytics: async (ctx: Context) => ok(ctx, await adminRepo.analytics()),
+  overview: async (ctx: Context) => ok(ctx, await overviewRepo.overview()),
+
+  // Provider verification queue + review detail (per provider account / user_id).
+  providerApplications: async (ctx: Context) =>
+    ok(ctx, await adminRepo.listProviderApplications({ status: ctx.request.url.searchParams.get("status") ?? undefined, ...page(ctx) })),
+  providerApplication: async (ctx: Context) => {
+    const app = await adminRepo.providerApplication(numericId(ctx));
+    if (!app) throw notFound("Provider application not found");
+    ok(ctx, app);
+  },
 
   listProviders: async (ctx: Context) => {
     const me = currentUser(ctx);

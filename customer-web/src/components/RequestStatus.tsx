@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Icon } from "./Icons";
+import { LiveMap } from "./LiveMap";
 import { etaDaysFor } from "../lib/serviceForms";
+import { useLiveTrack } from "../lib/useLiveTrack";
 import "./request-status.css";
 
 // The 4 customer-facing milestones. `done` is derived from the backend status.
@@ -49,6 +51,12 @@ export interface RequestStatusProps {
   accent: string;
   title: string;
   subtitle: string;
+  /** Tracking token — drives the live WebSocket subscription. */
+  token: string;
+  providerName: string | null;
+  providerPhone: string | null;
+  siteLocation: { lat: number; lng: number } | null;
+  providerLocation: { lat: number; lng: number; at: string | null } | null;
 }
 
 export function RequestStatusView(p: RequestStatusProps) {
@@ -57,6 +65,23 @@ export function RequestStatusView(p: RequestStatusProps) {
   const doneCount = STATUS_DONE[p.status] ?? 1;
   const finished = p.status === "confirmed" || p.status === "completed";
   const rootStyle = { ["--accent"]: p.accent } as CSSProperties;
+
+  // The driver only publishes while en_route (frozen at last position on arrival),
+  // so the live map is meaningful for exactly these two statuses.
+  const isLive = p.status === "en_route" || p.status === "arrived";
+  const track = useLiveTrack(p.token, { enabled: isLive });
+
+  // Seed with the REST provider_location for an instant first paint, then let the
+  // socket take over. Socket coords always win once they arrive.
+  const seedCoord = p.providerLocation
+    ? { lat: p.providerLocation.lat, lng: p.providerLocation.lng, ts: p.providerLocation.at ? Date.parse(p.providerLocation.at) : Date.now() }
+    : null;
+  const driver = track.coord ?? seedCoord;
+  // Only treat the feed as "paused" once the socket has actually reported offline;
+  // before any socket message we optimistically show the seeded position as live.
+  const paused = track.coord ? !track.live : false;
+  const lastSeenTs = track.coord?.ts ?? (p.providerLocation?.at ? Date.parse(p.providerLocation.at) : null);
+  const lastSeenLabel = lastSeenTs && !Number.isNaN(lastSeenTs) ? fmtTime(new Date(lastSeenTs)) : null;
 
   return (
     <section className="sd-succ" style={rootStyle}>
@@ -89,8 +114,35 @@ export function RequestStatusView(p: RequestStatusProps) {
           </div>
         </div>
 
+        {/* live tracking — provider en route / arrived */}
+        {isLive && (
+          <div className="sd-succ__live">
+            <div className="sd-succ__live-head">
+              <div className="sd-succ__live-info">
+                <span className="sd-succ__live-eyebrow">
+                  <span className={"sd-succ__live-dot" + (paused ? " sd-succ__live-dot--paused" : "")} />
+                  {p.status === "arrived" ? "Arrived" : "Live"}
+                </span>
+                <strong>{p.status === "arrived" ? "Your provider has arrived" : "Your provider is on the way"}</strong>
+                {p.providerName && <small>{p.providerName}</small>}
+              </div>
+              {p.providerPhone && (
+                <a href={`tel:${p.providerPhone}`} className="sd-btn sd-btn--ghost">
+                  <Icon name="phone" size={15} /> Call
+                </a>
+              )}
+            </div>
+            <LiveMap driver={driver} site={p.siteLocation} live={!paused} lastSeenAt={p.providerLocation?.at ?? null} />
+            {paused && (
+              <p className="sd-succ__live-paused">
+                Live location paused{lastSeenLabel ? ` — last seen ${lastSeenLabel}` : ""}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* countdown */}
-        {!finished && (
+        {!finished && !isLive && (
           <div className="sd-succ__eta">
             <div className="sd-succ__eta-head"><Icon name="clock" size={18} /> Estimated Service Delivery in</div>
             <div className="sd-succ__cd">

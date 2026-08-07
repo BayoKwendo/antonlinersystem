@@ -94,7 +94,7 @@ export default function Login() {
       <Paper shadow="md" radius="lg" p="xl" w={380} withBorder>
         <Stack gap="xs" mb="md">
           <Logo />
-          <Text c="dimmed" size="sm">Smart Drilling — staff portal</Text>
+          <Text c="dimmed" size="sm">SMART Drill — staff portal</Text>
         </Stack>
         <form onSubmit={form.onSubmit(submit)}>
           <Stack>

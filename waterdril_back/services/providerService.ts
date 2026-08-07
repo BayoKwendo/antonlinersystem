@@ -57,6 +57,9 @@ export const providerService = {
         [userId, input.business_name.trim(), input.kra_pin.trim(), input.bank_details ?? null],
       );
 
+      // Replace any previously-uploaded documents — supports re-application after
+      // a rejection (the admin then re-reviews the fresh set and re-approves).
+      await query(`DELETE FROM provider_documents WHERE user_id = ?`, [userId]);
       for (const d of input.documents ?? []) {
         await query(`INSERT INTO provider_documents (user_id, kind, url) VALUES (?, ?, ?)`, [userId, d.kind, d.url]);
       }
@@ -85,7 +88,12 @@ export const providerService = {
 
     if (!approve) {
       await client.query(`UPDATE provider_accounts SET verification_status = 'rejected', verification_note = ? WHERE user_id = ?`, [note ?? null, userId]);
-      await notifyUser(userId, "Verification update", `Your SMART Drill provider application needs attention.${note ? " " + note : ""}`, { push: false });
+      await notifyUser(
+        userId,
+        "Verification update",
+        `SMART Drill: your provider application needs changes.${note ? " " + note : ""} Please update your details in the app and resubmit.`,
+        { push: false, sms: true },
+      );
       await audit(actorId, "provider.reject", "user", userId, { note });
       return { verification_status: "rejected" };
     }
@@ -108,7 +116,7 @@ export const providerService = {
         await query(`UPDATE provider_profiles SET code = ?, verified_at = NOW(), availability = 'available' WHERE id = ?`, [code, l.id]);
       }
     });
-    await notifyUser(userId, "You're verified!", "Your SMART Drill provider account is verified — you can now receive jobs.", { push: false });
+    await notifyUser(userId, "You're verified!", "SMART Drill: your provider account is verified. You can now receive jobs in the app.", { push: false, sms: true });
     await audit(actorId, "provider.verify", "user", userId, {});
     return { verification_status: "verified" };
   },

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -49,6 +50,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,6 +62,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -172,11 +176,15 @@ fun JobDetailScreen(
     val s by vm.state.collectAsState()
     val context = LocalContext.current
     var menuOpen by remember { mutableStateOf(false) }
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val notify: (String) -> Unit = { msg -> scope.launch { snackbar.showSnackbar(msg) } }
     LaunchedEffect(bookingId) { vm.load(bookingId) }
     LaunchedEffect(s.promptDone) { if (s.promptDone) onPromptPayment(bookingId) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -199,7 +207,7 @@ fun JobDetailScreen(
             s.loading -> LoadingBox(Modifier.padding(pad))
             b == null -> MessageBox(s.error ?: "Could not load this job.", Modifier.padding(pad))
             b.status == JobStatus.PENDING_PAYMENT -> AwaitingPaymentBody(Modifier.padding(pad), b, s.working, s.error, context, vm)
-            else -> ProgressBody(Modifier.padding(pad), b, s.working, s.error, context, vm)
+            else -> ProgressBody(Modifier.padding(pad), b, s.working, s.error, context, vm, notify)
         }
     }
 }
@@ -238,10 +246,17 @@ private fun AwaitingPaymentBody(modifier: Modifier, b: Job, working: Boolean, er
 // Progress mode (confirmed and beyond)
 // ---------------------------------------------------------------------------
 @Composable
-private fun ProgressBody(modifier: Modifier, b: Job, working: Boolean, error: String?, context: Context, vm: JobDetailViewModel) {
+private fun ProgressBody(modifier: Modifier, b: Job, working: Boolean, error: String?, context: Context, vm: JobDetailViewModel, notify: (String) -> Unit) {
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         HeaderCard(b, showServiceDate = true)
         Spacer(Modifier.height(14.dp))
+
+        // Live-tracking window is en_route only: mirror the foreground-service
+        // notification with an in-app indicator + a stop control.
+        if (b.status == JobStatus.EN_ROUTE) {
+            LiveSharingBanner(enabled = !working) { vm.arrived(context, b.id) }
+            Spacer(Modifier.height(14.dp))
+        }
 
         WhiteCard {
             MiniLabel("JOB PROGRESS")
@@ -252,7 +267,7 @@ private fun ProgressBody(modifier: Modifier, b: Job, working: Boolean, error: St
 
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall); Spacer(Modifier.height(8.dp)) }
 
-        StageCard(b, working, context, vm)
+        StageCard(b, working, context, vm, notify)
         Spacer(Modifier.height(14.dp))
 
         JobSummaryCard(b)
@@ -264,12 +279,19 @@ private fun ProgressBody(modifier: Modifier, b: Job, working: Boolean, error: St
 }
 
 @Composable
-private fun StageCard(b: Job, working: Boolean, context: Context, vm: JobDetailViewModel) {
+private fun StageCard(b: Job, working: Boolean, context: Context, vm: JobDetailViewModel, notify: (String) -> Unit) {
     var showUpdate by remember { mutableStateOf(false) }
     val s = b.status
     val onSite = s == JobStatus.ARRIVED || s == JobStatus.IN_PROGRESS
     val stage1Done = s in setOf(JobStatus.ARRIVED, JobStatus.IN_PROGRESS, JobStatus.COMPLETED, JobStatus.CONFIRMED)
     val stage3Done = s in setOf(JobStatus.COMPLETED, JobStatus.CONFIRMED)
+
+    // Gate the trip start on runtime location permission — without it the
+    // foreground service self-stops and tracking silently never starts.
+    val startTrip = rememberLocationPermissionRequest(
+        onGranted = { vm.headedToSite(context, b.id) },
+        onDenied = { notify("Location permission is needed to start the trip and share your live location with the customer.") },
+    )
 
     WhiteCard {
         // Stage 1 — Arrival on Site
@@ -283,7 +305,15 @@ private fun StageCard(b: Job, working: Boolean, context: Context, vm: JobDetailV
             detail = { DetailBox("Site Location", b.address ?: "Shared", BrandBlueLight) { MapLink(b, context) } },
             action = {
                 when {
-                    s == JobStatus.BOOKED -> StageButton("Headed to Site", BrandBlue, !working) { vm.headedToSite(context, b.id) }
+                    s == JobStatus.BOOKED -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        StageButton("Start Trip", BrandBlue, !working) { startTrip() }
+                        Text(
+                            "Share your live location with the customer",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MutedGrey,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
                     s == JobStatus.EN_ROUTE -> StageButton("I've Arrived", BrandBlue, !working) { vm.arrived(context, b.id) }
                     else -> DoneTag()
                 }
@@ -346,6 +376,37 @@ private fun StageCard(b: Job, working: Boolean, context: Context, vm: JobDetailV
             confirmButton = { TextButton(onClick = { showUpdate = false }) { Text("Done") } },
             dismissButton = { TextButton(onClick = { showUpdate = false }) { Text("Cancel") } },
         )
+    }
+}
+
+/**
+ * In-app mirror of the location foreground-service notification: shows while the
+ * driver is en_route and live-streaming, with a Stop control that ends the trip
+ * (marks arrived, which stops publishing).
+ */
+@Composable
+private fun LiveSharingBanner(enabled: Boolean, onStop: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(BrandBlueLight).padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(34.dp).clip(CircleShape).background(BrandBlue.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
+        ) { Icon(Icons.Filled.LocationOn, null, tint = BrandBlue, modifier = Modifier.size(18.dp)) }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text("Sharing your live location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
+            Text("The customer can see you on the way.", style = MaterialTheme.typography.bodySmall, color = MutedGrey)
+        }
+        OutlinedButton(
+            onClick = onStop,
+            enabled = enabled,
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, if (enabled) DangerRed else HairlineGrey),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
+            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+        ) { Text("Stop", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold) }
     }
 }
 

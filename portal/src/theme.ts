@@ -1,17 +1,17 @@
 import { createTheme, type MantineColorsTuple } from "@mantine/core";
 
-// AntonLiner brand — rust orange (mark / primary actions).
+// SMART Drill brand — blue (mark / primary actions).
 const brand: MantineColorsTuple = [
-  "#fff0e8",
-  "#ffd8c4",
-  "#f4b095",
-  "#ec8a64",
-  "#e56a3b",
-  "#e25620",
-  "#e14d16", // primary shade
-  "#c8410d",
-  "#b2390a",
-  "#9a2e03",
+  "#e8f0fe",
+  "#cddcfb",
+  "#9fbcf5",
+  "#6e99ef",
+  "#487ce9",
+  "#2f6ae6",
+  "#1656c7", // primary shade
+  "#134db3",
+  "#0f4199",
+  "#0a3480",
 ];
 
 // Dark slate-teal (the wordmark / headings / sidebar ink).

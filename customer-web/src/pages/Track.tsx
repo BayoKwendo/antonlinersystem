@@ -41,6 +41,11 @@ export default function Track() {
           accent={getServiceForm(data.service_key).accent}
           title="Here's your request status"
           subtitle="We'll keep you updated at every step. This page refreshes automatically."
+          token={token}
+          providerName={data.provider_name}
+          providerPhone={data.provider_phone}
+          siteLocation={data.site_location}
+          providerLocation={data.provider_location}
         />
       )}
       <Footer />

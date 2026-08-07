@@ -17,6 +17,55 @@ function clamp(p: Page) {
 }
 
 const adminRepo = {
+  /** Provider verification queue: one row per provider account, filterable by status. */
+  async listProviderApplications({ status, limit, offset }: Page & { status?: string }) {
+    const { limit: l, offset: o } = clamp({ limit, offset });
+    const where = status ? "WHERE pa.verification_status = ?" : "";
+    const params: unknown[] = status ? [status] : [];
+    const [total] = await client.query(
+      `SELECT COUNT(*) AS total FROM provider_accounts pa ${where}`,
+      params,
+    );
+    const items = await client.query(
+      `SELECT pa.user_id, pa.business_name, pa.kra_pin, pa.bank_details,
+              pa.verification_status, pa.verification_note,
+              u.display_name, u.phone, u.email, u.created_at,
+              (SELECT COUNT(*) FROM provider_documents d WHERE d.user_id = pa.user_id) AS documents,
+              (SELECT COUNT(*) FROM provider_profiles pp WHERE pp.user_id = pa.user_id) AS services,
+              (SELECT GROUP_CONCAT(sc.name) FROM provider_profiles pp
+                 JOIN service_categories sc ON sc.id = pp.category_id WHERE pp.user_id = pa.user_id) AS service_names
+         FROM provider_accounts pa JOIN users u ON u.id = pa.user_id
+         ${where} ORDER BY FIELD(pa.verification_status,'pending','rejected','verified'), u.created_at DESC
+         LIMIT ? OFFSET ?`,
+      [...params, l, o],
+    );
+    return { items, total: total.total };
+  },
+
+  /** Full provider application for review: account, documents, and service listings. */
+  async providerApplication(userId: number) {
+    const account = (await client.query(
+      `SELECT pa.user_id, pa.business_name, pa.kra_pin, pa.bank_details,
+              pa.verification_status, pa.verification_note,
+              u.display_name, u.phone, u.email, u.created_at
+         FROM provider_accounts pa JOIN users u ON u.id = pa.user_id
+        WHERE pa.user_id = ? LIMIT 1`,
+      [userId],
+    ))[0];
+    if (!account) return null;
+    const documents = await client.query(
+      `SELECT id, kind, url, created_at FROM provider_documents WHERE user_id = ? ORDER BY id`,
+      [userId],
+    );
+    const services = await client.query(
+      `SELECT sc.\`key\`, sc.name, pp.code, pp.verified_at
+         FROM provider_profiles pp JOIN service_categories sc ON sc.id = pp.category_id
+        WHERE pp.user_id = ? ORDER BY sc.sort_order`,
+      [userId],
+    );
+    return { account, documents, services };
+  },
+
   async stats() {
     const [totals] = await client.query(
       `SELECT
@@ -348,6 +397,7 @@ const adminRepo = {
       phone?: string;
       bio?: string;
       owner_id?: number;
+      availability?: string;
     },
   ) {
     if (f.display_name !== undefined || f.phone !== undefined) {
@@ -366,6 +416,7 @@ const adminRepo = {
     if (f.bio !== undefined) { ppSets.push("bio = ?"); ppParams.push(f.bio); }
     if (f.owner_id !== undefined) { ppSets.push("owner_id = ?"); ppParams.push(f.owner_id); }
     if (f.verified !== undefined) ppSets.push(`verified_at = ${f.verified ? "CURRENT_TIMESTAMP" : "NULL"}`);
+    if (f.availability !== undefined) { ppSets.push("availability = ?"); ppParams.push(f.availability); }
     if (ppSets.length) {
       ppParams.push(id);
       await client.query(`UPDATE provider_profiles SET ${ppSets.join(", ")} WHERE user_id = ?`, ppParams);

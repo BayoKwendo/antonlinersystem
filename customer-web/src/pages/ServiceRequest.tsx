@@ -547,6 +547,11 @@ function SuccessPanel({ view, form, result, name }: { view: ServiceView; form: {
         accent={form.accent}
         title="Your request has been submitted successfully."
         subtitle="Thank you for choosing SMART Drill. We've received your request and our team will get to work right away."
+        token={result.tracking_token}
+        providerName={null}
+        providerPhone={null}
+        siteLocation={null}
+        providerLocation={null}
       />
       <div className="sd-req__track-cta" style={{ ["--accent" as string]: form.accent }}>
         <Link to={trackHref} className="sd-btn sd-btn--primary sd-btn--lg">Track My Request</Link>

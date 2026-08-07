@@ -17,6 +17,12 @@ import type {
   StaffUser,
   Stats,
   User,
+  Overview,
+  ProviderApplication,
+  ProviderApplicationRow,
+  RequestRow,
+  InvoiceRow,
+  PayoutRow,
 } from "../lib/types";
 
 type Page = { limit?: number; offset?: number };
@@ -34,6 +40,33 @@ export const api = {
   // --- dashboard ---
   stats: () => unwrap<Stats>(http.get("/admin/stats")),
   analytics: () => unwrap<Analytics>(http.get("/admin/analytics")),
+  overview: () => unwrap<Overview>(http.get("/admin/overview")),
+
+  // --- provider verification (applications) ---
+  providerApplications: (params: { status?: string } & Page) =>
+    unwrap<Paginated<ProviderApplicationRow>>(http.get("/admin/provider-applications", { params })),
+  providerApplication: (userId: number) =>
+    unwrap<ProviderApplication>(http.get(`/admin/provider-applications/${userId}`)),
+  verifyProvider: (userId: number, approve: boolean, note?: string) =>
+    http.post(`/admin/providers/${userId}/verify`, { approve, note }),
+
+  // --- journey ops (requests / invoices / payouts / QA) ---
+  adminRequests: (params: { status?: string }) =>
+    unwrap<RequestRow[]>(http.get("/admin/requests", { params })),
+  adminInvoices: (params: { status?: string }) =>
+    unwrap<InvoiceRow[]>(http.get("/admin/invoices", { params })),
+  adminPayouts: (params: { status?: string }) =>
+    unwrap<PayoutRow[]>(http.get("/admin/payouts", { params })),
+  requestPayouts: (id: number) => unwrap<PayoutRow[]>(http.get(`/admin/requests/${id}/payouts`)),
+  requestDocuments: (id: number) => unwrap<{ id: number; kind: string; url: string; created_at: string }[]>(http.get(`/admin/requests/${id}/documents`)),
+  issueInvoice: (id: number, amount?: number) => http.post(`/admin/requests/${id}/invoice`, { amount }),
+  setQuote: (id: number, amount: number) => http.post(`/admin/requests/${id}/quote`, { amount }),
+  confirmRequestPayment: (id: number) => http.post(`/admin/requests/${id}/payment`, {}),
+  assignProvider: (id: number, provider_id: number) => http.post(`/admin/requests/${id}/assign`, { provider_id }),
+  verifyCompletion: (id: number) => http.post(`/admin/requests/${id}/verify`, {}),
+  rateProvider: (id: number, body: { rating: number; feedback?: number; timeliness?: number; quality?: number; note?: string }) =>
+    http.post(`/admin/requests/${id}/rating`, body),
+  markPayoutPaid: (id: number, ref?: string) => http.post(`/admin/payouts/${id}/mark-paid`, { ref }),
 
   // --- providers ---
   providers: (params: { category?: string; q?: string } & Page) =>
