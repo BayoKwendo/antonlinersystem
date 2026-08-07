@@ -42,6 +42,10 @@ export const jobsService = {
   async accept(providerId: number, bookingId: number, scheduledAt: string, note?: string) {
     const b = (await bookingRepo.byId(bookingId))[0];
     if (!b) throw notFound("Job not found.");
+    // One paid job at a time: block new acceptances while a paid job is unfinished.
+    if (await bookingRepo.hasActivePaidJob(providerId)) {
+      throw conflict("Finish your current job before taking a new one — you can only handle one paid job at a time.");
+    }
     const claimed = await client.withTransaction(async (query) => {
       const n = await bookingRepo.acceptJob(bookingId, providerId, scheduledAt, query);
       if (n !== 1) return false;

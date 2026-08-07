@@ -221,10 +221,12 @@ export const payments = {
     const parties = await bookingRepo.parties(bookingId);
     if (!parties) return;
     if (becameBooked) {
-      await notifyUser(parties.provider_id, "New booking", `You have been booked (#${bookingId}).`, {
-        sms: true,
-        data: { booking_id: bookingId },
-      });
+      await notifyUser(parties.provider_id, "Payment received — start your trip",
+        `Payment for job #${bookingId} is confirmed. Open the job and tap Start Trip to begin.`, {
+          sms: true,
+          // Deep-links the driver app straight to the job (Start Trip front-and-centre).
+          data: { type: "start_trip", booking_id: bookingId },
+        });
       await notifyUser(parties.customer_id, "Booking confirmed", `Your booking #${bookingId} is confirmed. Track your provider in the app.`, {
         sms: true,
         data: { booking_id: bookingId },

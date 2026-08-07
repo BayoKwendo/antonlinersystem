@@ -42,7 +42,13 @@ class Repository(private val api: ApiService, val session: SessionStore) {
         services: List<String>,
         documents: List<DocumentUpload>,
     ): AuthResult {
-        val uploaded = documents.mapNotNull { d -> uploadDocument(d)?.let { key -> SignupDoc(d.kind, key) } }
+        // Every selected document must upload successfully; a failed upload (network /
+        // server error) aborts the sign-up rather than silently dropping the document.
+        val uploaded = documents.map { d ->
+            val url = uploadDocument(d)
+                ?: throw ApiException("Couldn't upload \"${d.filename}\". Check your connection and try again.")
+            SignupDoc(d.kind, url)
+        }
         val result = api.signup(
             ProviderSignupReq(
                 fullName = fullName,

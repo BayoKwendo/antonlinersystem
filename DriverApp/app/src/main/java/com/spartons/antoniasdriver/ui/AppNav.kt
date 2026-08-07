@@ -1,6 +1,7 @@
 package com.spartons.antoniasdriver.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,8 +30,21 @@ private object Routes {
 }
 
 @Composable
-fun AppNav(startLoggedIn: Boolean) {
+fun AppNav(
+    startLoggedIn: Boolean,
+    deepLinkJobId: Long? = null,
+    onDeepLinkConsumed: () -> Unit = {},
+) {
     val nav = rememberNavController()
+
+    // A "start your trip" push tap deep-links straight to the job screen (only when
+    // logged in; otherwise it's dropped and the driver lands on login).
+    LaunchedEffect(deepLinkJobId, startLoggedIn) {
+        if (deepLinkJobId != null && startLoggedIn) {
+            nav.navigate("${Routes.JOB}/$deepLinkJobId") { launchSingleTop = true }
+            onDeepLinkConsumed()
+        }
+    }
 
     NavHost(navController = nav, startDestination = if (startLoggedIn) Routes.MAIN else Routes.LOGIN) {
 

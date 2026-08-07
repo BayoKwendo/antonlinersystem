@@ -251,6 +251,22 @@ const bookingRepo = {
     return res.affectedRows as number;
   },
 
+  /**
+   * True if the provider already has a paid, unfinished job — i.e. one whose
+   * payment is confirmed (booked) and not yet completed. Used to enforce
+   * "one paid job at a time": a provider can't accept new work until the paid
+   * one(s) are done.
+   */
+  async hasActivePaidJob(providerId: number, q?: Querier): Promise<boolean> {
+    const rows = await db(q)(
+      `SELECT 1 FROM bookings
+        WHERE provider_id = ? AND status IN ('booked','en_route','arrived','in_progress')
+        LIMIT 1`,
+      [providerId],
+    );
+    return rows.length > 0;
+  },
+
   /** Provider users offering a given category (for job-available notifications). */
   providersForCategory(categoryId: number) {
     return client.query(

@@ -154,6 +154,11 @@ class SignUpViewModel : ViewModel() {
         _state.value = _state.value.copy(documents = _state.value.documents + (field to upload))
     }
 
+    /** System-driven rejection of a picked file (bad format / too large / read error). */
+    fun rejectDocument(message: String) { _state.value = _state.value.copy(error = message) }
+
+    fun clearError() { _state.value = _state.value.copy(error = null) }
+
     fun register() {
         val s = _state.value
         val err = validate(s)
@@ -204,19 +209,25 @@ fun SignUpScreen(
     val context = LocalContext.current
 
     LaunchedEffect(s.done) { if (s.done) onRegistered() }
-    LaunchedEffect(s.error) { s.error?.let { snackbar.showSnackbar(it) } }
+    LaunchedEffect(s.error) { s.error?.let { snackbar.showSnackbar(it); vm.clearError() } }
 
     // Single picker reused across the six document rows; the pending field marks
-    // which document the returned Uri belongs to.
+    // which document the returned Uri belongs to. The picker is restricted to the
+    // accepted document types, and the returned file is validated (format + 5 MB)
+    // before it is accepted — invalid picks are rejected by the system, not kept.
     var pendingField by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         val field = pendingField
         pendingField = null
+        // A null uri means the user simply backed out of the file picker (nothing
+        // was selected) — that is not a cancellation of an accepted upload.
         if (field == null || uri == null) return@rememberLauncherForActivityResult
         scope.launch {
-            val upload = withContext(Dispatchers.IO) { readDocument(context, field, uri) }
-            if (upload != null) vm.setDocument(field, upload)
+            when (val result = withContext(Dispatchers.IO) { readDocumentValidated(context, field, uri) }) {
+                is DocPick.Ok -> vm.setDocument(field, result.doc)
+                is DocPick.Error -> vm.rejectDocument(result.message)
+            }
         }
     }
 
@@ -287,7 +298,7 @@ fun SignUpScreen(
                         title = doc.title,
                         icon = doc.icon,
                         selectedName = s.documents[doc.field]?.filename,
-                        onPick = { pendingField = doc.field; picker.launch("*/*") },
+                        onPick = { pendingField = doc.field; picker.launch(ALLOWED_DOC_MIME_TYPES) },
                     )
                 }
                 Spacer(Modifier.height(24.dp))
@@ -544,15 +555,45 @@ private fun InfoBanner() {
     }
 }
 
-/** Read a picked document's name, mime and bytes off the main thread. */
-private fun readDocument(context: Context, field: String, uri: Uri): DocumentUpload? {
+/** Maximum accepted statutory-document size (matches the "Max 5MB" UI hint). */
+private const val MAX_DOC_BYTES = 5 * 1024 * 1024
+private val ALLOWED_DOC_MIME = setOf("application/pdf", "image/png", "image/jpeg")
+private val ALLOWED_DOC_MIME_TYPES = ALLOWED_DOC_MIME.toTypedArray()
+
+/** Outcome of picking a document: either a validated file or a system rejection reason. */
+private sealed interface DocPick {
+    data class Ok(val doc: DocumentUpload) : DocPick
+    data class Error(val message: String) : DocPick
+}
+
+/**
+ * Read + validate a picked document off the main thread. Rejects unsupported
+ * formats and files over 5 MB (checking the reported size before reading, then
+ * the actual bytes as a backstop) so only valid files are ever accepted.
+ */
+private fun readDocumentValidated(context: Context, field: String, uri: Uri): DocPick {
     val cr = context.contentResolver
+    val mime = cr.getType(uri)?.lowercase()
+    if (mime == null || mime !in ALLOWED_DOC_MIME) {
+        return DocPick.Error("Unsupported file type. Upload a PDF, PNG or JPG.")
+    }
+    val reportedSize = runCatching {
+        cr.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { c ->
+            if (c.moveToFirst() && !c.isNull(0)) c.getLong(0) else null
+        }
+    }.getOrNull()
+    if (reportedSize != null && reportedSize > MAX_DOC_BYTES) {
+        return DocPick.Error("File is too large. The maximum size is 5 MB.")
+    }
     val name = runCatching {
         cr.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
             if (c.moveToFirst()) c.getString(0) else null
         }
     }.getOrNull() ?: uri.lastPathSegment ?: "document"
-    val mime = cr.getType(uri) ?: "application/octet-stream"
-    val bytes = runCatching { cr.openInputStream(uri)?.use { it.readBytes() } }.getOrNull() ?: return null
-    return DocumentUpload(field, name, mime, bytes)
+    val bytes = runCatching { cr.openInputStream(uri)?.use { it.readBytes() } }.getOrNull()
+        ?: return DocPick.Error("Couldn't read the file. Please try again.")
+    if (bytes.size > MAX_DOC_BYTES) {
+        return DocPick.Error("File is too large. The maximum size is 5 MB.")
+    }
+    return DocPick.Ok(DocumentUpload(field, name, mime, bytes))
 }

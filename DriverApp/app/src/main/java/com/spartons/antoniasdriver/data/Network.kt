@@ -19,9 +19,9 @@ object Network {
     // Local backend on the host. Works for BOTH a USB physical device and the
     // emulator via `adb reverse tcp:5002 tcp:5002` (device localhost -> host:5002).
     // Emulator-only alt: http://10.0.2.2:5002/api/v1/ . Prod: the public host.
-       const val BASE_URL = "http://127.0.0.1:5002/api/v1/"
+//       const val BASE_URL = "http://127.0.0.1:5002/api/v1/"
 //    const val BASE_URL = "http://10.0.2.2:5002/api/v1/"
-//    const val BASE_URL = "https://api.antonlinersystems.co.ke/api/v1/"
+    const val BASE_URL = "https://api.antonlinersystems.co.ke/api/v1/"
 
     fun create(session: SessionStore): ApiService {
         val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }

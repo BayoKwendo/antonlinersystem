@@ -39,17 +39,21 @@ class DriverMessagingService : FirebaseMessagingService() {
         val notification = message.notification
         val title = notification?.title ?: message.data["title"] ?: getString(R.string.app_name)
         val body = notification?.body ?: message.data["body"] ?: return
-        showNotification(title, body)
+        val bookingId = message.data["booking_id"]?.toLongOrNull()
+        showNotification(title, body, bookingId)
     }
 
-    private fun showNotification(title: String, body: String) {
+    private fun showNotification(title: String, body: String, bookingId: Long?) {
         ensureChannel()
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            // Deep-link straight to the job (Start Trip front-and-centre) when tapped.
+            if (bookingId != null) putExtra(EXTRA_DEEPLINK_JOB_ID, bookingId)
         }
+        // Distinct request code per booking so a new deep-link doesn't reuse a stale extra.
         val pending = PendingIntent.getActivity(
-            this, 0, intent,
+            this, (bookingId ?: 0L).toInt(), intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
