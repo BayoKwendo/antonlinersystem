@@ -96,10 +96,17 @@ const F_NAME: FormField = { name: "full_name", label: "Full Name", type: "text",
 const F_PHONE: FormField = { name: "phone", label: "Phone Number", type: "tel", required: true, placeholder: "07XX XXX XXX", icon: "phone" };
 const F_LOC = (label = "Property / Site Location"): FormField => ({ name: "location", label, type: "location", required: true, help: "Drop a pin on the map or search for your location.", icon: "pin" });
 
+// ---- optional contact fields injected into every service (hero-sidebar + timeline) ----
+// Email: where we send the invoice/updates. KRA PIN: used to prepare the invoice.
+// Both optional — the customer can add them now or later.
+const F_EMAIL: FormField = { name: "email", label: "Email Address (Optional)", type: "email", required: false, placeholder: "Enter your email address", help: "We'll send your invoice and updates here.", icon: "mail" };
+const F_KRA: FormField = { name: "kra_pin", label: "KRA PIN (Optional)", type: "text", required: false, placeholder: "e.g. A012345678Z", help: "Used to prepare your invoice. You can provide it later.", icon: "card" };
+
 // ---- reusable timeline fields (Hydro top grid) ----
 const T_NAME: FormField = { name: "full_name", label: "Full Name", type: "text", required: true, placeholder: "Enter your full name", half: true };
 const T_PHONE: FormField = { name: "phone", label: "Phone Number", type: "tel", required: true, placeholder: "07XX XXX XXX", half: true };
-const T_EMAIL: FormField = { name: "email", label: "Email Address", type: "email", required: true, placeholder: "Enter your email address", half: true };
+const T_EMAIL: FormField = { name: "email", label: "Email Address (Optional)", type: "email", required: false, placeholder: "Enter your email address", help: "We'll send your invoice and updates here.", half: true };
+const T_KRA: FormField = { name: "kra_pin", label: "KRA PIN (Optional)", type: "text", required: false, placeholder: "e.g. A012345678Z", help: "Used to prepare your invoice. You can provide it later.", half: true };
 const T_COUNTY: FormField = { name: "county", label: "County", type: "select", required: true, placeholder: "Select your county", options: COUNTIES, half: true };
 const T_HEAD: FormField[] = [T_NAME, T_PHONE, T_EMAIL, T_COUNTY];
 const T_LOC = (label = "Property / Site Location"): FormField => ({ name: "location", label, type: "location", required: true, help: "Drop a pin on the map or search for your location" });
@@ -332,4 +339,29 @@ export const DEFAULT_FORM: ServiceForm = {
   photo: "/hero.jpg",
 };
 
-export const getServiceForm = (key: string): ServiceForm => SERVICE_FORMS[key] ?? DEFAULT_FORM;
+/**
+ * Ensure every service collects an (optional) email + KRA PIN, without editing
+ * each service's `fields` array. Email is inserted right after the phone field
+ * (if the form doesn't already have one), and KRA PIN right after the email —
+ * so the contact fields stay grouped. Uses the icon-prefixed variants for
+ * hero-sidebar layouts and the half-width variants for the timeline grid.
+ */
+function withContactFields(form: ServiceForm): ServiceForm {
+  const fields = [...form.fields];
+  const timeline = form.layout === "timeline";
+
+  let emailIdx = fields.findIndex((f) => f.name === "email");
+  if (emailIdx === -1) {
+    const phoneIdx = fields.findIndex((f) => f.name === "phone");
+    const at = phoneIdx === -1 ? fields.length : phoneIdx + 1;
+    fields.splice(at, 0, timeline ? T_EMAIL : F_EMAIL);
+    emailIdx = at;
+  }
+  if (!fields.some((f) => f.name === "kra_pin")) {
+    fields.splice(emailIdx + 1, 0, timeline ? T_KRA : F_KRA);
+  }
+  return { ...form, fields };
+}
+
+export const getServiceForm = (key: string): ServiceForm =>
+  withContactFields(SERVICE_FORMS[key] ?? DEFAULT_FORM);

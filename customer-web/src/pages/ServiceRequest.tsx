@@ -27,6 +27,9 @@ const fromApi = (s: ApiService): ServiceView => ({ key: s.key, title: s.name, pr
 const fromCatalog = (s: ServiceDef): ServiceView => ({ key: s.key, title: s.title, pricingMode: s.pricingMode, icon: s.icon });
 
 const COMMON = new Set(["full_name", "phone", "email", "location"]);
+// Matches the backend's z.string().email() so an invalid address is caught before
+// the OTP step rather than failing the request server-side.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ServiceRequest() {
   const { key = "" } = useParams();
@@ -87,6 +90,13 @@ export default function ServiceRequest() {
   const validate = (): boolean => {
     const next: Record<string, string> = {};
     for (const f of form.fields) {
+      // Email is optional, but when provided it must be a valid address.
+      if (f.type === "email") {
+        const v = values[f.name]?.trim();
+        if (!v) { if (f.required) next[f.name] = "This field is required."; continue; }
+        if (!EMAIL_RE.test(v)) next[f.name] = "Enter a valid email address.";
+        continue;
+      }
       if (!f.required) continue;
       if (f.type === "location") { if (!location) next[f.name] = "Please drop a pin on the map."; continue; }
       if (f.type === "file") { if (!(files[f.name]?.length)) next[f.name] = "Please upload the required document."; continue; }
@@ -556,6 +566,10 @@ function SuccessPanel({ view, form, result, name }: { view: ServiceView; form: {
       <div className="sd-req__track-cta" style={{ ["--accent" as string]: form.accent }}>
         <Link to={trackHref} className="sd-btn sd-btn--primary sd-btn--lg">Track My Request</Link>
         <p>Bookmark this page, or use the tracking link we've sent to your phone by SMS, to check progress anytime.</p>
+        <p className="sd-req__email-note">
+          <Icon name="mail" size={15} /> We'll send your invoice and updates to your email. Questions or documents? Reach us anytime at{" "}
+          <a href="mailto:info@smartdrill.co.ke">info@smartdrill.co.ke</a>.
+        </p>
       </div>
       <Footer />
     </div>

@@ -42,6 +42,7 @@ export function Icon({ name, size, className }: { name: IconName } & P) {
     case "doc": return <svg {...p}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>;
     // payment card
     case "card": return <svg {...p}><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/><path d="M7 15h4"/></svg>;
+    case "mail": return <svg {...p}><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>;
     // single person — provider contact
     case "user": return <svg {...p}><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>;
     // clock — fast response
@@ -80,5 +81,5 @@ export type IconName =
   | "survey" | "drill" | "pump" | "water" | "equip" | "maintenance" | "consult"
   | "shield" | "handshake" | "chart" | "phone" | "pin"
   | "tap" | "cursor" | "form" | "connect" | "bell" | "arrow" | "check"
-  | "doc" | "card" | "user" | "clock" | "lock" | "search" | "send" | "headset" | "usercheck" | "upload"
+  | "doc" | "card" | "mail" | "user" | "clock" | "lock" | "search" | "send" | "headset" | "usercheck" | "upload"
   | "calendar" | "sun" | "plug" | "bolt" | "chat" | "award" | "wrench";

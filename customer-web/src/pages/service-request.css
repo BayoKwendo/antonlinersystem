@@ -281,3 +281,16 @@ select.sd-field--placeholder { color: var(--sd-muted); }
   color: var(--sd-muted);
   font-size: 13.5px;
 }
+.sd-req__email-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 10px 16px;
+  border: 1px solid var(--sd-line);
+  border-radius: 10px;
+  background: var(--sd-surface);
+}
+.sd-req__email-note svg { color: var(--accent); flex: none; }
+.sd-req__email-note a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.sd-req__email-note a:hover { text-decoration: underline; }
