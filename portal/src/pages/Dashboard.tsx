@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api/endpoints";
 import { PageHeader } from "../components/PageHeader";
 import { money, date, titleCase, statusColor } from "../lib/format";
+import { useDateFilter, rangeToParams, isTodayRange } from "../lib/dateFilter";
 
 /** Card header with an optional right-aligned "View all" link (matches the design). */
 function CardHead({ title, to, icon, linkLabel = "View all" }: { title: string; to?: string; icon?: ReactNode; linkLabel?: string }) {
@@ -39,7 +40,14 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { data: o, isLoading } = useQuery({ queryKey: ["overview"], queryFn: api.overview, refetchInterval: 60_000 });
+  const { range } = useDateFilter();
+  const params = rangeToParams(range);
+  const today = isTodayRange(range);
+  const { data: o, isLoading } = useQuery({
+    queryKey: ["overview", params.from, params.to],
+    queryFn: () => api.overview(params),
+    refetchInterval: 60_000,
+  });
 
   const donut = o
     ? Object.entries(o.jobs_by_status)
@@ -84,8 +92,8 @@ export default function Dashboard() {
               sub={o.counters.active_jobs_today > 0 ? <Badge color="indigo" variant="light" size="sm">+{o.counters.active_jobs_today} today</Badge> : undefined} />
             <Tile icon={<IconShieldCheck size={22} />} color="grape" value={o.counters.awaiting_qa} label="Awaiting QA"
               sub={o.counters.awaiting_qa_today > 0 ? <Badge color="grape" variant="light" size="sm">+{o.counters.awaiting_qa_today} today</Badge> : undefined} />
-            <Tile icon={<IconArrowDownCircle size={22} />} color="teal" value={money(received)} label="Payments Received (today)"
-              sub={deltaPct !== null ? <Badge color={deltaPct >= 0 ? "teal" : "red"} variant="light" size="sm">{deltaPct >= 0 ? "+" : ""}{deltaPct}%</Badge> : undefined} />
+            <Tile icon={<IconArrowDownCircle size={22} />} color="teal" value={money(received)} label={today ? "Payments Received (today)" : "Payments Received (period)"}
+              sub={today && deltaPct !== null ? <Badge color={deltaPct >= 0 ? "teal" : "red"} variant="light" size="sm">{deltaPct >= 0 ? "+" : ""}{deltaPct}%</Badge> : undefined} />
             <Tile icon={<IconWallet size={22} />} color="orange" value={money(o.counters.payouts_due)} label="Provider Payments Due" />
           </SimpleGrid>
 
@@ -140,7 +148,7 @@ export default function Dashboard() {
               <CardHead title="Payments Overview" to="/payments" />
               <Stack gap="sm">
                 <PayRow label="Awaiting customer payment" value={money(o.counters.awaiting_payment_amount)} color="yellow" />
-                <PayRow label="Payments received today" value={money(o.counters.received_today)} color="teal" />
+                <PayRow label={today ? "Payments received today" : "Payments received (period)"} value={money(o.counters.received_today)} color="teal" />
                 <PayRow label="Provider payments due" value={money(o.counters.payouts_due)} color="orange" />
                 <PayRow label="Total payments received" value={money(o.counters.received_total)} color="blue" strong />
               </Stack>

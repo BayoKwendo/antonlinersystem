@@ -15,7 +15,7 @@ function Kpi({ label, value, color = "brand" }: { label: string; value: string; 
 }
 
 export default function Reports() {
-  const overview = useQuery({ queryKey: ["overview"], queryFn: api.overview });
+  const overview = useQuery({ queryKey: ["overview"], queryFn: () => api.overview() });
   const analytics = useQuery({ queryKey: ["analytics"], queryFn: api.analytics });
   const a = analytics.data;
   const c = overview.data?.counters;

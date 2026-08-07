@@ -27,3 +27,6 @@ waterdril_back/db/backups/
 
 # Locally-stored uploaded files (statutory docs, reports, attachments)
 waterdril_back/upload_files/
+
+# Transient local dev-only session seeder (never commit — auth bypass)
+portal/public/__devseed.html

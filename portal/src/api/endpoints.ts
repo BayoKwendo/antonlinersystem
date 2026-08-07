@@ -41,7 +41,7 @@ export const api = {
   // --- dashboard ---
   stats: () => unwrap<Stats>(http.get("/admin/stats")),
   analytics: () => unwrap<Analytics>(http.get("/admin/analytics")),
-  overview: () => unwrap<Overview>(http.get("/admin/overview")),
+  overview: (params?: { from?: string; to?: string }) => unwrap<Overview>(http.get("/admin/overview", { params })),
   search: (q: string) => unwrap<SearchResults>(http.get("/admin/search", { params: { q } })),
 
   // --- provider verification (applications) ---

@@ -45,7 +45,16 @@ function searchQ(ctx: Context) {
 const adminController = {
   stats: async (ctx: Context) => ok(ctx, await adminRepo.stats()),
   analytics: async (ctx: Context) => ok(ctx, await adminRepo.analytics()),
-  overview: async (ctx: Context) => ok(ctx, await overviewRepo.overview()),
+  overview: async (ctx: Context) => {
+    const url = ctx.request.url.searchParams;
+    const isDate = (v: string | null): v is string => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+    const from = url.get("from");
+    const to = url.get("to");
+    ok(ctx, await overviewRepo.overview({
+      from: isDate(from) ? from : undefined,
+      to: isDate(to) ? to : (isDate(from) ? from : undefined),
+    }));
+  },
 
   // Global top-bar search across requests, providers and customers.
   search: async (ctx: Context) => {

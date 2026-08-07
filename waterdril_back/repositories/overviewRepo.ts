@@ -13,22 +13,30 @@ const many = (sql: string, p: unknown[] = []) => client.query(sql, p);
 const ACTIVE = "('booked','en_route','arrived','in_progress')";
 
 export const overviewRepo = {
-  async overview() {
+  // `range` scopes the period-based figures (received, and the "+N in period"
+  // deltas) to a from/to date filter. NULL → CURDATE() (today), so the default
+  // dashboard is unchanged. Current-state totals (pending, active, awaiting QA)
+  // and the recent lists are always live and ignore the range.
+  async overview(range?: { from?: string; to?: string }) {
+    const from = range?.from || null;
+    const to = range?.to || null;
     // --- headline counters ---------------------------------------------------
+    // Period-scoped subqueries use COALESCE(?, CURDATE()); params are [from,to] per pair.
     const counters = await one(
       `SELECT
          (SELECT COUNT(*) FROM bookings WHERE status='submitted') AS new_requests,
-         (SELECT COUNT(*) FROM bookings WHERE status='submitted' AND DATE(created_at)=CURDATE()) AS new_requests_today,
+         (SELECT COUNT(*) FROM bookings WHERE status='submitted' AND DATE(created_at) BETWEEN COALESCE(?,CURDATE()) AND COALESCE(?,CURDATE())) AS new_requests_today,
          (SELECT COUNT(*) FROM bookings WHERE status='pending_payment') AS awaiting_payment,
          (SELECT COALESCE(SUM(COALESCE(quoted_amount,total_amount)),0) FROM bookings WHERE status='pending_payment') AS awaiting_payment_amount,
          (SELECT COUNT(*) FROM bookings WHERE status IN ${ACTIVE}) AS active_jobs,
-         (SELECT COUNT(*) FROM bookings WHERE status IN ${ACTIVE} AND DATE(created_at)=CURDATE()) AS active_jobs_today,
+         (SELECT COUNT(*) FROM bookings WHERE status IN ${ACTIVE} AND DATE(created_at) BETWEEN COALESCE(?,CURDATE()) AND COALESCE(?,CURDATE())) AS active_jobs_today,
          (SELECT COUNT(*) FROM bookings WHERE status='completed') AS awaiting_qa,
-         (SELECT COUNT(*) FROM bookings WHERE status='completed' AND DATE(updated_at)=CURDATE()) AS awaiting_qa_today,
-         (SELECT COALESCE(SUM(amount),0) FROM payments WHERE status='success' AND DATE(created_at)=CURDATE()) AS received_today,
+         (SELECT COUNT(*) FROM bookings WHERE status='completed' AND DATE(updated_at) BETWEEN COALESCE(?,CURDATE()) AND COALESCE(?,CURDATE())) AS awaiting_qa_today,
+         (SELECT COALESCE(SUM(amount),0) FROM payments WHERE status='success' AND DATE(created_at) BETWEEN COALESCE(?,CURDATE()) AND COALESCE(?,CURDATE())) AS received_today,
          (SELECT COALESCE(SUM(amount),0) FROM payments WHERE status='success' AND DATE(created_at)=CURDATE()-INTERVAL 1 DAY) AS received_yesterday,
          (SELECT COALESCE(SUM(amount),0) FROM provider_payouts WHERE status='released') AS payouts_due,
          (SELECT COALESCE(SUM(amount),0) FROM payments WHERE status='success') AS received_total`,
+      [from, to, from, to, from, to, from, to],
     );
 
     // --- jobs by status (donut) ---------------------------------------------

@@ -2,12 +2,12 @@ import { ActionIcon, AppShell, Avatar, Burger, Group, Indicator, Menu, NavLink, 
 import { Logo } from "../components/Logo";
 import { GlobalSearch } from "../components/GlobalSearch";
 import { useDisclosure } from "@mantine/hooks";
-import dayjs from "dayjs";
+import { DateFilterProvider } from "../lib/dateFilter";
+import { DateFilterControl } from "../components/DateFilterControl";
 import {
   IconBell,
   IconBuildingFactory2,
   IconCalendarStats,
-  IconCalendarEvent,
   IconCash,
   IconChevronDown,
   IconCategory,
@@ -70,8 +70,10 @@ export default function Shell() {
     admin: "Super Admin", owner: "Owner", finance: "Finance", assistance: "Support", provider: "Provider", customer: "Customer",
   };
   const roleLabel = ROLE_LABEL[user?.roles?.[0] ?? ""] ?? (user?.roles?.[0] ?? "");
+  const isDashboard = location.pathname === "/";
 
   return (
+    <DateFilterProvider>
     <AppShell
       layout="alt"
       header={{ height: 64 }}
@@ -83,12 +85,12 @@ export default function Shell() {
         <Group h="100%" px="lg" gap="md">
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
           <GlobalSearch />
-          <Group gap={7} className="sd-datepill" ml="auto" visibleFrom="md">
-            <IconCalendarEvent size={15} stroke={1.8} />
-            <Text size="sm" fw={500}>Today, {dayjs().format("DD MMM YYYY")}</Text>
-          </Group>
+          <Group gap="md" ml="auto" wrap="nowrap">
+            {isDashboard && (
+              <Group visibleFrom="md"><DateFilterControl /></Group>
+            )}
 
-          <Menu shadow="md" width={230} position="bottom-end">
+            <Menu shadow="md" width={230} position="bottom-end">
             <Menu.Target>
               <Indicator color="red" size={8} offset={5} withBorder>
                 <ActionIcon variant="subtle" color="gray" size="lg" radius="xl" aria-label="Notifications">
@@ -123,6 +125,7 @@ export default function Shell() {
               <Menu.Item color="red" leftSection={<IconLogout size={16} />} onClick={async () => { await logout(); navigate("/login"); }}>Log out</Menu.Item>
             </Menu.Dropdown>
           </Menu>
+          </Group>
         </Group>
       </AppShell.Header>
 
@@ -155,5 +158,6 @@ export default function Shell() {
         <Outlet />
       </AppShell.Main>
     </AppShell>
+    </DateFilterProvider>
   );
 }
