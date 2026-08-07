@@ -124,11 +124,12 @@ export default function ServiceRequest() {
     };
   };
 
-  // Upload any selected files to S3 (presigned PUT); fall back to filename on failure.
+  // Upload any selected files to the backend (local disk); the form field name is
+  // the document purpose (survey_report, test_pump_report, attachments, …).
   const uploadDocuments = async (): Promise<string[]> => {
-    const all = Object.values(files).flat();
-    return Promise.all(all.map(async (f) => {
-      try { return await uploadFile(f); } catch { return f.name; }
+    const all = Object.entries(files).flatMap(([field, list]) => list.map((f) => ({ field, f })));
+    return Promise.all(all.map(async ({ field, f }) => {
+      try { return await uploadFile(f, "request", field); } catch { return f.name; }
     }));
   };
 

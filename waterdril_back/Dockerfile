@@ -17,6 +17,11 @@ RUN deno cache deps.ts
 COPY . .
 RUN deno cache server.ts
 
+# Uploaded files live here (served at /api/v1/files/<name>). Create + own it as
+# the runtime user so the app can write, and so a fresh named volume mounted here
+# inherits deno ownership. Persist it via a compose volume (see docker-compose.yml).
+RUN mkdir -p /app/upload_files && chown -R deno:deno /app/upload_files
+
 # Drop root for runtime.
 USER deno
 
@@ -26,5 +31,5 @@ EXPOSE 5002
 HEALTHCHECK --interval=30s --timeout=5s --retries=5 --start-period=20s \
   CMD ["deno", "eval", "--allow-net", "const r = await fetch('http://localhost:5002/').catch(() => null); Deno.exit(r && r.ok ? 0 : 1)"]
 
-# Flags mirror deno.json's `start` task. No --allow-write: the app never writes to disk.
-CMD ["run", "--allow-net", "--allow-env", "--allow-read", "--allow-sys", "server.ts"]
+# Flags mirror deno.json's `start` task. --allow-write is scoped to the uploads dir.
+CMD ["run", "--allow-net", "--allow-env", "--allow-read", "--allow-write=/app/upload_files", "--allow-sys", "server.ts"]

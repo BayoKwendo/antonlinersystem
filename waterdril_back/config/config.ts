@@ -89,13 +89,6 @@ export const MPESA = {
   CALLBACK_URL: optional("MPESA_CALLBACK_URL"),
 };
 
-export const AWS = {
-  ACCESS_KEY_ID: optional("AWS_ACCESS_KEY_ID"),
-  SECRET_ACCESS_KEY: optional("AWS_SECRET_ACCESS_KEY"),
-  S3_BUCKET: optional("AWS_S3_BUCKET", "pantheon2"),
-  S3_REGION: optional("AWS_S3_REGION", "us-east-1"),
-};
-
 export const APP = {
   HOTLINE: optional("HOTLINE", "0111051030"),
   DEFAULT_AVATAR_URL: optional("DEFAULT_AVATAR_URL"),

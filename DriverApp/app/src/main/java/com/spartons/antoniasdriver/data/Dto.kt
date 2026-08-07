@@ -163,12 +163,10 @@ data class PromptPaymentResult(
 
 data class OnlineState(val online: Boolean = false)
 
-// --- uploads (S3 presign for statutory documents) ---------------------------
-data class UploadSignResult(
+// --- uploads (local-disk upload result) -------------------------------------
+data class UploadResult(
     val url: String,
-    val key: String,
-    val bucket: String? = null,
-    @SerializedName("expires_in") val expiresIn: Int? = null,
+    val filename: String? = null,
 )
 
 /** One statutory document selected for upload during sign-up. */
@@ -195,6 +193,7 @@ data class AcceptJobReq(
 data class JobStatusReq(val to: String, val note: String? = null)
 
 data class SignupDoc(val kind: String, val url: String)
+
 data class ProviderSignupReq(
     @SerializedName("full_name") val fullName: String,
     @SerializedName("business_name") val businessName: String,
@@ -207,8 +206,3 @@ data class ProviderSignupReq(
     val documents: List<SignupDoc> = emptyList(),
 )
 
-data class UploadSignReq(
-    val filename: String,
-    @SerializedName("content_type") val contentType: String,
-    val size: Long? = null,
-)

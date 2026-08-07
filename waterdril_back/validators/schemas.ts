@@ -91,12 +91,6 @@ export const providerVerifySchema = z.object({ approve: z.boolean(), note: z.str
 export const jobAcceptSchema = z.object({ scheduled_at: z.string().min(4).max(40), note: z.string().max(500).optional() });
 export const jobStatusSchema = z.object({ to: z.enum(["en_route", "arrived", "in_progress", "completed"]), note: z.string().max(500).optional() });
 
-export const uploadSignSchema = z.object({
-  filename: z.string().min(1).max(200),
-  content_type: z.string().min(1).max(100),
-  size: z.coerce.number().int().positive().optional(),
-});
-
 // --- journey admin ops -------------------------------------------------------
 export const assignSchema = z.object({ provider_id: z.coerce.number().int().positive() });
 export const invoiceSchema = z.object({ amount: z.coerce.number().positive().optional() });

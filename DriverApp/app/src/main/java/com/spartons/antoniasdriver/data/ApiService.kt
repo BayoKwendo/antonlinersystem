@@ -1,8 +1,12 @@
 package com.spartons.antoniasdriver.data
 
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -63,9 +67,14 @@ interface ApiService {
     @POST("jobs/{id}/status")
     suspend fun jobStatus(@Path("id") id: Long, @Body body: JobStatusReq): ApiResponse<Unit>
 
-    // --- uploads (statutory documents; presigned S3 PUT) --------------------
-    @POST("uploads/sign")
-    suspend fun signUpload(@Body body: UploadSignReq): ApiResponse<UploadSignResult>
+    // --- uploads (statutory documents; multipart → backend local disk) ------
+    @Multipart
+    @POST("uploads")
+    suspend fun uploadFile(
+        @Part file: MultipartBody.Part,
+        @Part("context") context: RequestBody,
+        @Part("purpose") purpose: RequestBody,
+    ): ApiResponse<UploadResult>
 
     // --- notifications + devices --------------------------------------------
     @GET("notifications")

@@ -24,3 +24,6 @@ waterdril_back/db/backups/
 **/*.apk
 **/*.aab
 *.log
+
+# Locally-stored uploaded files (statutory docs, reports, attachments)
+waterdril_back/upload_files/

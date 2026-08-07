@@ -1,17 +1,11 @@
 package com.spartons.antoniasdriver.data
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
 /** Thin domain layer over the SMART Drill provider API; unwraps envelopes + persists the session. */
 class Repository(private val api: ApiService, val session: SessionStore) {
-
-    /** Bare client (no auth header) for direct-to-S3 presigned PUT uploads. */
-    private val uploadClient = OkHttpClient()
 
     // --- auth ---------------------------------------------------------------
     suspend fun login(phone: String, password: String): AuthResult {
@@ -66,19 +60,16 @@ class Repository(private val api: ApiService, val session: SessionStore) {
         return result
     }
 
-    /** Presign + PUT a document to S3; returns the object key, or null on any failure. */
+    /** Upload a statutory document to the backend (local disk); returns its served
+     *  URL, or null on any failure. context="driverreg", purpose=<document kind>. */
     private suspend fun uploadDocument(doc: DocumentUpload): String? = runCatching {
-        val signed = api.signUpload(UploadSignReq(doc.filename, doc.mime, doc.bytes.size.toLong())).unwrap()
-        withContext(Dispatchers.IO) {
-            val req = Request.Builder()
-                .url(signed.url)
-                .put(doc.bytes.toRequestBody(doc.mime.toMediaTypeOrNull()))
-                .build()
-            uploadClient.newCall(req).execute().use { resp ->
-                if (!resp.isSuccessful) throw ApiException("upload failed ${resp.code}")
-            }
-        }
-        signed.key
+        val filePart = MultipartBody.Part.createFormData(
+            "file", doc.filename, doc.bytes.toRequestBody(doc.mime.toMediaTypeOrNull()),
+        )
+        val text = "text/plain".toMediaTypeOrNull()
+        val context = "driverreg".toRequestBody(text)
+        val purpose = doc.kind.toRequestBody(text)
+        api.uploadFile(filePart, context, purpose).unwrap().url
     }.getOrNull()
 
     // --- provider self-service ----------------------------------------------

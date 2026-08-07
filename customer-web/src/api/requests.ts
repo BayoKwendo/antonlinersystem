@@ -1,4 +1,4 @@
-import { getJson, postJson } from "./client";
+import { BASE_URL, getJson, postJson } from "./client";
 
 export interface RequestPayload {
   service_key: string;
@@ -61,17 +61,21 @@ export const lookupRequest = (request_no: string, phone: string) =>
 export const lookupVerify = (request_no: string, phone: string, otp_code: string) =>
   postJson<{ tracking_token: string }>("/requests/lookup/verify", { request_no, phone, otp_code });
 
-interface SignResult { url: string; key: string; bucket: string; expires_in: number; }
+interface UploadResult { url: string; filename: string }
 
 /**
- * Upload a file to S3 via a presigned PUT and return the object key. Uses a bare
- * fetch for the PUT (no Authorization header — it would break the signature).
- * Falls back to the filename if presigning/upload isn't available.
+ * Upload a file to the backend (stored on local disk) and return its served URL.
+ * `context` groups the file (e.g. "request"); `purpose` is the document kind
+ * (e.g. the form field name), which shapes the stored filename.
  */
-export async function uploadFile(file: File): Promise<string> {
-  const type = file.type || "application/octet-stream";
-  const sign = await postJson<SignResult>("/uploads/sign", { filename: file.name, content_type: type, size: file.size });
-  const put = await fetch(sign.url, { method: "PUT", body: file, headers: { "Content-Type": type } });
-  if (!put.ok) throw new Error(`Upload failed (${put.status})`);
-  return sign.key;
+export async function uploadFile(file: File, context = "request", purpose = "doc"): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("context", context);
+  fd.append("purpose", purpose);
+  // No Content-Type header — the browser sets the multipart boundary itself.
+  const res = await fetch(`${BASE_URL}/uploads`, { method: "POST", body: fd });
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body?.success) throw new Error(body?.message ?? `Upload failed (${res.status})`);
+  return (body.data as UploadResult).url;
 }

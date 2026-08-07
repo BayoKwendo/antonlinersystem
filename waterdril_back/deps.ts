@@ -17,4 +17,3 @@ export { load as loadEnv } from "@std/dotenv";
 export { default as bcrypt } from "bcryptjs";
 export { importPKCS8, SignJWT, jwtVerify } from "jose";
 export { z } from "zod";
-export { AwsClient } from "aws4fetch";

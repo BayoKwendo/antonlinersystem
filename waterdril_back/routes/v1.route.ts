@@ -44,7 +44,9 @@ router
   // Public provider self-signup (Android) — returns auth tokens.
   .post("/providers/signup", rlSignup, providerController.signup)
   // Public service requests (frictionless — no auth) + read-only tracking.
-  .post("/uploads/sign", rlSign, uploadController.sign)
+  // File uploads (multipart → local disk) + open file serving.
+  .post("/uploads", rlSign, uploadController.upload)
+  .get("/files/:name", uploadController.serve)
   .post("/requests", rlCreate, requestController.create)
   .post("/requests/lookup", rlLookup, requestController.lookup)
   .post("/requests/lookup/verify", rlLookup, requestController.lookupVerify)

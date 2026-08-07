@@ -26,6 +26,9 @@ services:
       FCM_SERVICE_ACCOUNT_FILE: /app/secrets/waterdril-firebase-adminsdk.json
     volumes:
       - ./waterdril_back/secrets:/app/secrets:ro
+      # Persist uploaded files (statutory docs, reports, request attachments)
+      # across container rebuilds. Served at /api/v1/files/<name>.
+      - smartdrill_uploads:/app/upload_files
 
   portal:
     build:
@@ -61,3 +64,8 @@ services:
       - "backend:host-gateway"
     depends_on:
       - backend
+
+volumes:
+  # Uploaded files (statutory docs, reports, request attachments). Survives
+  # `docker compose up -d --build`; deno owns it (see waterdril_back/Dockerfile).
+  smartdrill_uploads:
