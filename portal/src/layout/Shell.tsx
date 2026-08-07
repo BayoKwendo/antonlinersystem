@@ -1,11 +1,15 @@
-import { AppShell, Avatar, Burger, Group, Menu, NavLink, ScrollArea, Text, TextInput, Title, UnstyledButton } from "@mantine/core";
+import { ActionIcon, AppShell, Avatar, Burger, Group, Indicator, Menu, NavLink, ScrollArea, Text, UnstyledButton } from "@mantine/core";
 import { Logo } from "../components/Logo";
+import { GlobalSearch } from "../components/GlobalSearch";
 import { useDisclosure } from "@mantine/hooks";
 import dayjs from "dayjs";
 import {
+  IconBell,
   IconBuildingFactory2,
   IconCalendarStats,
+  IconCalendarEvent,
   IconCash,
+  IconChevronDown,
   IconCategory,
   IconGauge,
   IconHistory,
@@ -15,7 +19,6 @@ import {
   IconMessage,
   IconMessageReport,
   IconReportAnalytics,
-  IconSearch,
   IconSettings,
   IconShieldCheck,
   IconStar,
@@ -63,34 +66,54 @@ export default function Shell() {
   const location = useLocation();
 
   const items = NAV.filter((n) => !n.roles || hasRole(...n.roles));
+  const ROLE_LABEL: Record<string, string> = {
+    admin: "Super Admin", owner: "Owner", finance: "Finance", assistance: "Support", provider: "Provider", customer: "Customer",
+  };
+  const roleLabel = ROLE_LABEL[user?.roles?.[0] ?? ""] ?? (user?.roles?.[0] ?? "");
 
   return (
     <AppShell
-      header={{ height: 60 }}
+      layout="alt"
+      header={{ height: 64 }}
       navbar={{ width: 264, breakpoint: "sm", collapsed: { mobile: !opened } }}
       padding="lg"
       styles={{ main: { background: "light-dark(#f4f6fb, var(--mantine-color-dark-8))" } }}
     >
       <AppShell.Header>
-        <Group h="100%" px="md" gap="md">
+        <Group h="100%" px="lg" gap="md">
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-          <Title order={4} visibleFrom="sm">Dashboard</Title>
-          <TextInput
-            leftSection={<IconSearch size={16} />}
-            placeholder="Search requests, providers, customers…"
-            style={{ flex: 1, maxWidth: 460 }}
-            visibleFrom="sm"
-          />
-          <Text size="sm" c="dimmed" ml="auto" visibleFrom="md">{dayjs().format("ddd, DD MMM YYYY")}</Text>
+          <GlobalSearch />
+          <Group gap={7} className="sd-datepill" ml="auto" visibleFrom="md">
+            <IconCalendarEvent size={15} stroke={1.8} />
+            <Text size="sm" fw={500}>Today, {dayjs().format("DD MMM YYYY")}</Text>
+          </Group>
+
+          <Menu shadow="md" width={230} position="bottom-end">
+            <Menu.Target>
+              <Indicator color="red" size={8} offset={5} withBorder>
+                <ActionIcon variant="subtle" color="gray" size="lg" radius="xl" aria-label="Notifications">
+                  <IconBell size={20} />
+                </ActionIcon>
+              </Indicator>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>Needs attention</Menu.Label>
+              <Menu.Item leftSection={<IconInbox size={16} />} onClick={() => navigate("/requests")}>New customer requests</Menu.Item>
+              <Menu.Item leftSection={<IconBuildingFactory2 size={16} />} onClick={() => navigate("/providers")}>Provider applications</Menu.Item>
+              <Menu.Item leftSection={<IconMessageReport size={16} />} onClick={() => navigate("/complaints")}>Complaints</Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+
           <Menu shadow="md" width={200} position="bottom-end">
             <Menu.Target>
               <UnstyledButton>
-                <Group gap="xs">
+                <Group gap="xs" wrap="nowrap">
                   <Avatar color="brand" radius="xl" size={34}>{user?.display_name?.[0]?.toUpperCase() ?? "U"}</Avatar>
-                  <div style={{ lineHeight: 1.15 }}>
+                  <div style={{ lineHeight: 1.15 }} className="sd-userblock">
                     <Text size="sm" fw={600}>{user?.display_name}</Text>
-                    <Text size="xs" c="dimmed" tt="capitalize">{user?.roles?.[0] ?? ""}</Text>
+                    <Text size="xs" c="dimmed">{roleLabel}</Text>
                   </div>
+                  <IconChevronDown size={16} stroke={1.8} color="var(--mantine-color-gray-5)" />
                 </Group>
               </UnstyledButton>
             </Menu.Target>
@@ -105,7 +128,9 @@ export default function Shell() {
 
       <AppShell.Navbar className="sd-navbar" p="sm">
         <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-          <div style={{ padding: "6px 8px 14px" }}><Logo size="sm" onDark /></div>
+          <div style={{ height: 64, display: "flex", alignItems: "center", padding: "0 6px", marginBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <Logo size="sm" onDark />
+          </div>
           <ScrollArea style={{ flex: 1 }}>
             {items.map((n) => (
               <NavLink

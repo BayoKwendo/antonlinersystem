@@ -2,7 +2,8 @@ import { ActionIcon, Badge, Button, Center, Group, Loader, Menu, Table, Text, Te
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconDots, IconDownload } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../api/endpoints";
 import { apiError } from "../api/client";
 import { PageHeader } from "../components/PageHeader";
@@ -13,8 +14,12 @@ import type { Customer } from "../lib/types";
 
 export default function Customers() {
   const qc = useQueryClient();
-  const [q, setQ] = useState("");
+  const [params] = useSearchParams();
+  const qParam = params.get("q") ?? "";
+  const [q, setQ] = useState(qParam);
   const [page, setPage] = useState(1);
+  // Seed/refresh the search box when arrived at via a ?q deep link (global search).
+  useEffect(() => { setQ(qParam); setPage(1); }, [qParam]);
   const customers = useQuery({
     queryKey: ["customers", q, page],
     queryFn: () => api.customers({ q, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),

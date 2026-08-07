@@ -205,8 +205,15 @@ export interface Overview {
   provider_performance: { provider: string; jobs: number; rating: number | null }[];
   recent_requests: { id: number; request_no: string | null; status: string; location: string | null; created_at: string; service: string; customer: string }[];
   recent_activity: { status: string; note: string | null; created_at: string; request_no: string | null; service: string }[];
-  qa_queue: { id: number; request_no: string | null; status: string; service: string; customer: string; provider: string | null }[];
+  qa_queue: { id: number; request_no: string | null; status: string; completed_at: string; service: string; customer: string; provider: string | null }[];
   alerts: { delayed_jobs: number; unmatched_requests: number; pending_providers: number };
+}
+
+// --- global top-bar search --------------------------------------------------
+export interface SearchResults {
+  requests: { id: number; request_no: string | null; status: string; service: string; customer: string; phone: string | null }[];
+  providers: { id: number; name: string; person: string; phone: string | null; status: string | null }[];
+  customers: { id: number; name: string; phone: string | null }[];
 }
 
 // --- provider verification (applications) -----------------------------------

@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
-  Anchor, Badge, Button, Card, Group, Modal, SegmentedControl, Stack, Table, Text, Textarea, ThemeIcon,
+  Anchor, Badge, Button, Card, Group, Modal, SegmentedControl, Stack, Table, Text, Textarea, TextInput, ThemeIcon,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
-import { IconFileCheck, IconCheck, IconX, IconEye } from "@tabler/icons-react";
+import { IconFileCheck, IconCheck, IconX, IconEye, IconSearch } from "@tabler/icons-react";
 import { api } from "../api/endpoints";
 import { apiError } from "../api/client";
 import { PageHeader } from "../components/PageHeader";
@@ -25,6 +26,11 @@ export default function ServiceProviders() {
   const [reviewId, setReviewId] = useState<number | null>(null);
   const [reason, setReason] = useState("");
   const [opened, { open, close }] = useDisclosure(false);
+  const [params] = useSearchParams();
+  const qParam = params.get("q") ?? "";
+  const [search, setSearch] = useState(qParam);
+  // Arrived via a ?q deep link (global search): show all statuses and pre-filter.
+  useEffect(() => { if (qParam) { setSearch(qParam); setStatus("all"); setPage(1); } }, [qParam]);
 
   const list = useQuery({
     queryKey: ["provider-apps", status, page],
@@ -49,15 +55,26 @@ export default function ServiceProviders() {
 
   const openReview = (userId: number) => { setReviewId(userId); setReason(""); open(); };
 
+  const s = search.trim().toLowerCase();
+  const rows = (list.data?.items ?? []).filter((p) =>
+    !s || [p.business_name, p.display_name, p.phone, p.email].some((v) => (v ?? "").toString().toLowerCase().includes(s)));
+
   return (
     <>
       <PageHeader title="Service Providers" subtitle="Review provider applications, verify documents, and approve or reject. Providers self-register in the app." />
 
-      <Group mb="md">
+      <Group mb="md" justify="space-between">
         <SegmentedControl
           value={status}
           onChange={(v) => { setStatus(v); setPage(1); }}
           data={[{ label: "Pending", value: "pending" }, { label: "Verified", value: "verified" }, { label: "Rejected", value: "rejected" }, { label: "All", value: "all" }]}
+        />
+        <TextInput
+          leftSection={<IconSearch size={16} />}
+          placeholder="Search business, contact or phone"
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          w={280}
         />
       </Group>
 
@@ -68,7 +85,7 @@ export default function ServiceProviders() {
               <Table.Tr><Table.Th>Business</Table.Th><Table.Th>Contact</Table.Th><Table.Th>Services</Table.Th><Table.Th>Docs</Table.Th><Table.Th>Status</Table.Th><Table.Th /></Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {list.data?.items.map((p) => (
+              {rows.map((p) => (
                 <Table.Tr key={p.user_id}>
                   <Table.Td><Text fw={600}>{p.business_name ?? p.display_name}</Text><Text size="xs" c="dimmed">{p.display_name}</Text></Table.Td>
                   <Table.Td><Text size="sm">{p.phone}</Text><Text size="xs" c="dimmed">{p.email ?? ""}</Text></Table.Td>
@@ -78,8 +95,8 @@ export default function ServiceProviders() {
                   <Table.Td><Button size="xs" variant="light" leftSection={<IconEye size={14} />} onClick={() => openReview(p.user_id)}>Review</Button></Table.Td>
                 </Table.Tr>
               ))}
-              {list.data && !list.data.items.length && (
-                <Table.Tr><Table.Td colSpan={6}><Text c="dimmed" ta="center" py="md">No {status === "all" ? "" : status} applications.</Text></Table.Td></Table.Tr>
+              {list.data && !rows.length && (
+                <Table.Tr><Table.Td colSpan={6}><Text c="dimmed" ta="center" py="md">{s ? `No providers match “${search}”.` : `No ${status === "all" ? "" : status} applications.`}</Text></Table.Td></Table.Tr>
               )}
             </Table.Tbody>
           </Table>

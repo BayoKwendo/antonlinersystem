@@ -1,14 +1,25 @@
-import { Badge, Card, Group, Progress, SimpleGrid, Stack, Table, Text, ThemeIcon } from "@mantine/core";
+import { Anchor, Badge, Button, Card, Group, Progress, SimpleGrid, Stack, Table, Text, ThemeIcon } from "@mantine/core";
 import { DonutChart } from "@mantine/charts";
 import { useQuery } from "@tanstack/react-query";
 import {
   IconInbox, IconCash, IconBriefcase, IconShieldCheck, IconArrowDownCircle, IconWallet,
-  IconAlertTriangle, IconActivity,
+  IconAlertTriangle, IconActivity, IconUsersGroup,
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api/endpoints";
 import { PageHeader } from "../components/PageHeader";
 import { money, date, titleCase, statusColor } from "../lib/format";
+
+/** Card header with an optional right-aligned "View all" link (matches the design). */
+function CardHead({ title, to, icon, linkLabel = "View all" }: { title: string; to?: string; icon?: ReactNode; linkLabel?: string }) {
+  return (
+    <Group justify="space-between" align="center" mb="sm" wrap="nowrap">
+      <Group gap="xs" wrap="nowrap">{icon}<Text fw={700}>{title}</Text></Group>
+      {to && <Anchor component={Link} to={to} size="xs" fw={600} style={{ whiteSpace: "nowrap" }}>{linkLabel}</Anchor>}
+    </Group>
+  );
+}
 
 function Tile({ icon, color, value, label, sub }: { icon: ReactNode; color: string; value: ReactNode; label: string; sub?: ReactNode }) {
   return (
@@ -81,7 +92,7 @@ export default function Dashboard() {
           {/* jobs by status + provider status + alerts */}
           <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
             <Card withBorder radius="md" padding="md">
-              <Text fw={700} mb="sm">Jobs by Status</Text>
+              <CardHead title="Jobs by Status" to="/bookings" linkLabel="View all jobs" />
               {donut.length ? (
                 <Group justify="center">
                   <DonutChart data={donut} size={160} thickness={26} chartLabel={o.jobs_by_status.total}
@@ -99,7 +110,7 @@ export default function Dashboard() {
             </Card>
 
             <Card withBorder radius="md" padding="md">
-              <Text fw={700} mb="sm">Provider Status</Text>
+              <CardHead title="Provider Status" to="/providers" />
               <Stack gap={8}>
                 {providerStatusRows.map((r) => (
                   <Group key={r.label} justify="space-between">
@@ -108,10 +119,13 @@ export default function Dashboard() {
                   </Group>
                 ))}
               </Stack>
+              <Button variant="light" fullWidth mt="md" radius="md" component={Link} to="/providers" leftSection={<IconUsersGroup size={16} />}>
+                Manage Providers
+              </Button>
             </Card>
 
             <Card withBorder radius="md" padding="md">
-              <Group gap="xs" mb="sm"><IconAlertTriangle size={18} /><Text fw={700}>Alerts &amp; Notifications</Text></Group>
+              <CardHead title="Alerts &amp; Notifications" icon={<IconAlertTriangle size={18} />} to="/requests" />
               <Stack gap="sm">
                 <Alert value={o.alerts.pending_providers} color="blue" text="provider applications awaiting review" />
                 <Alert value={o.alerts.delayed_jobs} color="orange" text="jobs past their scheduled time" />
@@ -123,7 +137,7 @@ export default function Dashboard() {
           {/* payments overview + provider performance */}
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
             <Card withBorder radius="md" padding="md">
-              <Text fw={700} mb="sm">Payments Overview</Text>
+              <CardHead title="Payments Overview" to="/payments" />
               <Stack gap="sm">
                 <PayRow label="Awaiting customer payment" value={money(o.counters.awaiting_payment_amount)} color="yellow" />
                 <PayRow label="Payments received today" value={money(o.counters.received_today)} color="teal" />
@@ -133,7 +147,7 @@ export default function Dashboard() {
             </Card>
 
             <Card withBorder radius="md" padding="md">
-              <Text fw={700} mb="sm">Provider Performance (Top 5)</Text>
+              <CardHead title="Provider Performance (Top 5)" to="/providers" />
               <Table verticalSpacing="xs">
                 <Table.Thead><Table.Tr><Table.Th>Provider</Table.Th><Table.Th ta="right">Jobs</Table.Th><Table.Th ta="right">Rating</Table.Th></Table.Tr></Table.Thead>
                 <Table.Tbody>
@@ -153,26 +167,28 @@ export default function Dashboard() {
           {/* recent requests + top services */}
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
             <Card withBorder radius="md" padding="md">
-              <Text fw={700} mb="sm">Recent Requests</Text>
-              <Table.ScrollContainer minWidth={420}>
+              <CardHead title="Recent Requests" to="/requests" />
+              <Table.ScrollContainer minWidth={520}>
                 <Table verticalSpacing="xs">
-                  <Table.Thead><Table.Tr><Table.Th>Request</Table.Th><Table.Th>Customer</Table.Th><Table.Th>Service</Table.Th><Table.Th>Status</Table.Th></Table.Tr></Table.Thead>
+                  <Table.Thead><Table.Tr><Table.Th>Request</Table.Th><Table.Th>Customer</Table.Th><Table.Th>Service</Table.Th><Table.Th>Location</Table.Th><Table.Th>Status</Table.Th></Table.Tr></Table.Thead>
                   <Table.Tbody>
                     {o.recent_requests.map((r) => (
                       <Table.Tr key={r.id}>
                         <Table.Td><Text size="sm" fw={600}>{r.request_no ?? `#${r.id}`}</Text></Table.Td>
                         <Table.Td>{r.customer}</Table.Td>
                         <Table.Td>{r.service}</Table.Td>
+                        <Table.Td><Text size="sm" c="dimmed">{r.location ?? "—"}</Text></Table.Td>
                         <Table.Td><Badge color={statusColor(r.status)} variant="light" size="sm">{titleCase(r.status)}</Badge></Table.Td>
                       </Table.Tr>
                     ))}
+                    {!o.recent_requests.length && <Table.Tr><Table.Td colSpan={5}><Text c="dimmed" size="sm">No requests yet.</Text></Table.Td></Table.Tr>}
                   </Table.Tbody>
                 </Table>
               </Table.ScrollContainer>
             </Card>
 
             <Card withBorder radius="md" padding="md">
-              <Text fw={700} mb="sm">Top Services (This Month)</Text>
+              <CardHead title="Top Services (This Month)" to="/reports" linkLabel="View report" />
               <Stack gap="sm">
                 {o.top_services.map((s) => {
                   const max = Math.max(...o.top_services.map((x) => x.jobs), 1);
@@ -194,7 +210,7 @@ export default function Dashboard() {
           {/* recent activity + QA queue */}
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
             <Card withBorder radius="md" padding="md">
-              <Group gap="xs" mb="sm"><IconActivity size={18} /><Text fw={700}>Recent Activity</Text></Group>
+              <CardHead title="Recent Activity" icon={<IconActivity size={18} />} to="/audit" />
               <Stack gap="sm">
                 {o.recent_activity.map((a, i) => (
                   <Group key={i} justify="space-between" wrap="nowrap">
@@ -210,20 +226,21 @@ export default function Dashboard() {
             </Card>
 
             <Card withBorder radius="md" padding="md">
-              <Text fw={700} mb="sm">Quality Assurance Queue</Text>
-              <Table.ScrollContainer minWidth={420}>
+              <CardHead title="Quality Assurance Queue" to="/qa" />
+              <Table.ScrollContainer minWidth={560}>
                 <Table verticalSpacing="xs">
-                  <Table.Thead><Table.Tr><Table.Th>Request</Table.Th><Table.Th>Service</Table.Th><Table.Th>Customer</Table.Th><Table.Th>Provider</Table.Th></Table.Tr></Table.Thead>
+                  <Table.Thead><Table.Tr><Table.Th>Request</Table.Th><Table.Th>Service</Table.Th><Table.Th>Provider</Table.Th><Table.Th>Completed On</Table.Th><Table.Th /></Table.Tr></Table.Thead>
                   <Table.Tbody>
                     {o.qa_queue.map((r) => (
                       <Table.Tr key={r.id}>
-                        <Table.Td><Text size="sm" fw={600}>{r.request_no ?? `#${r.id}`}</Text></Table.Td>
+                        <Table.Td><Text size="sm" fw={600}>{r.request_no ?? `#${r.id}`}</Text><Text size="xs" c="dimmed">{r.customer}</Text></Table.Td>
                         <Table.Td>{r.service}</Table.Td>
-                        <Table.Td>{r.customer}</Table.Td>
                         <Table.Td>{r.provider ?? "—"}</Table.Td>
+                        <Table.Td><Text size="sm" c="dimmed">{date(r.completed_at)}</Text></Table.Td>
+                        <Table.Td ta="right"><Button size="xs" variant="light" component={Link} to="/qa" leftSection={<IconShieldCheck size={14} />}>Start QA</Button></Table.Td>
                       </Table.Tr>
                     ))}
-                    {!o.qa_queue.length && <Table.Tr><Table.Td colSpan={4}><Text c="dimmed" size="sm">Nothing awaiting QA.</Text></Table.Td></Table.Tr>}
+                    {!o.qa_queue.length && <Table.Tr><Table.Td colSpan={5}><Text c="dimmed" size="sm">Nothing awaiting QA.</Text></Table.Td></Table.Tr>}
                   </Table.Tbody>
                 </Table>
               </Table.ScrollContainer>

@@ -23,6 +23,7 @@ import type {
   RequestRow,
   InvoiceRow,
   PayoutRow,
+  SearchResults,
 } from "../lib/types";
 
 type Page = { limit?: number; offset?: number };
@@ -41,6 +42,7 @@ export const api = {
   stats: () => unwrap<Stats>(http.get("/admin/stats")),
   analytics: () => unwrap<Analytics>(http.get("/admin/analytics")),
   overview: () => unwrap<Overview>(http.get("/admin/overview")),
+  search: (q: string) => unwrap<SearchResults>(http.get("/admin/search", { params: { q } })),
 
   // --- provider verification (applications) ---
   providerApplications: (params: { status?: string } & Page) =>

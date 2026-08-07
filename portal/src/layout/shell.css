@@ -41,3 +41,22 @@
 .sd-help__title { font-weight: 700; font-size: 13px; color: #fff; }
 .sd-help__sub { font-size: 12px; color: rgba(255, 255, 255, 0.6); }
 .sd-help__phone { font-size: 14px; font-weight: 700; color: #6ea8f0; margin-top: 2px; }
+
+/* Global search dropdown rows */
+.sd-search__row { border-radius: 6px; transition: background 120ms ease; }
+.sd-search__row:hover { background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5)); }
+
+/* Top-bar ("upper side") date pill */
+.sd-datepill {
+  border: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+  border-radius: 999px;
+  padding: 5px 12px;
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-gray-3));
+  background: light-dark(#fff, var(--mantine-color-dark-6));
+  white-space: nowrap;
+}
+.sd-datepill svg { color: var(--mantine-color-brand-6); }
+
+/* Segmented "pill" toolbars — brand active tab, roomy padding (reference look) */
+.mantine-SegmentedControl-root { padding: 4px; }
+.mantine-SegmentedControl-label { font-weight: 600; }

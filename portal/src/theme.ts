@@ -36,4 +36,12 @@ export const theme = createTheme({
   fontFamily:
     "Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
   headings: { fontWeight: "700" },
+  components: {
+    // Rounded "pill" segmented toolbars with a brand-filled active tab (matches
+    // the reference design). Applies to every SegmentedControl in the portal.
+    SegmentedControl: { defaultProps: { color: "brand", radius: "xl", size: "md" } },
+    // Rounded inputs to go with the pill toolbar look.
+    TextInput: { defaultProps: { radius: "md" } },
+    Select: { defaultProps: { radius: "md" } },
+  },
 });

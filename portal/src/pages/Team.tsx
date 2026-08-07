@@ -13,7 +13,8 @@ import { apiError } from "../api/client";
 import { PageHeader } from "../components/PageHeader";
 import { PAGE_SIZE, Pager } from "../components/Pager";
 import { date, statusColor, titleCase } from "../lib/format";
-import { sanitizePhone, validatePhone } from "../lib/validation";
+import { validatePhone } from "../lib/validation";
+import { PhoneInput } from "../components/PhoneInput";
 import type { StaffUser } from "../lib/types";
 
 const ROLES = ["admin", "assistance", "finance", "owner", "agent"];
@@ -119,8 +120,7 @@ export default function Team() {
       <Modal opened={createOpen} onClose={createCtl.close} title="Add team member" centered>
         <form onSubmit={form.onSubmit((v) => create.mutate(v))}>
           <TextInput label="Full name" {...form.getInputProps("display_name")} mb="sm" />
-          <TextInput label="Phone" placeholder="2547XXXXXXXX" inputMode="tel" {...form.getInputProps("phone")}
-            onChange={(e) => form.setFieldValue("phone", sanitizePhone(e.currentTarget.value))} mb="sm" />
+          <PhoneInput label="Phone" value={form.values.phone} onChange={(v) => form.setFieldValue("phone", v)} error={form.errors.phone} mb="sm" />
           <TextInput label="Email (optional)" {...form.getInputProps("email")} mb="sm" />
           <Select label="Role" data={ROLES.map((r) => ({ value: r, label: titleCase(r) }))} {...form.getInputProps("role")} mb="sm" />
           <PasswordInput label="Initial password" {...form.getInputProps("password")} mb="md" />

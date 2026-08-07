@@ -1,4 +1,4 @@
-import { Anchor, Button, Center, Group, Modal, Paper, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
+import { Anchor, Button, Center, Group, Modal, Paper, PasswordInput, Stack, Text } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
@@ -8,7 +8,8 @@ import { useAuth } from "../store/auth";
 import { api } from "../api/endpoints";
 import { apiError } from "../api/client";
 import { Logo } from "../components/Logo";
-import { sanitizePhone, validatePhone } from "../lib/validation";
+import { validatePhone } from "../lib/validation";
+import { PhoneInput } from "../components/PhoneInput";
 
 export default function Login() {
   const login = useAuth((s) => s.login);
@@ -98,12 +99,11 @@ export default function Login() {
         </Stack>
         <form onSubmit={form.onSubmit(submit)}>
           <Stack>
-            <TextInput
+            <PhoneInput
               label="Phone"
-              placeholder="2547XXXXXXXX"
-              inputMode="tel"
-              {...form.getInputProps("phone")}
-              onChange={(e) => form.setFieldValue("phone", sanitizePhone(e.currentTarget.value))}
+              value={form.values.phone}
+              onChange={(v) => form.setFieldValue("phone", v)}
+              error={form.errors.phone}
             />
             <PasswordInput label="Password" placeholder="Your password" {...form.getInputProps("password")} />
             <Button type="submit" loading={loading} fullWidth mt="sm">Sign in</Button>
@@ -139,13 +139,7 @@ export default function Login() {
         <Text size="sm" c="dimmed" mb="sm">
           Enter your phone number. If it's registered we'll SMS you a temporary password to sign in with.
         </Text>
-        <TextInput
-          label="Phone"
-          placeholder="2547XXXXXXXX"
-          inputMode="tel"
-          value={resetPhone}
-          onChange={(e) => setResetPhone(sanitizePhone(e.currentTarget.value))}
-        />
+        <PhoneInput label="Phone" value={resetPhone} onChange={setResetPhone} />
         <Group justify="flex-end" mt="md">
           <Button variant="default" onClick={forgot.close}>Cancel</Button>
           <Button loading={resetting} onClick={resetPassword}>Send temporary password</Button>

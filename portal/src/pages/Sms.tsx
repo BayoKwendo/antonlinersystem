@@ -1,11 +1,12 @@
-import { Button, Card, Group, Stack, Text, Textarea, TextInput } from "@mantine/core";
+import { Button, Card, Group, Stack, Text, Textarea } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 import { api } from "../api/endpoints";
 import { apiError } from "../api/client";
 import { PageHeader } from "../components/PageHeader";
-import { sanitizePhone, validatePhone } from "../lib/validation";
+import { validatePhone } from "../lib/validation";
+import { PhoneInput } from "../components/PhoneInput";
 
 export default function Sms() {
   const [sending, setSending] = useState(false);
@@ -36,11 +37,7 @@ export default function Sms() {
       <Card withBorder radius="md" padding="lg" maw={520}>
         <form onSubmit={form.onSubmit(send)}>
           <Stack>
-            <TextInput
-              label="Phone" placeholder="2547XXXXXXXX" inputMode="tel"
-              {...form.getInputProps("phone")}
-              onChange={(e) => form.setFieldValue("phone", sanitizePhone(e.currentTarget.value))}
-            />
+            <PhoneInput label="Phone" value={form.values.phone} onChange={(v) => form.setFieldValue("phone", v)} error={form.errors.phone} />
             <Textarea label="Message" autosize minRows={3} maxRows={6} {...form.getInputProps("text")} />
             <Group justify="space-between">
               <Text size="xs" c="dimmed">{form.values.text.length}/400</Text>
