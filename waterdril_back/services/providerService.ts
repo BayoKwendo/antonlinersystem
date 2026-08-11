@@ -4,9 +4,10 @@
 //  aggregation (services, metrics, earnings, readiness).
 // =============================================================================
 import client from "../db/client.ts";
+import { bcrypt } from "../deps.ts";
 import authService from "./authService.ts";
 import { normalizePhone, isValidMsisdn } from "../utils/phone.ts";
-import { badRequest, notFound } from "../utils/errors.ts";
+import { badRequest, conflict, notFound } from "../utils/errors.ts";
 import { audit } from "./audit.ts";
 import { notifyUser } from "./notify.ts";
 
@@ -27,6 +28,20 @@ export const providerService = {
   async signup(input: ProviderSignupInput) {
     const phone = normalizePhone(input.phone);
     if (!isValidMsisdn(phone)) throw badRequest("Enter a valid Kenyan phone number.");
+
+    // If this phone already has a password-protected account, the signup password
+    // must match it (this is a re-application). We never overwrite an existing
+    // password via signup — so a mismatch is rejected clearly here, up-front,
+    // rather than committing the account changes and then failing the trailing
+    // login with a confusing "Invalid credentials".
+    const prior = (await client.query(
+      `SELECT password_hash FROM users WHERE phone = ? AND deleted_at IS NULL LIMIT 1`,
+      [phone],
+    ))[0];
+    if (prior?.password_hash && !(await bcrypt.compare(input.password, prior.password_hash))) {
+      throw conflict("This phone number is already registered. Please log in instead, or use the password you signed up with to update your application.");
+    }
+
     const passwordHash = await authService.hashPassword(input.password);
 
     await client.withTransaction(async (query) => {

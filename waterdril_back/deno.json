@@ -1,7 +1,7 @@
 {
   "tasks": {
-    "start": "deno run --allow-net --allow-env --allow-read --allow-write --allow-sys server.ts",
-    "dev": "deno run --watch --allow-net --allow-env --allow-read --allow-write --allow-sys server.ts",
+    "start": "deno run --no-prompt --allow-net --allow-env --allow-read --allow-write --allow-sys server.ts",
+    "dev": "deno run --no-prompt --watch --allow-net --allow-env --allow-read --allow-write --allow-sys server.ts",
     "check": "deno check server.ts"
   },
   "imports": {
