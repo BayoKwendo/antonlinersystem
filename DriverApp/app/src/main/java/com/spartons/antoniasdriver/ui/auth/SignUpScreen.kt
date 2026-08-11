@@ -33,6 +33,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Person
@@ -43,9 +44,11 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -54,6 +57,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -209,8 +213,13 @@ fun SignUpScreen(
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    LaunchedEffect(s.done) { if (s.done) onRegistered() }
     LaunchedEffect(s.error) { s.error?.let { snackbar.showSnackbar(it); vm.clearError() } }
+
+    // On a successful sign-up, confirm with a dialog and only navigate onward
+    // once the user acknowledges it (instead of jumping away immediately).
+    if (s.done) {
+        SignUpSuccessDialog(onContinue = onRegistered)
+    }
 
     // Single picker reused across the six document rows; the pending field marks
     // which document the returned Uri belongs to. The picker is restricted to the
@@ -334,6 +343,14 @@ fun SignUpScreen(
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Navy),
                 ) {
+                    if (s.loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            color = androidx.compose.ui.graphics.Color.White,
+                            strokeWidth = 2.dp,
+                        )
+                        Spacer(Modifier.width(10.dp))
+                    }
                     Text(
                         if (s.loading) "Creating account..." else "Create Account",
                         style = MaterialTheme.typography.titleMedium,
@@ -366,6 +383,42 @@ fun SignUpScreen(
 // ---------------------------------------------------------------------------
 // Pieces
 // ---------------------------------------------------------------------------
+/** Confirmation shown after a successful sign-up (account created + documents uploaded). */
+@Composable
+private fun SignUpSuccessDialog(onContinue: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onContinue,
+        icon = {
+            Icon(
+                Icons.Filled.CheckCircle,
+                contentDescription = null,
+                tint = BrandBlue,
+                modifier = Modifier.size(48.dp),
+            )
+        },
+        title = {
+            Text(
+                "Account Created",
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+        },
+        text = {
+            Text(
+                "Your account and documents were uploaded successfully. Your account is now " +
+                    "pending verification — we'll let you know once it's approved.",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onContinue) {
+                Text("Continue", fontWeight = FontWeight.SemiBold, color = BrandBlue)
+            }
+        },
+    )
+}
+
 @Composable
 private fun HeroHeader(onBack: () -> Unit) {
     val white = androidx.compose.ui.graphics.Color.White
