@@ -251,18 +251,21 @@ select.sd-field--placeholder { color: var(--sd-muted); }
 
 /* ---- RESPONSIVE ---- */
 @media (max-width: 940px) {
-  .sd-dh-grid { grid-template-columns: 1fr; gap: 24px; }
+  /* minmax(0, 1fr) — NOT bare 1fr: a plain 1fr is minmax(auto,1fr), whose
+     auto-minimum lets the embedded Leaflet map's min-content blow the single
+     column past the viewport (then it gets clipped). minmax(0,…) lets it shrink. */
+  .sd-dh-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .sd-dh-banner::after { background: linear-gradient(to right, var(--sd-card) 0%, color-mix(in srgb, var(--sd-card) 92%, transparent) 46%, color-mix(in srgb, var(--sd-card) 55%, transparent) 82%); }
   .sd-dh-banner__overlay { padding: 26px 20px; }
-  .sd-rcards { grid-template-columns: 1fr; }
-  .sd-req-grid { grid-template-columns: 1fr; gap: 30px; }
+  .sd-rcards { grid-template-columns: minmax(0, 1fr); }
+  .sd-req-grid { grid-template-columns: minmax(0, 1fr); gap: 30px; }
   .sd-req-intro { max-width: none; }
   .sd-req-trust__grid { grid-template-columns: repeat(2, 1fr); }
   .sd-req-photo-bg { position: static; transform: none; width: 100%; height: 200px; margin-top: 24px; }
   .sd-req-photo-bg::before { display: none; }
 }
 @media (max-width: 560px) {
-  .sd-form-grid { grid-template-columns: 1fr; }
+  .sd-form-grid { grid-template-columns: minmax(0, 1fr); }
   .sd-field { grid-column: 1 / -1; }
   .sd-req-card, .sd-dh-card { padding: 20px; }
   .sd-req-trust__grid { grid-template-columns: 1fr; }

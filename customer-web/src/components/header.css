@@ -97,16 +97,17 @@
   .sd-header__mobile { display: flex; }
 }
 
-/* On phones the header would overflow (logo + toggle + Track pill + burger).
-   The "Track Order" pill is duplicated as the "Track an Order" CTA inside the
-   burger menu, so drop the redundant pill here to keep the row within width. */
+/* On phones the full lockup (logo + wordmark + toggle + Track pill + burger)
+   overflows. Keep the Track Order pill (primary action) visible and drop the
+   "SMART DRILL" wordmark to just the droplet so the row fits; the wordmark
+   returns at >600px. */
 @media (max-width: 600px) {
-  .sd-header__track { display: none; }
+  .sd-header__logo .sd-logo__word { display: none; }
 }
 
 @media (max-width: 420px) {
   .sd-header__bar { gap: 10px; }
-  .sd-header__logo { --sd-logo-size: 34px; }
+  .sd-header__track { padding: 8px 14px; font-size: 13px; }
 }
 
 /* Very narrow phones: shrink the logo + pill so the burger (the only mobile nav
