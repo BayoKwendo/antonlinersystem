@@ -60,5 +60,7 @@
 }
 
 @media (max-width: 480px) {
-  .sd-phone .sd-phone__cc { max-width: 46%; padding: 11px 8px; }
+  /* keep the country select compact so the number input has room for the full
+     placeholder ("+254 07XX XXX XXX") */
+  .sd-phone .sd-phone__cc { max-width: 40%; padding: 11px 8px; }
 }
