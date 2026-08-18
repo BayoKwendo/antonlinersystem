@@ -24,6 +24,7 @@ import type {
   InvoiceRow,
   PayoutRow,
   SearchResults,
+  SmsLog,
 } from "../lib/types";
 
 type Page = { limit?: number; offset?: number };
@@ -94,6 +95,7 @@ export const api = {
 
   // --- SMS console ---
   sendSms: (phone: string, text: string) => http.post("/admin/sms", { phone, text }),
+  smsLogs: (params: { q?: string } & Page) => unwrap<Paginated<SmsLog>>(http.get("/admin/sms-logs", { params })),
 
   // --- bookings ---
   adminBookings: (params: { from?: string; to?: string; status?: string } & Page) =>

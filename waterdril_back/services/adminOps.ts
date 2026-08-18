@@ -14,6 +14,9 @@ import { notifyQualifiedProviders } from "./jobs.ts";
 import { badRequest, notFound } from "../utils/errors.ts";
 import { audit } from "./audit.ts";
 import { notifyUser } from "./notify.ts";
+import accountRepo from "../repositories/accountRepo.ts";
+import { sendEmail, emailLayout } from "./emailService.ts";
+import { APP } from "../config/config.ts";
 
 const kes = (n: number) => "KES " + n.toLocaleString("en-KE");
 
@@ -31,6 +34,24 @@ export const adminOps = {
       return created;
     });
     await notifyUser(b.customer_id, "Invoice issued", `Invoice ${inv.number} for ${kes(amt)} is ready. Pay to confirm your request.`, { push: false });
+    // Email the invoice to the customer (also stored in `invoices` for admin viewing).
+    const cust = await accountRepo.findById(b.customer_id);
+    if (cust?.email) {
+      const trackLink = APP.WEB_URL && b.tracking_token
+        ? `${APP.WEB_URL.replace(/\/+$/, "")}/track/${b.tracking_token}`
+        : null;
+      sendEmail({
+        to: cust.email,
+        subject: `Invoice ${inv.number} — SMART Drill`,
+        html: emailLayout(`Invoice ${inv.number}`, `
+          <p>Your invoice for request <strong>${b.request_no ?? "#" + bookingId}</strong> is ready.</p>
+          <table style="width:100%;border-collapse:collapse;margin:14px 0">
+            <tr><td style="padding:8px 0;color:#5a6b7c;border-bottom:1px solid #eef2f7">Invoice number</td><td style="padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #eef2f7">${inv.number}</td></tr>
+            <tr><td style="padding:8px 0;color:#5a6b7c">Amount due</td><td style="padding:8px 0;text-align:right;font-weight:700;font-size:18px">${kes(amt)}</td></tr>
+          </table>
+          <p>Pay to confirm your request.${trackLink ? ` <a href="${trackLink}" style="color:#1656c7">Open your request →</a>` : ""}</p>`),
+      }).catch(() => {});
+    }
     await audit(actorId, "invoice.issue", "booking", bookingId, { number: inv.number, amount: amt });
     return { number: inv.number, amount: amt };
   },

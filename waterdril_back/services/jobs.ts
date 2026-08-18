@@ -90,6 +90,17 @@ export const jobsService = {
     if (fromIdx < JOB_FLOW.indexOf("booked")) throw badRequest("This job isn't confirmed/paid yet.");
     if (toIdx !== fromIdx + 1) throw badRequest(`Cannot move from ${b.status} to ${to}.`);
 
+    // A job cannot be marked complete until the required deliverables are uploaded.
+    if (to === "completed") {
+      const [hasReport, hasEtims] = await Promise.all([
+        documentRepo.hasReport(bookingId),
+        documentRepo.hasKind(bookingId, "etims_invoice"),
+      ]);
+      if (!hasReport || !hasEtims) {
+        throw badRequest("Upload the completion report and the eTIMS invoice before marking this job complete.");
+      }
+    }
+
     await client.withTransaction(async (query) => {
       await bookingRepo.setStatus(bookingId, to, query);
       await bookingRepo.addEvent(bookingId, to, providerId, note ?? "", query);
@@ -122,7 +133,8 @@ export async function notifyQualifiedProviders(categoryId: number): Promise<void
   const rows = await bookingRepo.providersForCategory(categoryId);
   await Promise.all(
     rows.map((r: { user_id: number }) =>
-      notifyUser(r.user_id, "New job available", `A new SMART Drill ${serviceName} job is available. Open the app to accept.`, { push: false })
+      // In-app notification + FCM push to the provider's phone.
+      notifyUser(r.user_id, "New job available", `A new SMART Drill ${serviceName} job is available. Open the app to accept.`, { push: true })
     ),
   );
 }

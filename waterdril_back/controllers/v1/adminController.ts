@@ -207,6 +207,10 @@ const adminController = {
     ok(ctx, { sent }, sent ? "SMS sent" : "SMS gateway error");
   },
 
+  smsLogs: async (ctx: Context) => {
+    ok(ctx, await adminRepo.listSmsLogs({ q: searchQ(ctx), ...page(ctx) }));
+  },
+
   listCustomers: async (ctx: Context) => {
     ok(ctx, await adminRepo.listCustomers({ q: searchQ(ctx), ...page(ctx) }));
   },

@@ -317,6 +317,21 @@ const adminRepo = {
     return { requests, providers, customers };
   },
 
+  /** SMS delivery log (so staff can confirm/re-read an OTP a customer didn't receive). */
+  async listSmsLogs({ q, limit, offset }: { q?: string } & Page) {
+    // Match on the phone's national digits so 0712…, 712…, +254712… all hit 254712…
+    const digits = (q ?? "").replace(/\D/g, "").replace(/^0+/, "");
+    const clause = digits ? "WHERE destination LIKE ?" : "";
+    const params = digits ? [`%${digits}%`] : [];
+    const { limit: l, offset: o } = clamp({ limit, offset });
+    const [total] = await client.query(`SELECT COUNT(*) AS total FROM sms_logs ${clause}`, params);
+    const items = await client.query(
+      `SELECT id, destination, message, status, created_at FROM sms_logs ${clause} ORDER BY id DESC LIMIT ? OFFSET ?`,
+      [...params, l, o],
+    );
+    return { items, total: total.total };
+  },
+
   async listCustomers({ q, limit, offset }: { q?: string } & Page) {
     const clause = q ? "AND (u.display_name LIKE ? OR u.phone LIKE ? OR cp.id_number LIKE ?)" : "";
     const filterParams = q ? [`%${q}%`, `%${q}%`, `%${q}%`] : [];

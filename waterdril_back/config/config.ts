@@ -39,6 +39,17 @@ export const SERVER = {
   PORT: number("PORT", 5002),
 };
 
+/** SMTP email (OTP + invoices). Unset EMAIL_HOST → email delivery is a no-op
+ *  (dev-safe), just like SMS with an empty SMS_URL. */
+export const EMAIL = {
+  HOST: optional("EMAIL_HOST"),
+  PORT: number("EMAIL_PORT", 587),
+  USER: optional("EMAIL_USER"),
+  PASS: optional("EMAIL_PASS"),
+  FROM: optional("EMAIL_FROM", "SMART Drill <no-reply@smartdrill.co.ke>"),
+  SECURE: optional("EMAIL_SECURE") === "true", // true for implicit TLS (port 465)
+};
+
 
 export const SECURITY = {
   /**

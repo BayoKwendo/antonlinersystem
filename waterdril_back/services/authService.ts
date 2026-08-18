@@ -9,6 +9,7 @@ import { AUTH } from "../config/config.ts";
 import accountRepo, { type UserRow } from "../repositories/accountRepo.ts";
 import { signAccessToken } from "./tokenService.ts";
 import { sendSms } from "./smsService.ts";
+import { sendEmail, emailLayout } from "./emailService.ts";
 import { randomOtp, randomToken, sha256hex } from "../utils/crypto.ts";
 import { normalizePhone } from "../utils/phone.ts";
 import { badRequest, forbidden, unauthorized } from "../utils/errors.ts";
@@ -57,6 +58,18 @@ export const authService = {
     const code = randomOtp(AUTH.OTP_LENGTH);
     await accountRepo.insertOtp(phone, await sha256hex(code), AUTH.OTP_TTL_SECONDS);
     await sendSms({ to: phone, text: `Your SMART Drill verification code is ${code}. It expires in 5 minutes.`, asciiOnly: true });
+    // Also email the code when we have an address on file (SMS + email delivery).
+    const user = await accountRepo.findByPhone(phone);
+    if (user?.email) {
+      sendEmail({
+        to: user.email,
+        subject: "Your SMART Drill verification code",
+        html: emailLayout("Verification code", `
+          <p>Use this code to verify your number:</p>
+          <p style="font-size:28px;font-weight:700;letter-spacing:4px;color:#1656c7;margin:8px 0">${code}</p>
+          <p>It expires in 5 minutes. If you didn't request it, you can ignore this email.</p>`),
+      }).catch(() => {});
+    }
     return { expiresIn: AUTH.OTP_TTL_SECONDS };
   },
 

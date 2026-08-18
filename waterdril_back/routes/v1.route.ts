@@ -134,6 +134,7 @@ router
   .get("/admin/bookings", requireAuth, requireRole(...STAFF), adminController.listBookings)
   .get("/admin/payments", requireAuth, requireRole("admin", "finance"), adminController.listPayments)
   .post("/admin/sms", requireAuth, requireRole("admin", "assistance"), adminController.sendSms)
+  .get("/admin/sms-logs", requireAuth, requireRole("admin", "assistance"), adminController.smsLogs)
   .get("/admin/complaints", requireAuth, requireRole("admin", "assistance"), adminController.listComplaints)
   .patch("/admin/complaints/:id", requireAuth, requireRole("admin", "assistance"), adminController.updateComplaint)
   .get("/admin/reviews", requireAuth, requireRole("admin", "assistance"), adminController.listReviews)

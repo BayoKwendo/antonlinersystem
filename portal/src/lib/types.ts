@@ -209,6 +209,14 @@ export interface Overview {
   alerts: { delayed_jobs: number; unmatched_requests: number; pending_providers: number };
 }
 
+export interface SmsLog {
+  id: number;
+  destination: string;
+  message: string;
+  status: string;
+  created_at: string;
+}
+
 // --- global top-bar search --------------------------------------------------
 export interface SearchResults {
   requests: { id: number; request_no: string | null; status: string; service: string; customer: string; phone: string | null }[];

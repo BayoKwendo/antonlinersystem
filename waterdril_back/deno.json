@@ -12,7 +12,8 @@
     "mysql2/promise": "npm:mysql2@^3.11.5/promise",
     "bcryptjs": "npm:bcryptjs@^2.4.3",
     "jose": "npm:jose@^5.9.6",
-    "zod": "npm:zod@^3.24.1"
+    "zod": "npm:zod@^3.24.1",
+    "denomailer": "https://deno.land/x/denomailer@1.6.0/mod.ts"
   },
   "fmt": {
     "lineWidth": 100,
