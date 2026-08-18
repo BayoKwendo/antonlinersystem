@@ -7,21 +7,21 @@ const catalogRepo = {
   listCategories(activeOnly = true) {
     return client.query(
       `SELECT id, \`key\`, name, description, active,
-              price, price_unit, price_note, pricing_mode, icon, cta_label, accent, sort_order
+              price, price_unit, price_note, pricing_mode, icon, cta_label, accent, sort_order, tat_hours
          FROM service_categories
         ${activeOnly ? "WHERE active = 1" : ""}
         ORDER BY sort_order, name`,
     );
   },
 
-  createCategory({ key, name, description }: { key: string; name: string; description?: string }) {
+  createCategory({ key, name, description, tat_hours }: { key: string; name: string; description?: string; tat_hours?: number }) {
     return client.query(
-      `INSERT INTO service_categories (\`key\`, name, description, active) VALUES (?, ?, ?, 1)`,
-      [key, name, description ?? null],
+      `INSERT INTO service_categories (\`key\`, name, description, tat_hours, active) VALUES (?, ?, ?, ?, 1)`,
+      [key, name, description ?? null, tat_hours ?? null],
     );
   },
 
-  updateCategory(id: number, { name, active }: { name?: string; active?: boolean }) {
+  updateCategory(id: number, { name, active, tat_hours }: { name?: string; active?: boolean; tat_hours?: number }) {
     const sets: string[] = [];
     // deno-lint-ignore no-explicit-any
     const params: any[] = [];
@@ -32,6 +32,10 @@ const catalogRepo = {
     if (active !== undefined) {
       sets.push("active = ?");
       params.push(active ? 1 : 0);
+    }
+    if (tat_hours !== undefined) {
+      sets.push("tat_hours = ?");
+      params.push(tat_hours);
     }
     if (!sets.length) return Promise.resolve(null);
     params.push(id);

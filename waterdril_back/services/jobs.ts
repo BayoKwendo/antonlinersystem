@@ -59,6 +59,17 @@ export const jobsService = {
     return { status: "pending_payment", scheduled_at: scheduledAt };
   },
 
+  /** Provider marks that they've contacted the customer — drives the Customer
+   *  Contact Speed KPI. First tap wins (COALESCE keeps the earliest time). */
+  async markContacted(providerId: number, bookingId: number) {
+    const b = (await bookingRepo.byId(bookingId))[0];
+    if (!b) throw notFound("Job not found.");
+    if (Number(b.provider_id) !== providerId) throw forbidden();
+    await client.query(`UPDATE bookings SET contacted_at = COALESCE(contacted_at, NOW()) WHERE id = ?`, [bookingId]);
+    await audit(providerId, "job.contacted", "booking", bookingId, {});
+    return { contacted: true };
+  },
+
   /** Generate the two pro-forma invoices and prompt the customer to pay. */
   async promptPayment(providerId: number, bookingId: number) {
     const b = (await bookingRepo.byId(bookingId))[0];
@@ -123,6 +134,14 @@ export const jobsService = {
     const id = await documentRepo.add({ bookingId, kind: kind || "report", url, uploadedBy: providerId });
     await audit(providerId, "job.document", "booking", bookingId, { kind });
     return { id, kind: kind || "report", url };
+  },
+
+  /** List the deliverables uploaded against a job (provider-owned). */
+  async listDocuments(providerId: number, bookingId: number) {
+    const b = (await bookingRepo.byId(bookingId))[0];
+    if (!b) throw notFound("Job not found.");
+    if (Number(b.provider_id) !== providerId) throw forbidden();
+    return await documentRepo.byBooking(bookingId);
   },
 };
 

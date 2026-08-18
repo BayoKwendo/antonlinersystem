@@ -7,6 +7,7 @@ import { parseBody } from "../../utils/validate.ts";
 import { currentUser } from "../../middlewares/auth.ts";
 import providerRepo from "../../repositories/providerRepo.ts";
 import { providerService } from "../../services/providerService.ts";
+import ratingKpi from "../../services/ratingKpi.ts";
 import { providerLocationSchema, providerOnlineSchema, providerSignupSchema } from "../../validators/schemas.ts";
 
 const providerController = {
@@ -43,6 +44,11 @@ const providerController = {
     const { lat, lng } = await parseBody(ctx, providerLocationSchema);
     await providerRepo.updateLocation(me.userId, lat, lng);
     ok(ctx);
+  },
+
+  /** The provider's own KPI rating breakdown (transparent + auditable). */
+  kpi: async (ctx: Context) => {
+    ok(ctx, await ratingKpi.forProvider(currentUser(ctx).userId));
   },
 };
 

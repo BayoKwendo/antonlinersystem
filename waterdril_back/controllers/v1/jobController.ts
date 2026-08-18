@@ -37,8 +37,16 @@ const jobController = {
     ok(ctx, await jobsService.addReport(currentUser(ctx).userId, numericId(ctx), kind, url), "Document uploaded");
   },
 
+  documents: async (ctx: Context) => {
+    ok(ctx, await jobsService.listDocuments(currentUser(ctx).userId, numericId(ctx)));
+  },
+
   decline: async (ctx: Context) => {
     ok(ctx, await jobsService.decline(currentUser(ctx).userId, numericId(ctx)), "Request declined");
+  },
+
+  contacted: async (ctx: Context) => {
+    ok(ctx, await jobsService.markContacted(currentUser(ctx).userId, numericId(ctx)), "Customer marked as contacted");
   },
 };
 

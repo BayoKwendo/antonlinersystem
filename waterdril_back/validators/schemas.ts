@@ -163,11 +163,13 @@ export const categoryCreateSchema = z.object({
   key: z.string().min(2).max(40).regex(/^[a-z_]+$/),
   name: z.string().min(2).max(100),
   description: z.string().max(255).optional(),
+  tat_hours: z.coerce.number().int().min(1).max(2160).optional(), // service TAT in hours (≤90 days)
 });
 
 export const categoryUpdateSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   active: z.boolean().optional(),
+  tat_hours: z.coerce.number().int().min(1).max(2160).optional(),
 });
 
 export const complaintUpdateSchema = z.object({

@@ -15,6 +15,7 @@ import { badRequest, notFound } from "../utils/errors.ts";
 import { audit } from "./audit.ts";
 import { notifyUser } from "./notify.ts";
 import accountRepo from "../repositories/accountRepo.ts";
+import ratingKpi from "./ratingKpi.ts";
 import { sendEmail, emailLayout } from "./emailService.ts";
 import { APP } from "../config/config.ts";
 
@@ -160,10 +161,24 @@ export const adminOps = {
         [providerId, categoryId, providerId, categoryId, providerId, categoryId],
       );
     });
+    // Recompute the automatic KPI score now that the customer-feedback rating is in.
+    await ratingKpi.computeForBooking(bookingId);
     await notifyUser(providerId, "New performance rating",
       `Smart Drill rated your recent job ${b.request_no ?? ""}: ${input.rating}/5.`.replace(/\s+/g, " ").trim(), { push: false });
     await audit(actorId, "provider.rate", "booking", bookingId, { rating: input.rating });
     return { rating: input.rating };
+  },
+
+  /** A provider's automatic KPI breakdown (for the portal Ratings view). */
+  providerKpi(providerId: number) {
+    return ratingKpi.forProvider(providerId);
+  },
+
+  /** Admin resets a provider's ratings + KPI history to zero. */
+  async resetProviderRating(providerId: number, actorId: number) {
+    const r = await ratingKpi.reset(providerId);
+    await audit(actorId, "provider.resetRating", "user", providerId, {});
+    return r;
   },
 
   async markPayoutPaid(payoutId: number, ref: string | null, actorId: number) {

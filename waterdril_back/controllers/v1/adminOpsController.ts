@@ -67,6 +67,16 @@ const adminOpsController = {
     const { approve, note } = await parseBody(ctx, providerVerifySchema);
     ok(ctx, await providerService.verify(numericId(ctx), approve, note, currentUser(ctx).userId), "Provider verification updated");
   },
+
+  // A provider's KPI rating breakdown (per-job + aggregate).
+  providerKpi: async (ctx: Context) => {
+    ok(ctx, await adminOps.providerKpi(numericId(ctx)));
+  },
+
+  // Reset a provider's ratings + KPI history.
+  resetRating: async (ctx: Context) => {
+    ok(ctx, await adminOps.resetProviderRating(numericId(ctx), currentUser(ctx).userId), "Provider ratings reset");
+  },
 };
 
 export default adminOpsController;

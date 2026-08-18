@@ -82,6 +82,7 @@ CREATE TABLE `service_categories` (
   `price`        DECIMAL(12,2) NULL,
   `price_unit`   VARCHAR(40)  NULL,         -- "Flat Rate" / "Per Meter" / "Guided by Survey"
   `price_note`   VARCHAR(120) NULL,         -- quote-card sub-line
+  `tat_hours`    INT UNSIGNED  NULL,         -- configurable turnaround (hours) for the completion KPI
   `pricing_mode` ENUM('fixed','quote') NOT NULL DEFAULT 'fixed',
   `icon`         VARCHAR(24)  NULL,         -- client icon key
   `cta_label`    VARCHAR(60)  NULL,
@@ -169,6 +170,8 @@ CREATE TABLE `provider_profiles` (
   `base_price`          DECIMAL(12,2)   NOT NULL DEFAULT 0.00,
   `rating_avg`          DECIMAL(3,2)    NOT NULL DEFAULT 0.00,
   `rating_count`        INT UNSIGNED    NOT NULL DEFAULT 0,
+  `kpi_avg`             DECIMAL(5,2)    NOT NULL DEFAULT 0.00,   -- automatic KPI score /100 (avg)
+  `kpi_jobs`            INT UNSIGNED    NOT NULL DEFAULT 0,
   `availability`         ENUM('available','booked','offline','on_holiday','maintenance') NOT NULL DEFAULT 'offline',
   `movement_status`     ENUM('static','moving') NOT NULL DEFAULT 'static',
   `lat`                 DECIMAL(10,7)   NOT NULL DEFAULT 0,
@@ -244,6 +247,7 @@ CREATE TABLE `bookings` (
   `provider_lng`   DECIMAL(10,7) DEFAULT NULL,
   `provider_loc_at` DATETIME DEFAULT NULL,             -- when the last live fix was recorded
   `scheduled_at`   DATETIME DEFAULT NULL,
+  `contacted_at`   DATETIME DEFAULT NULL,             -- when the provider marked the customer contacted (KPI)
   `customer_confirmed_at` DATETIME DEFAULT NULL,
   `details`        JSON DEFAULT NULL,                 -- per-service request form fields
   `created_at`     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

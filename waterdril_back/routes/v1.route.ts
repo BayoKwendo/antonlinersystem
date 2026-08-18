@@ -80,6 +80,7 @@ router
   .get("/providers/me", requireAuth, requireRole("provider"), providerController.me)
   .get("/providers/dashboard", requireAuth, requireRole("provider"), providerController.dashboard)
   .get("/providers/earnings", requireAuth, requireRole("provider"), providerController.earnings)
+  .get("/providers/kpi", requireAuth, requireRole("provider"), providerController.kpi)
   .post("/providers/me/online", requireAuth, requireRole("provider"), providerController.setOnline)
   .post("/providers/me/location", requireAuth, requireRole("provider"), providerController.updateLocation);
 
@@ -91,7 +92,9 @@ router
   .post("/jobs/:id/prompt-payment", requireAuth, requireRole("provider"), jobController.promptPayment)
   .post("/jobs/:id/status", requireAuth, requireRole("provider"), jobController.status)
   .post("/jobs/:id/documents", requireAuth, requireRole("provider"), jobController.addDocument)
-  .post("/jobs/:id/decline", requireAuth, requireRole("provider"), jobController.decline);
+  .get("/jobs/:id/documents", requireAuth, requireRole("provider"), jobController.documents)
+  .post("/jobs/:id/decline", requireAuth, requireRole("provider"), jobController.decline)
+  .post("/jobs/:id/contacted", requireAuth, requireRole("provider"), jobController.contacted);
 
 // bookings
 router
@@ -156,6 +159,8 @@ router
   .post("/admin/requests/:id/verify", requireAuth, requireRole("admin", "assistance", "finance"), adminOpsController.verifyCompletion)
   .post("/admin/requests/:id/rating", requireAuth, requireRole("admin", "assistance", "owner"), adminOpsController.rateProvider)
   .post("/admin/providers/:id/verify", requireAuth, requireRole("admin", "assistance", "owner"), adminOpsController.verifyProvider)
+  .get("/admin/providers/:id/kpi", requireAuth, requireRole("admin", "assistance", "owner"), adminOpsController.providerKpi)
+  .post("/admin/providers/:id/reset-rating", requireAuth, requireRole("admin", "owner"), adminOpsController.resetRating)
   .post("/admin/payouts/:id/mark-paid", requireAuth, requireRole("admin", "finance"), adminOpsController.markPayoutPaid);
 
 // service-category management (admin)

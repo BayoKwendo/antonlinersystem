@@ -42,6 +42,7 @@ MIGRATIONS=(
   migrate_smartdrill_provider_availability.sql
   migrate_smartdrill_ratings_declines.sql
   migrate_smartdrill_live_tracking.sql            # bookings.provider_lat/lng/loc_at (live tracking snapshot)
+  migrate_smartdrill_kpi.sql                      # service TATs + provider_kpi_scores + contacted_at
 )
 
 for f in "${MIGRATIONS[@]}"; do
