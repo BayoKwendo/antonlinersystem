@@ -172,6 +172,26 @@ export interface Category {
   name: string;
   description: string | null;
   active: number;
+  tat_hours: number | null;
+}
+
+// --- provider KPI rating (automatic) ----------------------------------------
+export interface KpiJob {
+  booking_id: number;
+  request_no: string | null;
+  service: string | null;
+  overall: string;
+  acceptance_pct: string; contact_pct: string; arrival_pct: string; completion_pct: string; feedback_pct: string;
+  feedback_rating: string | null;
+  tat_hours: number | null;
+  request_at: string | null; accept_at: string | null; contacted_at: string | null;
+  scheduled_at: string | null; arrived_at: string | null; completed_at: string | null; deadline_at: string | null;
+  created_at: string;
+}
+export interface ProviderKpi {
+  weights: { acceptance: number; contact: number; arrival: number; completion: number; feedback: number };
+  summary: { kpi_avg: string | null; jobs: number; acceptance: string | null; contact: string | null; arrival: string | null; completion: string | null; feedback: string | null };
+  jobs: KpiJob[];
 }
 
 export interface Complaint {

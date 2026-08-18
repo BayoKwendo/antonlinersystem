@@ -6,11 +6,12 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
-import { IconFileCheck, IconCheck, IconX, IconEye, IconSearch } from "@tabler/icons-react";
+import { IconFileCheck, IconCheck, IconX, IconEye, IconSearch, IconStar } from "@tabler/icons-react";
 import { api } from "../api/endpoints";
 import { apiError } from "../api/client";
 import { PageHeader } from "../components/PageHeader";
 import { Pager, PAGE_SIZE } from "../components/Pager";
+import { ProviderKpiModal } from "../components/ProviderKpiModal";
 import { date } from "../lib/format";
 
 const STATUS_COLOR: Record<string, string> = { pending: "yellow", verified: "teal", rejected: "red" };
@@ -26,6 +27,7 @@ export default function ServiceProviders() {
   const [reviewId, setReviewId] = useState<number | null>(null);
   const [reason, setReason] = useState("");
   const [opened, { open, close }] = useDisclosure(false);
+  const [kpiFor, setKpiFor] = useState<{ id: number; name: string } | null>(null);
   const [params] = useSearchParams();
   const qParam = params.get("q") ?? "";
   const [search, setSearch] = useState(qParam);
@@ -92,7 +94,12 @@ export default function ServiceProviders() {
                   <Table.Td><Text size="sm">{p.service_names ?? "—"}</Text></Table.Td>
                   <Table.Td><Badge variant="light" color={p.documents >= 6 ? "teal" : "gray"}>{p.documents}</Badge></Table.Td>
                   <Table.Td><Badge color={STATUS_COLOR[p.verification_status] ?? "gray"} variant="light">{p.verification_status}</Badge></Table.Td>
-                  <Table.Td><Button size="xs" variant="light" leftSection={<IconEye size={14} />} onClick={() => openReview(p.user_id)}>Review</Button></Table.Td>
+                  <Table.Td>
+                    <Group gap={6} wrap="nowrap" justify="flex-end">
+                      <Button size="xs" variant="subtle" color="gray" leftSection={<IconStar size={14} />} onClick={() => setKpiFor({ id: p.user_id, name: p.business_name ?? p.display_name })}>Rating</Button>
+                      <Button size="xs" variant="light" leftSection={<IconEye size={14} />} onClick={() => openReview(p.user_id)}>Review</Button>
+                    </Group>
+                  </Table.Td>
                 </Table.Tr>
               ))}
               {list.data && !rows.length && (
@@ -165,6 +172,8 @@ export default function ServiceProviders() {
           </Stack>
         )}
       </Modal>
+
+      <ProviderKpiModal userId={kpiFor?.id ?? null} name={kpiFor?.name} opened={!!kpiFor} onClose={() => setKpiFor(null)} />
     </>
   );
 }

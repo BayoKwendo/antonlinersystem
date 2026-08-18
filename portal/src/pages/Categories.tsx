@@ -1,9 +1,10 @@
-import { Badge, Button, Center, Group, Loader, Modal, Switch, Table, TextInput } from "@mantine/core";
+import { Badge, Button, Center, Group, Loader, Modal, NumberInput, Switch, Table, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconPlus } from "@tabler/icons-react";
+import { useState } from "react";
 import { api } from "../api/endpoints";
 import { apiError } from "../api/client";
 import { PageHeader } from "../components/PageHeader";
@@ -15,11 +16,17 @@ export default function Categories() {
   const categories = useQuery({ queryKey: ["categories", "all"], queryFn: () => api.categories(true) });
 
   const form = useForm({
-    initialValues: { key: "", name: "", description: "" },
+    initialValues: { key: "", name: "", description: "", tat_hours: 24 },
     validate: {
       key: (v) => (/^[a-z_]{2,40}$/.test(v) ? null : "lowercase letters/underscores only"),
       name: (v) => (v.length < 2 ? "Required" : null),
     },
+  });
+
+  const saveTat = useMutation({
+    mutationFn: ({ id, tat_hours }: { id: number; tat_hours: number }) => api.updateCategory(id, { tat_hours }),
+    onSuccess: () => { notifications.show({ color: "teal", message: "Turnaround updated" }); qc.invalidateQueries({ queryKey: ["categories"] }); },
+    onError: (e) => notifications.show({ color: "red", message: apiError(e) }),
   });
 
   const create = useMutation({
@@ -58,6 +65,7 @@ export default function Categories() {
               <Table.Th>Name</Table.Th>
               <Table.Th>Key</Table.Th>
               <Table.Th>Description</Table.Th>
+              <Table.Th>TAT (hrs)</Table.Th>
               <Table.Th>Active</Table.Th>
             </Table.Tr>
           </Table.Thead>
@@ -67,6 +75,9 @@ export default function Categories() {
                 <Table.Td fw={600}>{c.name}</Table.Td>
                 <Table.Td><Badge variant="outline" color="gray">{c.key}</Badge></Table.Td>
                 <Table.Td>{c.description ?? "—"}</Table.Td>
+                <Table.Td>
+                  <TatInput value={c.tat_hours} onSave={(v) => saveTat.mutate({ id: c.id, tat_hours: v })} />
+                </Table.Td>
                 <Table.Td>
                   <Switch
                     checked={!!c.active}
@@ -83,7 +94,8 @@ export default function Categories() {
         <form onSubmit={form.onSubmit((v) => create.mutate(v))}>
           <TextInput label="Name" placeholder="Borehole Drilling" {...form.getInputProps("name")} mb="sm" />
           <TextInput label="Key" placeholder="drillers" {...form.getInputProps("key")} mb="sm" />
-          <TextInput label="Description (optional)" {...form.getInputProps("description")} mb="md" />
+          <TextInput label="Description (optional)" {...form.getInputProps("description")} mb="sm" />
+          <NumberInput label="Turnaround time (hours)" description="Completion-KPI deadline = arrival + this" min={1} max={2160} {...form.getInputProps("tat_hours")} mb="md" />
           <Group justify="flex-end">
             <Button variant="default" onClick={close}>Cancel</Button>
             <Button type="submit" loading={create.isPending}>Create</Button>
@@ -91,5 +103,18 @@ export default function Categories() {
         </form>
       </Modal>
     </>
+  );
+}
+
+/** Inline, save-on-blur editor for a service's turnaround (hours). */
+function TatInput({ value, onSave }: { value: number | null; onSave: (v: number) => void }) {
+  const [v, setV] = useState<number | string>(value ?? "");
+  return (
+    <NumberInput
+      value={v}
+      onChange={setV}
+      onBlur={() => { const n = Number(v); if (Number.isFinite(n) && n >= 1 && n !== (value ?? -1)) onSave(n); }}
+      min={1} max={2160} w={92} size="xs" hideControls placeholder="—"
+    />
   );
 }

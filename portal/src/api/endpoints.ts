@@ -25,6 +25,7 @@ import type {
   PayoutRow,
   SearchResults,
   SmsLog,
+  ProviderKpi,
 } from "../lib/types";
 
 type Page = { limit?: number; offset?: number };
@@ -69,6 +70,8 @@ export const api = {
   verifyCompletion: (id: number) => http.post(`/admin/requests/${id}/verify`, {}),
   rateProvider: (id: number, body: { rating: number; feedback?: number; timeliness?: number; quality?: number; note?: string }) =>
     http.post(`/admin/requests/${id}/rating`, body),
+  providerKpi: (userId: number) => unwrap<ProviderKpi>(http.get(`/admin/providers/${userId}/kpi`)),
+  resetRating: (userId: number) => http.post(`/admin/providers/${userId}/reset-rating`),
   markPayoutPaid: (id: number, ref?: string) => http.post(`/admin/payouts/${id}/mark-paid`, { ref }),
 
   // --- providers ---
