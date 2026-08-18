@@ -48,7 +48,6 @@ import com.spartons.antoniasdriver.ui.notifications.NotificationBell
 import com.spartons.antoniasdriver.ui.profile.ProfileScreen
 import com.spartons.antoniasdriver.ui.requests.RequestsScreen
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.Navy
 
 private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
@@ -99,7 +98,7 @@ fun MainScaffold(
             )
         },
         bottomBar = {
-            NavigationBar(containerColor = Color.White) {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 Tab.entries.forEach { tab ->
                     val selected = currentRoute == tab.route
                     NavigationBarItem(
@@ -116,8 +115,8 @@ fun MainScaffold(
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = BrandBlue,
                             selectedTextColor = BrandBlue,
-                            unselectedIconColor = MutedGrey,
-                            unselectedTextColor = MutedGrey,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             indicatorColor = Color.Transparent,
                         ),
                     )

@@ -55,9 +55,7 @@ import com.spartons.antoniasdriver.data.Job
 import com.spartons.antoniasdriver.ui.money
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
 import com.spartons.antoniasdriver.ui.theme.BrandBlueLight
-import com.spartons.antoniasdriver.ui.theme.HairlineGrey
 import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.Navy
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.SuccessGreenLight
@@ -115,9 +113,9 @@ fun PaymentRequestedScreen(
                 }
             }
             Spacer(Modifier.height(18.dp))
-            Text("Payment Requested!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = InkBlack, textAlign = TextAlign.Center)
+            Text("Payment Requested!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
             Spacer(Modifier.height(6.dp))
-            Text("Proforma invoices have been generated automatically.", style = MaterialTheme.typography.bodyMedium, color = MutedGrey, textAlign = TextAlign.Center)
+            Text("Proforma invoices have been generated automatically.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
             Spacer(Modifier.height(20.dp))
 
             // What happens next
@@ -144,14 +142,14 @@ fun PaymentRequestedScreen(
                     Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(1.dp, HairlineGrey),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 ) {
                     Column(Modifier.padding(16.dp)) {
-                        Text("Invoice Summary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = InkBlack)
+                        Text("Invoice Summary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(Modifier.height(12.dp))
                         InvoiceLine("Proforma invoice from you to Smart Drill (90%)", money(b.earningsAmount.toString()), SuccessGreen)
                         Spacer(Modifier.height(10.dp))
-                        InvoiceLine("Proforma invoice from Smart Drill to Customer (100%)", money(b.feeAmount), InkBlack)
+                        InvoiceLine("Proforma invoice from Smart Drill to Customer (100%)", money(b.feeAmount), MaterialTheme.colorScheme.onSurface)
                     }
                 }
                 Spacer(Modifier.height(20.dp))
@@ -190,7 +188,7 @@ private fun NextIcon(icon: ImageVector, tint: Color, text: String) {
 @Composable
 private fun InvoiceLine(label: String, amount: String, amountColor: Color) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = InkBlack, modifier = Modifier.weight(1f))
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         Spacer(Modifier.width(10.dp))
         Text(amount, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = amountColor)
     }

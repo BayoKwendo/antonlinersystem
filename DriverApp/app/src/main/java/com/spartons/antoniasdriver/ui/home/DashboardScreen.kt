@@ -71,7 +71,6 @@ import com.spartons.antoniasdriver.ui.components.IconCircle
 import com.spartons.antoniasdriver.ui.components.ServiceCatalog
 import com.spartons.antoniasdriver.ui.money
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
-import com.spartons.antoniasdriver.ui.theme.BrandBlueLight
 import com.spartons.antoniasdriver.ui.theme.HairlineGrey
 import com.spartons.antoniasdriver.ui.theme.InkBlack
 import com.spartons.antoniasdriver.ui.theme.MutedGrey
@@ -280,7 +279,7 @@ private fun ServiceCard(svc: ProviderService) {
             )
             Spacer(Modifier.height(8.dp))
             Box(
-                Modifier.clip(RoundedCornerShape(50)).background(BrandBlueLight).padding(horizontal = 10.dp, vertical = 3.dp),
+                Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.primaryContainer).padding(horizontal = 10.dp, vertical = 3.dp),
             ) {
                 Text(svc.code ?: "Pending", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = BrandBlue)
             }
@@ -419,10 +418,10 @@ private fun PerformanceCard(m: ProviderMetrics?) {
     ) {
         Column {
             Row(
-                Modifier.fillMaxWidth().background(BrandBlueLight).padding(horizontal = 14.dp, vertical = 12.dp),
+                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primaryContainer).padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = Navy, modifier = Modifier.size(18.dp))
+                Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("Performance Overview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
             }
@@ -459,14 +458,14 @@ private fun KpiCard(kpi: ProviderKpi) {
     ) {
         Column {
             Row(
-                Modifier.fillMaxWidth().background(BrandBlueLight).padding(horizontal = 14.dp, vertical = 12.dp),
+                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primaryContainer).padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Filled.Star, null, tint = Navy, modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.Star, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("My Performance Rating", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
                 Spacer(Modifier.weight(1f))
-                Text("${sm.kpiAvg ?: "—"} / 100", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = Navy)
+                Text("${sm.kpiAvg ?: "—"} / 100", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
             Column(Modifier.padding(14.dp)) {
                 Text(
@@ -505,11 +504,11 @@ private fun KpiBar(label: String, pct: String?, weight: Int) {
 @Composable
 private fun CaughtUpCard() {
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(BrandBlueLight).padding(16.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.primaryContainer).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            Modifier.size(72.dp).clip(CircleShape).background(Color.White),
+            Modifier.size(72.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface),
             contentAlignment = Alignment.Center,
         ) { Icon(Icons.Filled.AssignmentTurnedIn, null, tint = BrandBlue, modifier = Modifier.size(40.dp)) }
         Spacer(Modifier.width(14.dp))

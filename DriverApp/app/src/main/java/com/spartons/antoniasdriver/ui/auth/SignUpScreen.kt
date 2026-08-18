@@ -94,10 +94,6 @@ import com.spartons.antoniasdriver.ui.components.PhoneField
 import com.spartons.antoniasdriver.ui.components.ServiceCatalog
 import com.spartons.antoniasdriver.ui.components.ServiceDef
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
-import com.spartons.antoniasdriver.ui.theme.BrandBlueLight
-import com.spartons.antoniasdriver.ui.theme.HairlineGrey
-import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.Navy
 import com.spartons.antoniasdriver.ui.theme.NavyDark
 import kotlinx.coroutines.Dispatchers
@@ -266,14 +262,14 @@ fun SignUpScreen(
                     "Create Your Service Provider Account",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = InkBlack,
+                    color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
                     "Join Smart Drill and connect with customers who need your expertise.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MutedGrey,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )
             }
@@ -363,7 +359,7 @@ fun SignUpScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Already have an account? ", style = MaterialTheme.typography.bodyMedium, color = MutedGrey)
+                    Text("Already have an account? ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         "Login",
                         style = MaterialTheme.typography.bodyMedium,
@@ -455,7 +451,7 @@ private fun HeroHeader(onBack: () -> Unit) {
 private fun SectionTitle(title: String, subtitle: String? = null) {
     Column {
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Navy)
-        subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MutedGrey, modifier = Modifier.padding(top = 2.dp)) }
+        subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp)) }
     }
 }
 
@@ -473,7 +469,7 @@ private fun IconField(
     Surface(
         shape = RoundedCornerShape(14.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, HairlineGrey),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 14.dp),
@@ -484,13 +480,13 @@ private fun IconField(
                 Spacer(Modifier.width(14.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = InkBlack)
+                Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(3.dp))
                 BasicTextField(
                     value = value,
                     onValueChange = onChange,
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = InkBlack),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
                     keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
                     visualTransformation = visualTransformation,
                     cursorBrush = SolidColor(BrandBlue),
@@ -498,7 +494,7 @@ private fun IconField(
                     decorationBox = { inner ->
                         Box(contentAlignment = Alignment.CenterStart) {
                             if (value.isEmpty()) {
-                                Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = MutedGrey)
+                                Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             inner()
                         }
@@ -516,7 +512,7 @@ private fun EyeToggle(visible: Boolean, onToggle: () -> Unit) {
         Icon(
             if (visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
             contentDescription = if (visible) "Hide" else "Show",
-            tint = MutedGrey,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp),
         )
     }
@@ -545,8 +541,8 @@ private fun ServiceGridItem(service: ServiceDef, checked: Boolean, onToggle: () 
     Surface(
         modifier = modifier.height(68.dp).clickable(onClick = onToggle),
         shape = RoundedCornerShape(12.dp),
-        color = if (checked) BrandBlueLight else MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, if (checked) BrandBlue else HairlineGrey),
+        color = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (checked) BrandBlue else MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
             Modifier.padding(horizontal = 12.dp),
@@ -557,7 +553,7 @@ private fun ServiceGridItem(service: ServiceDef, checked: Boolean, onToggle: () 
             Text(
                 "${service.label} (${service.badge})",
                 style = MaterialTheme.typography.labelMedium,
-                color = InkBlack,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f),
                 maxLines = 2,
@@ -567,7 +563,7 @@ private fun ServiceGridItem(service: ServiceDef, checked: Boolean, onToggle: () 
                     .size(20.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (checked) BrandBlue else androidx.compose.ui.graphics.Color.Transparent)
-                    .border(1.5.dp, if (checked) BrandBlue else HairlineGrey, RoundedCornerShape(5.dp)),
+                    .border(1.5.dp, if (checked) BrandBlue else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(5.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 if (checked) Icon(Icons.Filled.VerifiedUser, null, tint = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(13.dp))
@@ -588,7 +584,7 @@ private fun TermsRow(checked: Boolean, onToggle: (Boolean) -> Unit) {
                 withStyle(SpanStyle(color = BrandBlue, fontWeight = FontWeight.SemiBold)) { append("Privacy Policy") }
             },
             style = MaterialTheme.typography.bodySmall,
-            color = InkBlack,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -596,7 +592,7 @@ private fun TermsRow(checked: Boolean, onToggle: (Boolean) -> Unit) {
 @Composable
 private fun InfoBanner() {
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(BrandBlueLight).padding(14.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primaryContainer).padding(14.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Icon(Icons.Outlined.Shield, null, tint = BrandBlue, modifier = Modifier.size(20.dp))
@@ -604,7 +600,7 @@ private fun InfoBanner() {
         Text(
             "All providers are verified before they can receive jobs through Smart Drill. Your information is secure and will only be used for verification purposes.",
             style = MaterialTheme.typography.bodySmall,
-            color = InkBlack,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
         )
     }
 }

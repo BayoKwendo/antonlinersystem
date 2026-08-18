@@ -54,8 +54,6 @@ import com.spartons.antoniasdriver.ui.initials
 import com.spartons.antoniasdriver.ui.titleCase
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
 import com.spartons.antoniasdriver.ui.theme.DangerRed
-import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.Navy
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.WarningAmber
@@ -97,7 +95,7 @@ fun ProfileScreen(onLoggedOut: () -> Unit, vm: ProfileViewModel = viewModel()) {
             Spacer(Modifier.height(8.dp))
             val services = d?.services.orEmpty()
             if (services.isEmpty()) {
-                Text("No services registered.", style = MaterialTheme.typography.bodySmall, color = MutedGrey)
+                Text("No services registered.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 services.forEachIndexed { i, svc ->
                     if (i > 0) Spacer(Modifier.height(10.dp))
@@ -153,9 +151,9 @@ private fun IdentityCard(d: ProviderDashboard?) {
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text(d?.businessName ?: d?.name ?: "Service Provider", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = InkBlack)
+                Text(d?.businessName ?: d?.name ?: "Service Provider", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 d?.name?.takeIf { it != d.businessName }?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = MutedGrey)
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 val accepting = d?.acceptingRequests == true
                 Spacer(Modifier.height(6.dp))
@@ -171,8 +169,8 @@ private fun ServiceIdRow(svc: ProviderService) {
         IconCircle(ServiceCatalog.icon(svc.key), tint = BrandBlue, diameter = 38)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(ServiceCatalog.label(svc.key, svc.name), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = InkBlack)
-            Text(svc.code ?: "Awaiting verification", style = MaterialTheme.typography.labelSmall, color = MutedGrey)
+            Text(ServiceCatalog.label(svc.key, svc.name), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(svc.code ?: "Awaiting verification", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Pill(if (svc.active) "Active" else "Pending", if (svc.active) SuccessGreen else WarningAmber)
     }
@@ -181,8 +179,8 @@ private fun ServiceIdRow(svc: ProviderService) {
 @Composable
 private fun ContactRow(icon: ImageVector, value: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, null, tint = MutedGrey, modifier = Modifier.size(18.dp))
+        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(10.dp))
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = InkBlack)
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
     }
 }

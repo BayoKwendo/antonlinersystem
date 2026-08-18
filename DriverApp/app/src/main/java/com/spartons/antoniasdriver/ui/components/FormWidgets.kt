@@ -32,10 +32,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
-import com.spartons.antoniasdriver.ui.theme.BrandBlueLight
-import com.spartons.antoniasdriver.ui.theme.HairlineGrey
-import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.Navy
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.SuccessGreenLight
@@ -54,7 +50,7 @@ fun DocumentUploadRow(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, if (picked) SuccessGreen else HairlineGrey),
+        border = BorderStroke(1.dp, if (picked) SuccessGreen else MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
             Modifier.padding(12.dp),
@@ -64,23 +60,23 @@ fun DocumentUploadRow(
                 Modifier
                     .size(46.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (picked) SuccessGreenLight else BrandBlueLight),
+                    .background(if (picked) SuccessGreenLight else MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     if (picked) Icons.Filled.CheckCircle else icon,
                     contentDescription = null,
-                    tint = if (picked) SuccessGreen else Navy,
+                    tint = if (picked) SuccessGreen else MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(24.dp),
                 )
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = InkBlack)
+                Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                 Text(
                     selectedName ?: "PDF, PNG or JPG (Max 5MB)",
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (picked) SuccessGreen else MutedGrey,
+                    color = if (picked) SuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                 )
             }
@@ -88,7 +84,7 @@ fun DocumentUploadRow(
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, if (picked) SuccessGreen else HairlineGrey),
+                border = BorderStroke(1.dp, if (picked) SuccessGreen else MaterialTheme.colorScheme.outlineVariant),
                 modifier = Modifier.clickable(onClick = onPick),
             ) {
                 Column(
@@ -116,7 +112,7 @@ fun ServiceCheckbox(
         modifier = modifier.clickable(onClick = onToggle),
         shape = RoundedCornerShape(12.dp),
         color = if (checked) BrandBlue.copy(alpha = 0.06f) else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, if (checked) BrandBlue else HairlineGrey),
+        border = BorderStroke(1.dp, if (checked) BrandBlue else MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
             Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
@@ -127,7 +123,7 @@ fun ServiceCheckbox(
             Text(
                 service.label,
                 style = MaterialTheme.typography.labelLarge,
-                color = InkBlack,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f),
             )
@@ -150,11 +146,11 @@ fun ReadinessRow(label: String, done: Boolean, modifier: Modifier = Modifier) {
             Icon(
                 if (done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
                 null,
-                tint = if (done) SuccessGreen else MutedGrey,
+                tint = if (done) SuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
         }
         Spacer(Modifier.width(10.dp))
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = if (done) InkBlack else MutedGrey)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = if (done) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

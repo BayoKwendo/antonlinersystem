@@ -43,8 +43,6 @@ import com.spartons.antoniasdriver.ui.money
 import com.spartons.antoniasdriver.ui.requirementsText
 import com.spartons.antoniasdriver.ui.timeAgo
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
-import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -86,8 +84,8 @@ fun RequestsScreen(onOpenRequest: (Long) -> Unit, vm: RequestsViewModel = viewMo
         ) {
             item {
                 Column {
-                    Text("Available Requests", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = InkBlack)
-                    Text("Broadcast to every verified provider — first to accept secures the job.", style = MaterialTheme.typography.bodySmall, color = MutedGrey)
+                    Text("Available Requests", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Broadcast to every verified provider — first to accept secures the job.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             items(s.jobs) { job -> RequestCard(job) { onOpenRequest(job.id) } }
@@ -105,12 +103,12 @@ private fun EmptyRequests(error: String?) {
                 "You're all caught up",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = InkBlack,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 error ?: "No new requests right now. We'll notify you the moment one lands.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MutedGrey,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -127,9 +125,9 @@ fun RequestCard(job: Job, onClick: () -> Unit) {
                     ServiceCatalog.label(job.category, job.serviceName),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = InkBlack,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
-                job.requestNo?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MutedGrey) }
+                job.requestNo?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
             Pill("New Request", BrandBlue)
         }
@@ -137,24 +135,24 @@ fun RequestCard(job: Job, onClick: () -> Unit) {
         if (where != null) {
             Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.LocationOn, null, tint = MutedGrey, modifier = Modifier.height(16.dp))
+                Icon(Icons.Filled.LocationOn, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.height(16.dp))
                 Spacer(Modifier.width(4.dp))
-                Text(where, style = MaterialTheme.typography.bodySmall, color = MutedGrey)
+                Text(where, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         requirementsText(job.details)?.let {
             Spacer(Modifier.height(6.dp))
-            Text(it, style = MaterialTheme.typography.bodySmall, color = InkBlack, maxLines = 2)
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface, maxLines = 2)
         }
         Spacer(Modifier.height(10.dp))
         HorizontalDivider()
         Spacer(Modifier.height(10.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column {
-                Text("You earn", style = MaterialTheme.typography.labelSmall, color = MutedGrey)
+                Text("You earn", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(money(job.earningsAmount.toString()), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = SuccessGreen)
             }
-            Text(timeAgo(job.createdAt), style = MaterialTheme.typography.labelSmall, color = MutedGrey)
+            Text(timeAgo(job.createdAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

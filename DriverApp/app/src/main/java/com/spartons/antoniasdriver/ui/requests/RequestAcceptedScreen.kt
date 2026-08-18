@@ -51,9 +51,6 @@ import com.spartons.antoniasdriver.ServiceLocator
 import com.spartons.antoniasdriver.data.Job
 import com.spartons.antoniasdriver.ui.components.ServiceCatalog
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
-import com.spartons.antoniasdriver.ui.theme.HairlineGrey
-import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.Navy
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.SuccessGreenLight
@@ -109,9 +106,9 @@ fun RequestAcceptedScreen(
                 }
             }
             Spacer(Modifier.height(18.dp))
-            Text("Request Successfully Accepted!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = InkBlack, textAlign = TextAlign.Center)
+            Text("Request Successfully Accepted!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
             Spacer(Modifier.height(6.dp))
-            Text("You have been matched with this customer.", style = MaterialTheme.typography.bodyMedium, color = MutedGrey, textAlign = TextAlign.Center)
+            Text("You have been matched with this customer.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
             Spacer(Modifier.height(20.dp))
 
             // Matched card
@@ -119,8 +116,8 @@ fun RequestAcceptedScreen(
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     job?.requestNo?.let {
                         Column {
-                            Text("Request ID", style = MaterialTheme.typography.labelSmall, color = MutedGrey)
-                            Text(it, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
+                            Text("Request ID", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(it, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                     Box(Modifier.clip(RoundedCornerShape(50)).background(SuccessGreenLight).padding(horizontal = 12.dp, vertical = 4.dp)) {
@@ -136,7 +133,7 @@ fun RequestAcceptedScreen(
 
             // What's Next
             Card {
-                Text("What's Next?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = InkBlack)
+                Text("What's Next?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(12.dp))
                 NextStep(done = true, index = 1, text = "You accepted the request", last = false)
                 NextStep(done = false, index = 2, text = "Contact the customer to discuss details and confirm the service", last = false)
@@ -161,7 +158,7 @@ private fun Card(content: @Composable androidx.compose.foundation.layout.ColumnS
         Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, HairlineGrey),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) { Column(Modifier.padding(16.dp), content = content) }
 }
 
@@ -171,8 +168,8 @@ private fun InfoLine(icon: androidx.compose.ui.graphics.vector.ImageVector, labe
         Icon(icon, null, tint = BrandBlue, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(10.dp))
         Column {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MutedGrey)
-            Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = InkBlack)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -188,13 +185,13 @@ private fun NextStep(done: Boolean, index: Int, text: String, last: Boolean) {
                 if (done) Icon(Icons.Filled.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))
                 else Text("$index", color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
             }
-            if (!last) Box(Modifier.width(2.dp).height(28.dp).background(HairlineGrey))
+            if (!last) Box(Modifier.width(2.dp).height(28.dp).background(MaterialTheme.colorScheme.outlineVariant))
         }
         Spacer(Modifier.width(12.dp))
         Text(
             text,
             style = MaterialTheme.typography.bodyMedium,
-            color = InkBlack,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(top = 3.dp, bottom = if (last) 0.dp else 12.dp),
         )
     }

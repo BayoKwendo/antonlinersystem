@@ -69,7 +69,6 @@ import com.spartons.antoniasdriver.ui.requirementsText
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
 import com.spartons.antoniasdriver.ui.theme.DangerRed
 import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.SuccessGreenLight
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -194,8 +193,8 @@ private fun RequestDetailBody(
             IconCircle(ServiceCatalog.icon(job.category), tint = BrandBlue, diameter = 52)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(ServiceCatalog.label(job.category, job.serviceName), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = InkBlack)
-                job.requestNo?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = MutedGrey) }
+                Text(ServiceCatalog.label(job.category, job.serviceName), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                job.requestNo?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -204,7 +203,7 @@ private fun RequestDetailBody(
         SmartCard {
             MiniHeading("CUSTOMER")
             Spacer(Modifier.height(8.dp))
-            Text(job.customerName ?: "Customer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = InkBlack)
+            Text(job.customerName ?: "Customer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
             if (job.customerPhone != null) {
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(onClick = onCall, modifier = Modifier.fillMaxWidth()) {
@@ -212,7 +211,7 @@ private fun RequestDetailBody(
                 }
             } else {
                 Spacer(Modifier.height(4.dp))
-                Text("Contact details are revealed once you accept.", style = MaterialTheme.typography.labelSmall, color = MutedGrey)
+                Text("Contact details are revealed once you accept.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         Spacer(Modifier.height(12.dp))
@@ -224,7 +223,7 @@ private fun RequestDetailBody(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.LocationOn, null, tint = BrandBlue)
                 Spacer(Modifier.width(8.dp))
-                Text(job.address ?: "Location shared on map", style = MaterialTheme.typography.bodyMedium, color = InkBlack, modifier = Modifier.weight(1f))
+                Text(job.address ?: "Location shared on map", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                 if (job.lat?.toDoubleOrNull() != null && job.lng?.toDoubleOrNull() != null) {
                     TextButton(onClick = onMap) { Text("View Map") }
                 }
@@ -237,7 +236,7 @@ private fun RequestDetailBody(
             SmartCard {
                 MiniHeading("CUSTOMER REQUIREMENTS")
                 Spacer(Modifier.height(8.dp))
-                Text(it, style = MaterialTheme.typography.bodyMedium, color = InkBlack)
+                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
             }
             Spacer(Modifier.height(12.dp))
         }
@@ -247,7 +246,7 @@ private fun RequestDetailBody(
             MiniHeading("RATE CARD")
             Spacer(Modifier.height(8.dp))
             InfoRow("Customer pays", money(job.feeAmount))
-            InfoRow("SmartDrill commission (10%)", "- ${money(job.commissionAmount.toString())}", valueColor = MutedGrey)
+            InfoRow("SmartDrill commission (10%)", "- ${money(job.commissionAmount.toString())}", valueColor = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
@@ -268,7 +267,7 @@ private fun RequestDetailBody(
             Text(
                 "Tell the customer the earliest date you can deliver this service.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MutedGrey,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
             )
             OutlinedButton(onClick = { showDate = true }, modifier = Modifier.fillMaxWidth()) {

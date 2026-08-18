@@ -39,8 +39,6 @@ import com.spartons.antoniasdriver.ui.components.SmartCard
 import com.spartons.antoniasdriver.ui.money
 import com.spartons.antoniasdriver.ui.timeAgo
 import com.spartons.antoniasdriver.ui.titleCase
-import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.Navy
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.WarningAmber
@@ -85,11 +83,11 @@ fun EarningsScreen(vm: EarningsViewModel = viewModel()) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Text("Earnings", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = InkBlack) }
+        item { Text("Earnings", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) }
         item { HeroEarnings(s.totals) }
         item { MiniHeading("PAYOUTS", modifier = Modifier.padding(top = 4.dp)) }
         if (s.payouts.isEmpty()) {
-            item { Text(s.error ?: "No payouts yet.", style = MaterialTheme.typography.bodyMedium, color = MutedGrey) }
+            item { Text(s.error ?: "No payouts yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         } else {
             items(s.payouts) { p -> PayoutRow(p) }
         }
@@ -126,15 +124,15 @@ private fun PayoutRow(p: Payout) {
             Column(Modifier.weight(1f)) {
                 Text(
                     listOfNotNull(p.service, p.kind?.let { titleCase(it) }).joinToString(" · ").ifBlank { "Payout" },
-                    style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = InkBlack,
+                    style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface,
                 )
                 Row {
-                    p.requestNo?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MutedGrey) }
-                    p.date?.let { Text("  ·  ${timeAgo(it)}", style = MaterialTheme.typography.labelSmall, color = MutedGrey) }
+                    p.requestNo?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    p.date?.let { Text("  ·  ${timeAgo(it)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(money(p.amount), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = InkBlack)
+                Text(money(p.amount), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 val paid = (p.status ?: "").equals("paid", ignoreCase = true) || (p.status ?: "").equals("released", ignoreCase = true)
                 Spacer(Modifier.height(2.dp))
                 Pill(

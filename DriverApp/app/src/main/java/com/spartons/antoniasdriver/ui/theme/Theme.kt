@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,10 +36,20 @@ val WarningAmber = Color(0xFFF5A623)
 val WarningAmberLight = Color(0xFFFDF1DD)
 val DangerRed = Color(0xFFE23B3B)
 val DangerRedLight = Color(0xFFFDE8E8)
-val InkBlack = Color(0xFF0F1B2D)     // primary text
-val MutedGrey = Color(0xFF6B7280)    // secondary text
-val HairlineGrey = Color(0xFFE5E9F0) // dividers / card borders
-val CanvasGrey = Color(0xFFF4F6FA)   // screen background
+// Neutral roles are theme-aware: screens reference these names directly and they
+// now resolve to the ACTIVE color scheme, so body text, secondary text, dividers
+// and screen backgrounds stay legible in dark mode. (Raw light/dark hex values
+// live in the two schemes below.)
+val InkBlack: Color @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSurface
+val MutedGrey: Color @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSurfaceVariant
+val HairlineGrey: Color @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.outlineVariant
+val CanvasGrey: Color @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.background
+
+// Fixed-dark text for content that sits on a *Light pastel banner/badge. Those
+// pastels stay light in BOTH themes (they double as icon-holder tints), so text
+// placed on them must stay dark in both themes rather than follow the scheme.
+val InkOnTint = Color(0xFF0F1B2D)
+val MutedOnTint = Color(0xFF5B6472)
 
 private val LightColors = lightColorScheme(
     primary = BrandBlue,
@@ -51,14 +62,14 @@ private val LightColors = lightColorScheme(
     onSecondaryContainer = NavyDark,
     tertiary = SuccessGreen,
     onTertiary = Color.White,
-    background = CanvasGrey,
-    onBackground = InkBlack,
+    background = Color(0xFFF4F6FA),
+    onBackground = Color(0xFF0F1B2D),
     surface = Color.White,
-    onSurface = InkBlack,
+    onSurface = Color(0xFF0F1B2D),
     surfaceVariant = Color(0xFFF0F3F8),
-    onSurfaceVariant = MutedGrey,
-    outline = HairlineGrey,
-    outlineVariant = HairlineGrey,
+    onSurfaceVariant = Color(0xFF6B7280),
+    outline = Color(0xFFE5E9F0),
+    outlineVariant = Color(0xFFE5E9F0),
     error = DangerRed,
     onError = Color.White,
 )

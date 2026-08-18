@@ -30,9 +30,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.spartons.antoniasdriver.ui.theme.HairlineGrey
-import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 
 /** White rounded card used as the base surface across the redesign. */
 @Composable
@@ -45,7 +42,7 @@ fun SmartCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, HairlineGrey),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(Modifier.padding(padding.dp), content = content)
@@ -89,11 +86,11 @@ fun RowScope.MetricTile(icon: ImageVector, value: String, label: String, tint: C
     SmartCard(modifier = Modifier.weight(1f), padding = 12) {
         Icon(icon, null, tint = tint, modifier = Modifier.size(22.dp))
         Spacer(Modifier.height(6.dp))
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = InkBlack)
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,
-            color = MutedGrey,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Start,
         )
     }
@@ -122,7 +119,7 @@ fun StatusChip(status: String?, modifier: Modifier = Modifier) =
 fun InfoRow(
     label: String,
     value: String,
-    valueColor: Color = InkBlack,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface,
     valueWeight: FontWeight = FontWeight.Medium,
 ) {
     Row(
@@ -130,7 +127,7 @@ fun InfoRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MutedGrey)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
             value,
             style = MaterialTheme.typography.bodyMedium,
@@ -143,9 +140,9 @@ fun InfoRow(
 
 /** Small stacked label + value block (used in horizontal summary strips). */
 @Composable
-fun LabeledValue(label: String, value: String, modifier: Modifier = Modifier, valueColor: Color = InkBlack) {
+fun LabeledValue(label: String, value: String, modifier: Modifier = Modifier, valueColor: Color = MaterialTheme.colorScheme.onSurface) {
     Column(modifier) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MutedGrey)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = valueColor)
     }
 }
@@ -157,7 +154,7 @@ fun MiniHeading(text: String, modifier: Modifier = Modifier) {
         text,
         modifier = modifier,
         style = MaterialTheme.typography.labelMedium,
-        color = MutedGrey,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontWeight = FontWeight.Bold,
         letterSpacing = 1.sp,
     )

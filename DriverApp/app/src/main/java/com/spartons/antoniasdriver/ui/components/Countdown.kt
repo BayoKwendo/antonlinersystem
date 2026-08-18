@@ -15,8 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -47,7 +45,7 @@ fun parseIsoToMillis(iso: String?): Long? {
 @Composable
 fun CountdownTimer(targetMillis: Long?, modifier: Modifier = Modifier, compact: Boolean = false) {
     if (targetMillis == null) {
-        Text("Scheduled", style = MaterialTheme.typography.labelMedium, color = MutedGrey, modifier = modifier)
+        Text("Scheduled", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = modifier)
         return
     }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -59,7 +57,7 @@ fun CountdownTimer(targetMillis: Long?, modifier: Modifier = Modifier, compact: 
     }
     val remaining = targetMillis - now
     if (remaining <= 0) {
-        Text("Due now", style = MaterialTheme.typography.labelLarge, color = MutedGrey, modifier = modifier, fontWeight = FontWeight.SemiBold)
+        Text("Due now", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = modifier, fontWeight = FontWeight.SemiBold)
         return
     }
     val totalSecs = remaining / 1000
@@ -83,8 +81,8 @@ private fun CountUnit(value: Long, label: String, compact: Boolean) {
             value.toString().padStart(2, '0'),
             style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = InkBlack,
+            color = MaterialTheme.colorScheme.onSurface,
         )
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MutedGrey)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

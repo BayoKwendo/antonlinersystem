@@ -59,9 +59,6 @@ import com.spartons.antoniasdriver.ui.components.parseIsoToMillis
 import com.spartons.antoniasdriver.ui.prettyDate
 import com.spartons.antoniasdriver.ui.prettyTime
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
-import com.spartons.antoniasdriver.ui.theme.HairlineGrey
-import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.WarningAmber
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -119,7 +116,7 @@ fun JobsScreen(onOpenJob: (Long) -> Unit, vm: JobsViewModel = viewModel()) {
                 "My Jobs",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = InkBlack,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
             )
             ScrollableTabRow(selectedTabIndex = tab, edgePadding = 16.dp) {
@@ -130,7 +127,7 @@ fun JobsScreen(onOpenJob: (Long) -> Unit, vm: JobsViewModel = viewModel()) {
             when {
                 s.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 filtered.isEmpty() -> Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-                    Text(s.error ?: "No jobs here yet.", color = MutedGrey)
+                    Text(s.error ?: "No jobs here yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 else -> LazyColumn(
                     Modifier.fillMaxSize(),
@@ -162,14 +159,14 @@ private fun JobCard(job: Job, onClick: () -> Unit, onStartTrip: () -> Unit, onPe
         Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, HairlineGrey),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(Modifier.padding(14.dp)) {
             Column(Modifier.weight(1f)) {
                 Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = color)
                 Spacer(Modifier.height(3.dp))
-                Text(job.customerName ?: "Customer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = InkBlack)
-                Text(ServiceCatalog.label(job.category, job.serviceName), style = MaterialTheme.typography.bodyMedium, color = InkBlack)
+                Text(job.customerName ?: "Customer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Text(ServiceCatalog.label(job.category, job.serviceName), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                 prettyDate(job.scheduledAt)?.let { d ->
                     Spacer(Modifier.height(6.dp))
                     IconLine(Icons.Filled.CalendarMonth, d + (prettyTime(job.scheduledAt)?.let { " · $it" } ?: ""))
@@ -182,7 +179,7 @@ private fun JobCard(job: Job, onClick: () -> Unit, onStartTrip: () -> Unit, onPe
                 when {
                     job.status in JobStatus.DONE -> {
                         Text("Completed", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = SuccessGreen)
-                        prettyDate(job.scheduledAt)?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MutedGrey) }
+                        prettyDate(job.scheduledAt)?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     }
                     target != null && job.status in JobStatus.COUNTDOWN -> CountdownTimer(target, compact = true)
                     else -> {}
@@ -207,9 +204,9 @@ private fun JobCard(job: Job, onClick: () -> Unit, onStartTrip: () -> Unit, onPe
 @Composable
 private fun IconLine(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
-        Icon(icon, null, tint = MutedGrey, modifier = Modifier.height(15.dp))
+        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.height(15.dp))
         Spacer(Modifier.width(4.dp))
-        Text(text, style = MaterialTheme.typography.labelMedium, color = MutedGrey)
+        Text(text, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

@@ -31,9 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
-import com.spartons.antoniasdriver.ui.theme.HairlineGrey
-import com.spartons.antoniasdriver.ui.theme.InkBlack
-import com.spartons.antoniasdriver.ui.theme.MutedGrey
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 
 private val STEP_ICONS = listOf(
@@ -65,7 +62,7 @@ fun ProgressStepper(currentIndex: Int, modifier: Modifier = Modifier) {
                 Text(
                     label,
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (i <= currentIndex) InkBlack else MutedGrey,
+                    color = if (i <= currentIndex) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = if (current) FontWeight.SemiBold else FontWeight.Normal,
                     textAlign = TextAlign.Center,
                 )
@@ -83,7 +80,7 @@ private fun Connector(visible: Boolean, active: Boolean, modifier: Modifier) {
                 when {
                     !visible -> Color.Transparent
                     active -> SuccessGreen
-                    else -> HairlineGrey
+                    else -> MaterialTheme.colorScheme.outlineVariant
                 },
             ),
     )
@@ -94,15 +91,15 @@ private fun StepNode(icon: ImageVector, done: Boolean, current: Boolean) {
     val bg = when {
         done -> SuccessGreen
         current -> BrandBlue
-        else -> Color.White
+        else -> MaterialTheme.colorScheme.surfaceVariant
     }
-    val fg = if (done || current) Color.White else MutedGrey
+    val fg = if (done || current) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
     Box(
         Modifier
             .size(34.dp)
             .clip(CircleShape)
             .background(bg)
-            .then(if (!done && !current) Modifier.border(1.5.dp, HairlineGrey, CircleShape) else Modifier),
+            .then(if (!done && !current) Modifier.border(1.5.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, null, tint = fg, modifier = Modifier.size(18.dp))

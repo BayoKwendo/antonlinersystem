@@ -122,9 +122,9 @@ fun IncomingRequestScreen(
 @Composable
 private fun IncomingCard(job: Job) {
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color.White).padding(18.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).padding(18.dp),
     ) {
-        Text(ServiceCatalog.label(job.category, job.serviceName), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Navy)
+        Text(ServiceCatalog.label(job.category, job.serviceName), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
         job.requestNo?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         Spacer(Modifier.height(12.dp))
         AlertRow("Customer", job.customerName ?: "—")

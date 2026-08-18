@@ -53,7 +53,7 @@ fun statusColor(status: String?): Color = when (status) {
     JobStatus.PENDING_PAYMENT, JobStatus.EN_ROUTE, JobStatus.COMPLETED -> WarningAmber
     JobStatus.CONFIRMED -> SuccessGreen
     JobStatus.CANCELLED -> DangerRed
-    else -> MutedGrey
+    else -> Color(0xFF6B7280) // neutral grey (non-composable context, so a fixed value)
 }
 
 /** The five-milestone JOB PROGRESS stepper labels. */
