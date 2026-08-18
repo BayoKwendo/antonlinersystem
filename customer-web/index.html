@@ -7,6 +7,17 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1656c7" />
+    <!-- Apply the saved light/dark choice before first paint (no flash). No
+         stored value → tokens.css follows the OS via prefers-color-scheme. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("sd-theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
     <title>SMART Drill — Your One-Stop Shop for Borehole Services</title>
     <meta
       name="description"

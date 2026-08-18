@@ -1,7 +1,7 @@
 .sd-blue-text { color: var(--sd-blue-600); }
 
 /* ---- HERO (contained banner, square corners; headline overlaid left) ---- */
-.sd-hero { padding: 20px 0 4px; background: #fff; }
+.sd-hero { padding: 20px 0 4px; background: var(--sd-card); }
 .sd-hero__banner {
   position: relative; overflow: hidden;
   min-height: 420px; display: flex; align-items: center;
@@ -11,7 +11,13 @@
 .sd-hero__photo { position: absolute; inset: 0; z-index: 1; background: url("/hero.jpg") center right/cover no-repeat; }
 .sd-hero__banner::after {
   content: ""; position: absolute; inset: 0; z-index: 2;
-  background: linear-gradient(90deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.82) 34%, rgba(255,255,255,0.35) 56%, rgba(255,255,255,0) 74%);
+  /* Theme-aware fade over the photo: white in light, dark in dark — so the
+     overlay text (ink tokens, which invert) stays readable in both themes. */
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--sd-card) 95%, transparent) 0%,
+    color-mix(in srgb, var(--sd-card) 82%, transparent) 34%,
+    color-mix(in srgb, var(--sd-card) 35%, transparent) 56%,
+    transparent 74%);
 }
 .sd-hero__overlay { position: relative; z-index: 3; max-width: 560px; padding: 44px 48px; }
 .sd-hero__overlay h1 { font-size: clamp(32px, 3.8vw, 50px); margin-bottom: 14px; }
@@ -29,7 +35,7 @@
 .sd-services__grid--3 { grid-template-columns: repeat(3, 1fr); }
 
 /* ---- TRUST STRIP (light, 5-up, icon-left) ---- */
-.sd-trust { background: #fff; border-top: 1px solid var(--sd-line); border-bottom: 1px solid var(--sd-line); }
+.sd-trust { background: var(--sd-card); border-top: 1px solid var(--sd-line); border-bottom: 1px solid var(--sd-line); }
 .sd-trust__grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 22px; padding: 34px 24px; }
 .sd-trust__item { display: flex; gap: 12px; align-items: flex-start; }
 .sd-trust__icon {
@@ -42,7 +48,7 @@
 .sd-trust__body span { color: var(--sd-muted); font-size: 12px; line-height: 1.4; }
 
 /* ---- HOW IT WORKS (white, so only the CTA below reads as the blue band) ---- */
-.sd-section.sd-how { background: #fff; border-top: 1px solid var(--sd-line); padding: 30px 0; }
+.sd-section.sd-how { background: var(--sd-card); border-top: 1px solid var(--sd-line); padding: 30px 0; }
 .sd-how .sd-section__head { margin-bottom: 18px; }
 .sd-how__row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }
 .sd-how__cell { display: flex; align-items: center; flex: 1; min-width: 230px; }
@@ -58,7 +64,7 @@
 .sd-how__arrow { color: var(--sd-blue-300); flex: none; padding: 0 2px; }
 
 /* ---- CTA BANNER (contained rounded card) ---- */
-.sd-cta-band { background: #fff; padding: 10px 0; }
+.sd-cta-band { background: var(--sd-card); padding: 10px 0; }
 /* The card visual lives on the inner element; higher specificity than
    .sd-container (also on it) so the card padding wins over its 0 24px. */
 .sd-cta-band .sd-cta-inner {
@@ -86,7 +92,7 @@
   .sd-trust__grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 900px) {
-  .sd-hero__banner::after { background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.55) 60%, rgba(255,255,255,0.2) 100%); }
+  .sd-hero__banner::after { background: linear-gradient(180deg, color-mix(in srgb, var(--sd-card) 90%, transparent) 0%, color-mix(in srgb, var(--sd-card) 55%, transparent) 60%, color-mix(in srgb, var(--sd-card) 20%, transparent) 100%); }
   .sd-hero__banner { min-height: 380px; }
   .sd-hero__overlay { padding: 28px 20px; }
   .sd-how__arrow { display: none; }

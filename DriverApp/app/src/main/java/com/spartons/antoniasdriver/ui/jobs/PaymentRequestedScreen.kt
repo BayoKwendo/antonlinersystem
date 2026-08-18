@@ -177,7 +177,7 @@ fun PaymentRequestedScreen(
 @Composable
 private fun NextIcon(icon: ImageVector, tint: Color, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(38.dp).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(38.dp).clip(CircleShape).background(tint.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
             Icon(icon, null, tint = tint, modifier = Modifier.size(20.dp))
         }
         Spacer(Modifier.width(12.dp))

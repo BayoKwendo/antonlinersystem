@@ -27,7 +27,7 @@
   align-items: stretch;
   border: 1px solid var(--sd-line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--sd-card);
   overflow: hidden;
   transition: box-shadow .15s, border-color .15s, transform .1s;
 }
@@ -52,7 +52,7 @@
   width: 42px; height: 42px;
   border-radius: 11px;
   display: flex; align-items: center; justify-content: center;
-  background: color-mix(in srgb, var(--accent) 12%, #fff);
+  background: color-mix(in srgb, var(--accent) 12%, var(--sd-card));
   color: var(--accent);
 }
 
@@ -84,8 +84,8 @@
   white-space: nowrap;
 }
 .sd-orders__badge--info  { background: var(--sd-blue-050); color: var(--sd-blue-600); }
-.sd-orders__badge--warn  { background: #fff4e5; color: #b26a00; }
-.sd-orders__badge--done  { background: #e7f7ee; color: #1a7f45; }
+.sd-orders__badge--warn  { background: var(--sd-warning-bg); color: var(--sd-warning-fg); }
+.sd-orders__badge--done  { background: var(--sd-success-bg); color: var(--sd-success-fg); }
 .sd-orders__badge--muted { background: var(--sd-blue-050); color: var(--sd-muted); }
 
 .sd-orders__chev {
@@ -106,7 +106,7 @@
   cursor: pointer;
   transition: background .15s, color .15s;
 }
-.sd-orders__remove:hover { background: #fdecec; color: #c0392b; }
+.sd-orders__remove:hover { background: var(--sd-danger-bg); color: var(--sd-danger-fg); }
 
 .sd-orders__note {
   margin-top: 8px;

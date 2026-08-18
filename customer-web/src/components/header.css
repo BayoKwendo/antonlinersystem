@@ -1,15 +1,20 @@
 .sd-header {
   position: sticky; top: 0; z-index: 50;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: saturate(1.4) blur(8px);
+  background: var(--sd-header-bg);
   border-bottom: 1px solid var(--sd-line);
+}
+/* Blur is expensive to re-sample every scroll frame on mobile GPUs (reads as
+   jank). Restrict it to pointer-capable widescreens; mobile gets an opaque bar. */
+@supports (backdrop-filter: saturate(1.4) blur(8px)) {
+  @media (min-width: 900px) and (hover: hover) {
+    .sd-header { background: var(--sd-header-bg); backdrop-filter: saturate(1.4) blur(8px); }
+  }
 }
 .sd-header__bar {
   display: flex; align-items: center; justify-content: space-between;
-  height: 68px; gap: 16px;
+  height: 68px; gap: 16px; min-width: 0;
 }
-.sd-header__logo { display: inline-flex; align-items: center; flex: none; }
-.sd-header__logo img { height: 46px; width: auto; display: block; }
+.sd-header__logo { display: inline-flex; align-items: center; flex: none; --sd-logo-size: 40px; }
 
 .sd-header__nav { display: flex; gap: 28px; margin-left: auto; }
 .sd-header__nav a {
@@ -25,7 +30,7 @@
   display: inline-flex; align-items: center;
   font-weight: 700; font-size: 14px; white-space: nowrap;
   color: var(--sd-blue-600);
-  border: 1px solid var(--sd-blue-200, #bcd3f7);
+  border: 1px solid var(--sd-blue-100);
   background: var(--sd-blue-050);
   padding: 9px 18px; border-radius: 999px;
   cursor: pointer;
@@ -33,12 +38,22 @@
 }
 .sd-header__track:hover { background: var(--sd-blue-600); border-color: var(--sd-blue-600); color: #fff; }
 
+/* Light/dark toggle */
+.sd-theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; flex: none;
+  border: 1px solid var(--sd-line); border-radius: 999px;
+  background: var(--sd-card); color: var(--sd-ink-700);
+  cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+}
+.sd-theme-toggle:hover { color: var(--sd-blue-600); border-color: var(--sd-blue-300); }
+
 /* Hamburger — hidden on desktop */
 .sd-header__burger {
   display: none;
   width: 44px; height: 44px; flex: none;
   border: 1px solid var(--sd-line); border-radius: 12px;
-  background: #fff; cursor: pointer;
+  background: var(--sd-card); cursor: pointer;
   flex-direction: column; align-items: center; justify-content: center; gap: 5px;
 }
 .sd-header__burger span {
@@ -53,7 +68,7 @@
 .sd-header__mobile {
   display: none;
   flex-direction: column;
-  background: #fff;
+  background: var(--sd-card);
   border-bottom: 1px solid var(--sd-line);
   overflow: hidden;
   max-height: 0;
@@ -72,7 +87,7 @@
 }
 
 .sd-header__scrim {
-  position: fixed; inset: 68px 0 0; z-index: -1;
+  position: fixed; inset: 0; z-index: 40;
   border: none; background: rgba(12, 36, 54, 0.35); cursor: default;
 }
 
@@ -84,6 +99,16 @@
 
 @media (max-width: 420px) {
   .sd-header__bar { gap: 10px; }
-  .sd-header__logo img { height: 40px; }
+  .sd-header__logo { --sd-logo-size: 34px; }
   .sd-header__track { padding: 8px 14px; font-size: 13px; }
+}
+
+/* Very narrow phones: shrink the logo + pill so the burger (the only mobile nav
+   trigger) is never pushed out and clipped by the overflow guard. */
+@media (max-width: 360px) {
+  .sd-header__bar { gap: 8px; }
+  .sd-header__logo { --sd-logo-size: 30px; }
+  .sd-header__track { padding: 7px 11px; font-size: 12px; }
+  .sd-header__burger { width: 40px; height: 40px; }
+  .sd-theme-toggle { width: 36px; height: 36px; }
 }

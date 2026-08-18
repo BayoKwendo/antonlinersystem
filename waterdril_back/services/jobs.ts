@@ -9,10 +9,13 @@ import client from "../db/client.ts";
 import bookingRepo from "../repositories/bookingRepo.ts";
 import invoiceRepo from "../repositories/invoiceRepo.ts";
 import documentRepo from "../repositories/documentRepo.ts";
+import accountRepo from "../repositories/accountRepo.ts";
 import escrow from "./escrow.ts";
 import { badRequest, conflict, forbidden, notFound } from "../utils/errors.ts";
 import { audit } from "./audit.ts";
 import { notifyUser } from "./notify.ts";
+import { sendEmail, emailLayout } from "./emailService.ts";
+import { APP } from "../config/config.ts";
 
 const kes = (n: number) => "KES " + n.toLocaleString("en-KE");
 const PROVIDER_CUT = 0.90; // provider pro-forma = 90% of the service fee (10% commission)
@@ -80,13 +83,35 @@ export const jobsService = {
     if (!gross || gross <= 0) throw badRequest("A quote is required before prompting payment.");
     const providerAmount = Math.round(gross * PROVIDER_CUT);
 
+    let custInv: { number: string } | null = null;
     if (!(await invoiceRepo.byBooking(bookingId, "customer"))) { // idempotent
-      await client.withTransaction(async (query) => {
-        await invoiceRepo.issue({ bookingId, amount: gross, party: "customer", prefix: "INV" }, query);
+      custInv = await client.withTransaction(async (query) => {
+        const ci = await invoiceRepo.issue({ bookingId, amount: gross, party: "customer", prefix: "INV" }, query);
         await invoiceRepo.issue({ bookingId, amount: providerAmount, party: "provider", prefix: "PI" }, query);
+        return ci;
       });
     }
     await notifyUser(b.customer_id, "Payment requested", `Please pay ${kes(gross)} to confirm your request ${b.request_no ?? ""}.`.trim(), { push: false });
+    // Email the invoice to the customer when it was just issued (mirrors adminOps.issueInvoice).
+    if (custInv) {
+      const cust = await accountRepo.findById(b.customer_id);
+      if (cust?.email) {
+        const trackLink = APP.WEB_URL && b.tracking_token
+          ? `${APP.WEB_URL.replace(/\/+$/, "")}/track/${b.tracking_token}`
+          : null;
+        sendEmail({
+          to: cust.email,
+          subject: `Invoice ${custInv.number} — SMART Drill`,
+          html: emailLayout(`Invoice ${custInv.number}`, `
+            <p>Your invoice for request <strong>${b.request_no ?? "#" + bookingId}</strong> is ready.</p>
+            <table style="width:100%;border-collapse:collapse;margin:14px 0">
+              <tr><td style="padding:8px 0;color:#5a6b7c;border-bottom:1px solid #eef2f7">Invoice number</td><td style="padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #eef2f7">${custInv.number}</td></tr>
+              <tr><td style="padding:8px 0;color:#5a6b7c">Amount due</td><td style="padding:8px 0;text-align:right;font-weight:700;font-size:18px">${kes(gross)}</td></tr>
+            </table>
+            <p>Pay to confirm your request.${trackLink ? ` <a href="${trackLink}" style="color:#1656c7">Open your request →</a>` : ""}</p>`),
+        }).catch(() => {});
+      }
+    }
     await audit(providerId, "job.promptPayment", "booking", bookingId, { gross, providerAmount });
     return { customer_amount: gross, provider_amount: providerAmount, commission: gross - providerAmount };
   },

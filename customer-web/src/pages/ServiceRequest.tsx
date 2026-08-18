@@ -60,6 +60,15 @@ export default function ServiceRequest() {
   const [otpResendKey, setOtpResendKey] = useState(0);
   const otpCd = useOtpCountdown(otpExpiresIn, otpResendKey);
 
+  // Lock the page behind the OTP modal so the background doesn't scroll under it
+  // (matches TrackLookupDialog). Prevents the "page jitters while the code dialog
+  // is open" feel on mobile.
+  useEffect(() => {
+    if (!otpOpen) return;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, [otpOpen]);
+
   const mutation = useMutation({
     mutationFn: submitRequest,
     onSuccess: (res) => { setResult(res); setOtpOpen(false); window.scrollTo({ top: 0 }); },
@@ -142,7 +151,7 @@ export default function ServiceRequest() {
     }
     setOtpError(null); setOtpCode(""); setOtpSending(true);
     try {
-      const { expires_in } = await requestOtp(values.phone.trim());
+      const { expires_in } = await requestOtp(values.phone.trim(), values.email?.trim() || undefined);
       setOtpExpiresIn(expires_in || 300); setOtpResendKey((k) => k + 1);
       setOtpOpen(true);
     } catch {
@@ -165,7 +174,7 @@ export default function ServiceRequest() {
   const resendOtp = async () => {
     setOtpError(null); setOtpSending(true);
     try {
-      const { expires_in } = await requestOtp(values.phone.trim());
+      const { expires_in } = await requestOtp(values.phone.trim(), values.email?.trim() || undefined);
       setOtpExpiresIn(expires_in || 300); setOtpResendKey((k) => k + 1); setOtpCode("");
     } catch { setOtpError("Couldn't resend the code."); }
     finally { setOtpSending(false); }

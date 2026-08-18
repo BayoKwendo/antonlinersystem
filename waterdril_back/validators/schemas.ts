@@ -8,6 +8,9 @@ const phone = z.string().min(7).max(20);
 // --- auth --------------------------------------------------------------------
 export const requestOtpSchema = z.object({
   phone,
+  // Optional: a first-time customer's email (from the KYC form) so the OTP can
+  // be delivered by email too, before the customer record exists on file.
+  email: z.string().email().optional(),
 });
 
 export const verifyOtpSchema = z.object({

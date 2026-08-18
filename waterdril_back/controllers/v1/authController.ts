@@ -19,8 +19,8 @@ import {
 
 const authController = {
   requestOtp: async (ctx: Context) => {
-    const { phone } = await parseBody(ctx, requestOtpSchema);
-    const { expiresIn } = await authService.requestOtp(phone);
+    const { phone, email } = await parseBody(ctx, requestOtpSchema);
+    const { expiresIn } = await authService.requestOtp(phone, email);
     ok(ctx, { expires_in: expiresIn }, "If the number is valid, a code has been sent");
   },
 

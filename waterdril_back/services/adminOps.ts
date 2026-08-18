@@ -104,7 +104,7 @@ export const adminOps = {
       await bookingRepo.addEvent(bookingId, "booked", actorId, "provider assigned", query);
       await escrow.onAssigned(bookingId, providerId, gross, query);
     });
-    await notifyUser(providerId, "New job assigned", "You've been assigned a new SMART Drill job.", { push: false });
+    await notifyUser(providerId, "New job assigned", "You've been assigned a new SMART Drill job. Open the app to view it.", { push: true });
     await notifyUser(b.customer_id, "Provider assigned", "A vetted provider has been assigned to your request.", { push: false });
     await audit(actorId, "request.assign", "booking", bookingId, { provider_id: providerId, gross });
     return { status: "booked", provider_id: providerId };

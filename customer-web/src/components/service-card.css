@@ -13,11 +13,13 @@
 }
 /* reserve two title lines so single- and two-line titles keep cards aligned */
 .sd-card__title { font-size: 17px; line-height: 1.2; min-height: 2.4em; display: flex; align-items: center; }
-.sd-card__blurb { color: var(--sd-muted); font-size: 14px; flex: 1; margin-bottom: 14px; }
+/* Clamp to 3 lines + reserve the height so the grid doesn't reflow when the
+   API blurbs (different lengths) swap in over the fallback catalog. */
+.sd-card__blurb { color: var(--sd-muted); font-size: 14px; flex: 1; margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(3 * 1.55em); }
 .sd-card__price {
   display: flex; flex-direction: column; gap: 1px;
   border: 1px solid; border-radius: var(--sd-radius-sm);
-  padding: 9px 14px; margin-bottom: 14px; background: #fbfdff;
+  padding: 9px 14px; margin-bottom: 14px; background: var(--sd-bg);
 }
 .sd-card__price-main { font-weight: 800; font-size: 17px; }
 .sd-card__price-note { font-size: 12px; color: var(--sd-muted); }

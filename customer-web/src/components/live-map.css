@@ -1,5 +1,7 @@
 /* Live follow-the-driver map. Mirrors .sd-map from map-picker.css but taller. */
-.sd-livemap__canvas { height: 320px; }
+/* touch-action: pan-y lets a one-finger vertical swipe scroll the page through
+   the map instead of panning it (see MapTouchScroll). */
+.sd-livemap__canvas { height: 320px; touch-action: pan-y; }
 
 /* Marker divIcons carry no default chrome. */
 .sd-livemap__driver,

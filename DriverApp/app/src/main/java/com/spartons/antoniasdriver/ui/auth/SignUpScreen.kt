@@ -450,7 +450,7 @@ private fun HeroHeader(onBack: () -> Unit) {
 @Composable
 private fun SectionTitle(title: String, subtitle: String? = null) {
     Column {
-        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Navy)
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp)) }
     }
 }
@@ -476,7 +476,7 @@ private fun IconField(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (icon != null) {
-                Icon(icon, null, tint = Navy, modifier = Modifier.size(24.dp))
+                Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(14.dp))
             }
             Column(Modifier.weight(1f)) {
@@ -548,7 +548,7 @@ private fun ServiceGridItem(service: ServiceDef, checked: Boolean, onToggle: () 
             Modifier.padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(service.icon, null, tint = Navy, modifier = Modifier.size(24.dp))
+            Icon(service.icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
             Spacer(Modifier.width(10.dp))
             Text(
                 "${service.label} (${service.badge})",

@@ -18,7 +18,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
   render() {
     if (!this.state.hasError) return this.props.children;
     return (
-      <div style={{ minHeight: "70vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "40px 20px", gap: 12 }}>
+      <div style={{ minHeight: "70dvh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "40px 20px", gap: 12 }}>
         <h1 style={{ fontSize: 26, color: "#0c2436" }}>Something went wrong</h1>
         <p style={{ color: "#6b7a87", maxWidth: 420 }}>
           Sorry — an unexpected error occurred. Please reload the page; if it keeps happening, contact SMART Drill support.

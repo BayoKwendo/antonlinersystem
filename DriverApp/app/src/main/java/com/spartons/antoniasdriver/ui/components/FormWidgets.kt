@@ -91,9 +91,9 @@ fun DocumentUploadRow(
                     Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Icon(Icons.Filled.CloudUpload, null, tint = if (picked) SuccessGreen else Navy, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Filled.CloudUpload, null, tint = if (picked) SuccessGreen else MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.height(2.dp))
-                    Text(if (picked) "Change" else "Upload", style = MaterialTheme.typography.labelSmall, color = if (picked) SuccessGreen else Navy)
+                    Text(if (picked) "Change" else "Upload", style = MaterialTheme.typography.labelSmall, color = if (picked) SuccessGreen else MaterialTheme.colorScheme.primary)
                 }
             }
         }

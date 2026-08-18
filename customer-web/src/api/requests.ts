@@ -11,8 +11,10 @@ export interface RequestPayload {
   documents: string[]; // filenames for now; presigned S3 keys once uploads land
 }
 
-/** Send a 6-digit OTP to the phone (reuses the shared auth OTP endpoint). */
-export const requestOtp = (phone: string) => postJson<{ expires_in: number }>("/auth/otp/request", { phone });
+/** Send an OTP to the phone (reuses the shared auth OTP endpoint). When an email
+ *  is supplied it's also delivered there, so first-time customers get it both ways. */
+export const requestOtp = (phone: string, email?: string) =>
+  postJson<{ expires_in: number }>("/auth/otp/request", { phone, ...(email ? { email } : {}) });
 
 export interface RequestResult {
   request_no: string;

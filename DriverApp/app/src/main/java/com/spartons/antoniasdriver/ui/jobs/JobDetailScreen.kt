@@ -100,11 +100,12 @@ import com.spartons.antoniasdriver.ui.prettyDate
 import com.spartons.antoniasdriver.ui.prettyTime
 import com.spartons.antoniasdriver.ui.sms
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
-import com.spartons.antoniasdriver.ui.theme.BrandBlueLight
 import com.spartons.antoniasdriver.ui.theme.DangerRed
 import com.spartons.antoniasdriver.ui.theme.HairlineGrey
 import com.spartons.antoniasdriver.ui.theme.InkBlack
+import com.spartons.antoniasdriver.ui.theme.InkOnTint
 import com.spartons.antoniasdriver.ui.theme.MutedGrey
+import com.spartons.antoniasdriver.ui.theme.MutedOnTint
 import com.spartons.antoniasdriver.ui.theme.Navy
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.SuccessGreenLight
@@ -397,7 +398,7 @@ private fun StageCard(b: Job, working: Boolean, context: Context, vm: JobDetailV
             accent = BrandBlue,
             done = stage1Done,
             desc = "Once you arrive at the customer's location, let us know.",
-            detail = { DetailBox("Site Location", b.address ?: "Shared", BrandBlueLight) { MapLink(b, context) } },
+            detail = { DetailBox("Site Location", b.address ?: "Shared", MaterialTheme.colorScheme.primaryContainer) { MapLink(b, context) } },
             action = {
                 when {
                     s == JobStatus.BOOKED -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -414,7 +415,7 @@ private fun StageCard(b: Job, working: Boolean, context: Context, vm: JobDetailV
                 }
             },
             note = "This will notify the customer and Smart Drill that you are on site.",
-            noteBg = BrandBlueLight, noteTint = BrandBlue,
+            noteBg = MaterialTheme.colorScheme.primaryContainer, noteTint = BrandBlue,
         )
         StageDivider()
         // Stage 2 — Job in Progress
@@ -517,7 +518,7 @@ private fun StageCard(b: Job, working: Boolean, context: Context, vm: JobDetailV
 @Composable
 private fun LiveSharingBanner(enabled: Boolean, onStop: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(BrandBlueLight).padding(14.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primaryContainer).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -526,8 +527,8 @@ private fun LiveSharingBanner(enabled: Boolean, onStop: () -> Unit) {
         ) { Icon(Icons.Filled.LocationOn, null, tint = BrandBlue, modifier = Modifier.size(18.dp)) }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Sharing your live location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
-            Text("The customer can see you on the way.", style = MaterialTheme.typography.bodySmall, color = MutedGrey)
+            Text("Sharing your live location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkOnTint)
+            Text("The customer can see you on the way.", style = MaterialTheme.typography.bodySmall, color = MutedOnTint)
         }
         OutlinedButton(
             onClick = onStop,
@@ -724,7 +725,7 @@ private fun ContactLine(icon: ImageVector, label: String, value: String, onCall:
             Text(value, style = MaterialTheme.typography.bodyMedium, color = InkBlack)
         }
         IconButton(onClick = onCall, modifier = Modifier.size(34.dp)) {
-            Box(Modifier.size(34.dp).clip(CircleShape).background(BrandBlueLight), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(34.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
                 Icon(icon, "Call", tint = BrandBlue, modifier = Modifier.size(18.dp))
             }
         }
@@ -801,14 +802,14 @@ private fun SummaryItem(icon: ImageVector, label: String, value: String, modifie
 @Composable
 private fun ContactSupportCard(context: Context) {
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(BrandBlueLight).padding(14.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primaryContainer).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Filled.SupportAgent, null, tint = Navy, modifier = Modifier.size(26.dp))
+        Icon(Icons.Filled.SupportAgent, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(26.dp))
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Need Help?", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
-            Text("Contact Smart Drill Support", style = MaterialTheme.typography.bodySmall, color = MutedGrey)
+            Text("Need Help?", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkOnTint)
+            Text("Contact Smart Drill Support", style = MaterialTheme.typography.bodySmall, color = MutedOnTint)
         }
         OutlinedButton(
             onClick = { dial(context, SUPPORT_PHONE) },

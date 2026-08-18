@@ -18,12 +18,12 @@
   font: inherit;
   font-size: 14px;
   color: var(--sd-ink);
-  background: #fff;
+  background: var(--sd-card);
 }
 .sd-phone .sd-phone__cc:focus {
   outline: none;
-  border-color: var(--accent, #1656c7);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #1656c7) 18%, transparent);
+  border-color: var(--accent, var(--sd-blue-600));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--sd-blue-600)) 18%, transparent);
 }
 
 /* Number box: a fixed "+dial" prefix followed by the national-number input. */
@@ -34,7 +34,7 @@
   align-items: center;
   border: 1px solid var(--sd-line);
   border-radius: 9px;
-  background: #fff;
+  background: var(--sd-card);
   overflow: hidden;
 }
 .sd-phone__dial {
@@ -55,10 +55,10 @@
 }
 .sd-phone .sd-phone__num input:focus { outline: none; box-shadow: none; }
 .sd-phone__num:focus-within {
-  border-color: var(--accent, #1656c7);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #1656c7) 18%, transparent);
+  border-color: var(--accent, var(--sd-blue-600));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--sd-blue-600)) 18%, transparent);
 }
 
 @media (max-width: 480px) {
-  .sd-phone .sd-phone__cc { max-width: 38%; }
+  .sd-phone .sd-phone__cc { max-width: 46%; padding: 11px 8px; }
 }

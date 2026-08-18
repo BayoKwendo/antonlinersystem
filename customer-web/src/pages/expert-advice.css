@@ -2,7 +2,7 @@
 .sd-xa-hero {
   background:
     radial-gradient(120% 140% at 80% -20%, rgba(47, 123, 230, 0.35), transparent 60%),
-    linear-gradient(180deg, #0c2a4d, var(--sd-ink));
+    linear-gradient(180deg, #0c2a4d, #0c2436); /* fixed dark navy — always-dark hero */
   color: #fff;
   text-align: center;
   padding: 56px 0 48px;
@@ -20,11 +20,11 @@
 .sd-xa-card {
   border: 1px solid var(--sd-line);
   border-radius: 16px;
-  background: #fff;
+  background: var(--sd-card);
   overflow: hidden;
   transition: border-color .15s, box-shadow .15s;
 }
-.sd-xa-card.is-open { border-color: var(--sd-blue-200, #bcd3f7); box-shadow: 0 10px 26px rgba(12, 36, 54, 0.06); }
+.sd-xa-card.is-open { border-color: var(--sd-blue-100); box-shadow: 0 10px 26px rgba(12, 36, 54, 0.06); }
 
 .sd-xa-card__head {
   width: 100%;
@@ -61,7 +61,7 @@
 .sd-xa-card.is-open .sd-xa-card__panel { max-height: 320px; padding-bottom: 20px; }
 .sd-xa-card__panel ul { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .sd-xa-card__panel li { display: flex; gap: 9px; align-items: flex-start; color: var(--sd-ink-700); font-size: 14px; }
-.sd-xa-card__panel li svg { flex: none; color: #1a7f45; margin-top: 3px; }
+.sd-xa-card__panel li svg { flex: none; color: var(--sd-success-fg); margin-top: 3px; }
 .sd-xa-card__cta {
   display: inline-flex; align-items: center; gap: 6px;
   color: var(--sd-blue-600); font-weight: 700; font-size: 14px;
@@ -69,9 +69,9 @@
 .sd-xa-card__cta:hover { text-decoration: underline; }
 
 /* ---- WHY CHOOSE ---- */
-.sd-xa-why-sec { background: #fff; }
+.sd-xa-why-sec { background: var(--sd-card); }
 .sd-xa-why {
-  background: linear-gradient(180deg, var(--sd-blue-050), #fff);
+  background: linear-gradient(180deg, var(--sd-blue-050), var(--sd-card));
   border: 1px solid var(--sd-blue-100);
   border-radius: 20px;
   padding: 30px 28px;
@@ -82,13 +82,13 @@
 .sd-xa-why__item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
 .sd-xa-why__icon {
   width: 52px; height: 52px; border-radius: 14px;
-  background: #fff; border: 1px solid var(--sd-blue-100); color: var(--sd-blue-600);
+  background: var(--sd-card); border: 1px solid var(--sd-blue-100); color: var(--sd-blue-600);
   display: flex; align-items: center; justify-content: center;
 }
 .sd-xa-why__item span:last-child { font-size: 13.5px; font-weight: 600; color: var(--sd-ink-700); line-height: 1.35; }
 
 /* ---- JOURNEY BAND ---- */
-.sd-xa-journey { background: var(--sd-ink); color: #fff; padding: 34px 0; }
+.sd-xa-journey { background: #0c2436; color: #fff; padding: 34px 0; } /* always-dark band (fixed navy, not ink token) */
 .sd-xa-journey h2 { color: #fff; font-size: 20px; text-align: center; margin: 0 0 22px; }
 .sd-xa-journey__row { display: flex; align-items: flex-start; justify-content: center; flex-wrap: wrap; gap: 4px; }
 .sd-xa-journey__cell { display: flex; align-items: center; }
@@ -105,7 +105,7 @@
 .sd-xa-final {
   display: flex; align-items: center; gap: 18px;
   border: 1px solid var(--sd-blue-100);
-  background: linear-gradient(180deg, var(--sd-blue-050), #fff);
+  background: linear-gradient(180deg, var(--sd-blue-050), var(--sd-card));
   border-radius: 18px; padding: 24px 26px;
 }
 .sd-xa-final__icon {

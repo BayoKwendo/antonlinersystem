@@ -1,5 +1,7 @@
 .sd-footer {
-  background: var(--sd-ink);
+  /* intentionally dark in BOTH themes — fixed navy, not the ink token (which
+     inverts to near-white in dark and would hide the white footer text) */
+  background: #0c2436;
   color: rgba(255, 255, 255, 0.72);
   margin-top: 30px;
 }

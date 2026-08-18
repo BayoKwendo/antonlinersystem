@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, ZoomControl, useMapEvents, useMap } fr
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Icon } from "./Icons";
+import { MapTouchScroll } from "./MapTouchScroll";
 import "./map-picker.css";
 
 export interface LatLng { lat: number; lng: number; }
@@ -87,6 +88,7 @@ export function MapPicker({ value, onChange }: { value: LatLng | null; onChange:
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <ZoomControl position="bottomright" />
+          <MapTouchScroll />
           <ClickHandler onSet={onChange} />
           <Recenter value={value} />
           {value && (

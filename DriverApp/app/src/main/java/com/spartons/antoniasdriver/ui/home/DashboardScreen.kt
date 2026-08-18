@@ -73,7 +73,9 @@ import com.spartons.antoniasdriver.ui.money
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
 import com.spartons.antoniasdriver.ui.theme.HairlineGrey
 import com.spartons.antoniasdriver.ui.theme.InkBlack
+import com.spartons.antoniasdriver.ui.theme.InkOnTint
 import com.spartons.antoniasdriver.ui.theme.MutedGrey
+import com.spartons.antoniasdriver.ui.theme.MutedOnTint
 import com.spartons.antoniasdriver.ui.theme.Navy
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.SuccessGreenLight
@@ -267,13 +269,13 @@ private fun ServiceCard(svc: ProviderService) {
         border = BorderStroke(1.dp, HairlineGrey),
     ) {
         Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            IconCircle(ServiceCatalog.icon(svc.key), tint = Navy, diameter = 52)
+            IconCircle(ServiceCatalog.icon(svc.key), tint = MaterialTheme.colorScheme.primary, diameter = 52)
             Spacer(Modifier.height(10.dp))
             Text(
                 ServiceCatalog.label(svc.key, svc.name),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = Navy,
+                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
             )
@@ -370,7 +372,7 @@ private fun ReadinessCard(r: ProviderReadiness?, modifier: Modifier) {
     ) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.Shield, null, tint = Navy, modifier = Modifier.size(18.dp))
+                Icon(Icons.Outlined.Shield, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
                 Text("Provider Readiness", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack, modifier = Modifier.weight(1f))
                 Icon(Icons.Outlined.Info, null, tint = MutedGrey, modifier = Modifier.size(15.dp))
@@ -423,7 +425,7 @@ private fun PerformanceCard(m: ProviderMetrics?) {
             ) {
                 Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Performance Overview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
+                Text("Performance Overview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkOnTint)
             }
             Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 PerfStat(Icons.Filled.Star, ratingText(m?.averageRating), "Customer Rating", WarningAmber, Modifier.weight(1f))
@@ -463,7 +465,7 @@ private fun KpiCard(kpi: ProviderKpi) {
             ) {
                 Icon(Icons.Filled.Star, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("My Performance Rating", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
+                Text("My Performance Rating", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkOnTint)
                 Spacer(Modifier.weight(1f))
                 Text("${sm.kpiAvg ?: "—"} / 100", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
@@ -513,12 +515,12 @@ private fun CaughtUpCard() {
         ) { Icon(Icons.Filled.AssignmentTurnedIn, null, tint = BrandBlue, modifier = Modifier.size(40.dp)) }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text("You're all caught up!", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = InkBlack)
+            Text("You're all caught up!", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = InkOnTint)
             Spacer(Modifier.height(4.dp))
             Text(
                 "There are currently no customer requests assigned to you. We'll notify you immediately when a new request matching your approved services becomes available.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MutedGrey,
+                color = MutedOnTint,
             )
         }
     }

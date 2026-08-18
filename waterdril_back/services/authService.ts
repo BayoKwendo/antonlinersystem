@@ -53,16 +53,18 @@ async function issueTokens(user: UserRow): Promise<AuthResult> {
 
 export const authService = {
   /** Generate + SMS an OTP. Always succeeds silently (no account enumeration). */
-  async requestOtp(rawPhone: string): Promise<{ expiresIn: number }> {
+  async requestOtp(rawPhone: string, fallbackEmail?: string): Promise<{ expiresIn: number }> {
     const phone = normalizePhone(rawPhone);
     const code = randomOtp(AUTH.OTP_LENGTH);
     await accountRepo.insertOtp(phone, await sha256hex(code), AUTH.OTP_TTL_SECONDS);
     await sendSms({ to: phone, text: `Your SMART Drill verification code is ${code}. It expires in 5 minutes.`, asciiOnly: true });
-    // Also email the code when we have an address on file (SMS + email delivery).
+    // Also email the code (SMS + email delivery). Prefer the address on file; fall
+    // back to the one supplied by a first-time customer whose record doesn't exist yet.
     const user = await accountRepo.findByPhone(phone);
-    if (user?.email) {
+    const emailTo = user?.email ?? fallbackEmail;
+    if (emailTo) {
       sendEmail({
-        to: user.email,
+        to: emailTo,
         subject: "Your SMART Drill verification code",
         html: emailLayout("Verification code", `
           <p>Use this code to verify your number:</p>

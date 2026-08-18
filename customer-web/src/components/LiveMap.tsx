@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { MapTouchScroll } from "./MapTouchScroll";
 import "./live-map.css";
 
 export interface LatLng { lat: number; lng: number; }
@@ -81,6 +82,7 @@ export function LiveMap({ driver, site, live }: LiveMapProps) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <ZoomControl position="bottomright" />
+        <MapTouchScroll />
         <Follow driver={driver} site={site} />
         {site && <Marker position={[site.lat, site.lng]} icon={siteIcon} />}
         {driver && <Marker position={[driver.lat, driver.lng]} icon={driverIcon(live)} />}

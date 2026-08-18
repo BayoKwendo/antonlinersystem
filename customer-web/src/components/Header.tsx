@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { TrackLookupDialog } from "./TrackLookupDialog";
+import { ThemeToggle } from "./ThemeToggle";
+import { Logo } from "./Logo";
 import "./header.css";
 
 const NAV = [
@@ -21,10 +23,11 @@ export function Header() {
   const closeMenu = () => setMenuOpen(false);
 
   return (
+    <>
     <header className="sd-header">
       <div className="sd-container sd-header__bar">
         <Link to="/" aria-label="SMART Drill home" className="sd-header__logo" onClick={closeMenu}>
-          <img src="/logo.png" alt="SMART Drill" />
+          <Logo tagline={false} />
         </Link>
 
         <nav className="sd-header__nav">
@@ -34,6 +37,7 @@ export function Header() {
         </nav>
 
         <div className="sd-header__actions">
+          <ThemeToggle />
           <button type="button" className="sd-header__track" onClick={() => setTrackOpen(true)}>Track Order</button>
           <button
             type="button"
@@ -60,9 +64,12 @@ export function Header() {
           Track an Order
         </button>
       </div>
-      {menuOpen && <button type="button" className="sd-header__scrim" aria-hidden="true" tabIndex={-1} onClick={closeMenu} />}
-
       <TrackLookupDialog open={trackOpen} onClose={() => setTrackOpen(false)} />
     </header>
+    {/* Scrim lives OUTSIDE <header> so its position:fixed resolves against the
+        viewport — the header's backdrop-filter would otherwise make it the
+        containing block and trap the scrim inside the bar. */}
+    {menuOpen && <button type="button" className="sd-header__scrim" aria-hidden="true" tabIndex={-1} onClick={closeMenu} />}
+    </>
   );
 }

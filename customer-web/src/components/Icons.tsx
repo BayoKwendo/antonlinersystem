@@ -63,6 +63,8 @@ export function Icon({ name, size, className }: { name: IconName } & P) {
     case "calendar": return <svg {...p}><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>;
     // sun — solar power
     case "sun": return <svg {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>;
+    // crescent — dark mode
+    case "moon": return <svg {...p}><path d="M20 14.5A8 8 0 0 1 9.5 4a7 7 0 1 0 10.5 10.5Z"/></svg>;
     // plug — electric grid
     case "plug": return <svg {...p}><path d="M9 2v6M15 2v6"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v5"/></svg>;
     // bolt — power source
@@ -82,4 +84,4 @@ export type IconName =
   | "shield" | "handshake" | "chart" | "phone" | "pin"
   | "tap" | "cursor" | "form" | "connect" | "bell" | "arrow" | "check"
   | "doc" | "card" | "mail" | "user" | "clock" | "lock" | "search" | "send" | "headset" | "usercheck" | "upload"
-  | "calendar" | "sun" | "plug" | "bolt" | "chat" | "award" | "wrench";
+  | "calendar" | "sun" | "moon" | "plug" | "bolt" | "chat" | "award" | "wrench";

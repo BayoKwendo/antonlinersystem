@@ -69,6 +69,7 @@ import com.spartons.antoniasdriver.ui.requirementsText
 import com.spartons.antoniasdriver.ui.theme.BrandBlue
 import com.spartons.antoniasdriver.ui.theme.DangerRed
 import com.spartons.antoniasdriver.ui.theme.InkBlack
+import com.spartons.antoniasdriver.ui.theme.InkOnTint
 import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.SuccessGreenLight
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -255,7 +256,7 @@ private fun RequestDetailBody(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("You earn", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = InkBlack)
+                Text("You earn", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = InkOnTint)
                 Text(money(job.earningsAmount.toString()), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = SuccessGreen)
             }
         }

@@ -1,6 +1,11 @@
 /* =============================================================================
    SMART Drill design tokens. Blue primary (droplet/brand) + rust-orange accent
    (carried over from AntonLiner), navy ink, neutral surfaces.
+
+   Theme-aware: the light palette lives on :root. Dark values are applied when
+   the user explicitly picks dark (html[data-theme="dark"]) OR when the OS
+   prefers dark and the user hasn't explicitly chosen light. Every color the UI
+   uses is a token here, so components never hard-code light-only colors.
    ============================================================================= */
 :root {
   /* brand blue */
@@ -26,9 +31,18 @@
   --sd-surface: #ffffff;
   --sd-bg: #f6f9fd;
 
+  /* semantic surfaces (theme-aware; replace hard-coded #fff in components) */
+  --sd-card: #ffffff;                        /* cards, inputs, panels */
+  --sd-header-bg: rgba(255, 255, 255, 0.98); /* sticky header glass */
+
   /* status */
   --sd-green: #1a9e6a;
   --sd-amber: #e0952a;
+
+  /* status tints (badges / banners) */
+  --sd-danger-bg: #fdecec;  --sd-danger-fg: #b03030;
+  --sd-success-bg: #e7f7ee; --sd-success-fg: #1a7f45;
+  --sd-warning-bg: #fff4e5; --sd-warning-fg: #b26a00;
 
   /* system */
   --sd-radius: 12px;
@@ -37,4 +51,88 @@
   --sd-shadow-lg: 0 12px 40px rgba(12, 36, 54, 0.12);
   --sd-container: 1200px;
   --sd-font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  color-scheme: light;
+}
+
+/* ---- Dark palette ---------------------------------------------------------
+   Brand blues are brightened so links/buttons keep contrast on dark surfaces;
+   ink/text lighten; surfaces become deep navy; status tints darken. Kept in one
+   place and applied to both the explicit-dark and system-dark selectors. */
+:root[data-theme="dark"] {
+  --sd-blue-050: #16263c;
+  --sd-blue-100: #1e3859;
+  --sd-blue-300: #5b86d6;
+  --sd-blue-500: #4f8ce8;
+  --sd-blue-600: #4b8ef0; /* primary / links — brightened for dark */
+  --sd-blue-700: #74a8f5; /* hover — lighter than 600 on dark */
+  --sd-blue-900: #a9c8fb;
+
+  --sd-accent: #f2683a;
+  --sd-accent-600: #e0562a;
+  --sd-accent-050: #3a2015;
+
+  --sd-ink: #eef3f8;
+  --sd-ink-700: #cdd9e4;
+  --sd-text: #b7c3ce;
+  --sd-muted: #8593a1;
+  --sd-line: #26333f;
+  --sd-surface: #131e2a;
+  --sd-bg: #0b141d;
+
+  --sd-card: #131e2a;
+  --sd-header-bg: rgba(15, 23, 32, 0.98);
+
+  --sd-green: #35c088;
+  --sd-amber: #e6a53f;
+
+  --sd-danger-bg: #3a1f1f;  --sd-danger-fg: #f3a1a1;
+  --sd-success-bg: #14311f; --sd-success-fg: #6fd39b;
+  --sd-warning-bg: #3a2c14; --sd-warning-fg: #e8bd6a;
+
+  --sd-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4);
+  --sd-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+}
+
+/* System dark preference — applies the same dark palette unless the user has
+   explicitly chosen light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sd-blue-050: #16263c;
+    --sd-blue-100: #1e3859;
+    --sd-blue-300: #5b86d6;
+    --sd-blue-500: #4f8ce8;
+    --sd-blue-600: #4b8ef0;
+    --sd-blue-700: #74a8f5;
+    --sd-blue-900: #a9c8fb;
+
+    --sd-accent: #f2683a;
+    --sd-accent-600: #e0562a;
+    --sd-accent-050: #3a2015;
+
+    --sd-ink: #eef3f8;
+    --sd-ink-700: #cdd9e4;
+    --sd-text: #b7c3ce;
+    --sd-muted: #8593a1;
+    --sd-line: #26333f;
+    --sd-surface: #131e2a;
+    --sd-bg: #0b141d;
+
+    --sd-card: #131e2a;
+    --sd-header-bg: rgba(15, 23, 32, 0.98);
+
+    --sd-green: #35c088;
+    --sd-amber: #e6a53f;
+
+    --sd-danger-bg: #3a1f1f;  --sd-danger-fg: #f3a1a1;
+    --sd-success-bg: #14311f; --sd-success-fg: #6fd39b;
+    --sd-warning-bg: #3a2c14; --sd-warning-fg: #e8bd6a;
+
+    --sd-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4);
+    --sd-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55);
+
+    color-scheme: dark;
+  }
 }

@@ -1,6 +1,7 @@
 import { ActionIcon, AppShell, Avatar, Burger, Group, Indicator, Menu, NavLink, ScrollArea, Text, UnstyledButton } from "@mantine/core";
 import { Logo } from "../components/Logo";
 import { GlobalSearch } from "../components/GlobalSearch";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { useDisclosure } from "@mantine/hooks";
 import { DateFilterProvider } from "../lib/dateFilter";
 import { DateFilterControl } from "../components/DateFilterControl";
@@ -89,6 +90,8 @@ export default function Shell() {
             {isDashboard && (
               <Group visibleFrom="md"><DateFilterControl /></Group>
             )}
+
+            <ThemeToggle />
 
             <Menu shadow="md" width={230} position="bottom-end">
             <Menu.Target>
