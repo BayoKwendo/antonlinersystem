@@ -139,6 +139,7 @@ data class Job(
     val lat: String?,
     val lng: String?,
     @SerializedName("scheduled_at") val scheduledAt: String?,   // ISO datetime
+    @SerializedName("contacted_at") val contactedAt: String?,   // set when provider marked customer contacted
     @SerializedName("pricing_mode") val pricingMode: String?,   // fixed / quote
     @SerializedName("total_amount") val totalAmount: String?,
     @SerializedName("quoted_amount") val quotedAmount: String?,
@@ -154,6 +155,14 @@ data class Job(
     val commissionAmount: Double get() = (feeAmount?.toDoubleOrNull() ?: 0.0) * 0.10
 }
 
+/** A deliverable uploaded against a job (report, etims_invoice, photos, ...). */
+data class JobDocument(
+    val id: Long = 0,
+    val kind: String,
+    val url: String,
+    @SerializedName("created_at") val createdAt: String? = null,
+)
+
 /** Result of POST /jobs/:id/prompt-payment (numbers → String via Gson). */
 data class PromptPaymentResult(
     @SerializedName("customer_amount") val customerAmount: String? = null,
@@ -162,6 +171,35 @@ data class PromptPaymentResult(
 )
 
 data class OnlineState(val online: Boolean = false)
+
+// --- provider KPI rating (GET /providers/kpi) -------------------------------
+data class KpiWeights(
+    val acceptance: Int = 10, val contact: Int = 20, val arrival: Int = 40,
+    val completion: Int = 10, val feedback: Int = 20,
+)
+data class KpiSummary(
+    @SerializedName("kpi_avg") val kpiAvg: String? = null,
+    val jobs: Int = 0,
+    val acceptance: String? = null, val contact: String? = null, val arrival: String? = null,
+    val completion: String? = null, val feedback: String? = null,
+)
+data class KpiJob(
+    @SerializedName("booking_id") val bookingId: Long = 0,
+    @SerializedName("request_no") val requestNo: String? = null,
+    val service: String? = null,
+    val overall: String? = null,
+    @SerializedName("acceptance_pct") val acceptancePct: String? = null,
+    @SerializedName("contact_pct") val contactPct: String? = null,
+    @SerializedName("arrival_pct") val arrivalPct: String? = null,
+    @SerializedName("completion_pct") val completionPct: String? = null,
+    @SerializedName("feedback_pct") val feedbackPct: String? = null,
+    @SerializedName("created_at") val createdAt: String? = null,
+)
+data class ProviderKpi(
+    val weights: KpiWeights = KpiWeights(),
+    val summary: KpiSummary? = null,
+    val jobs: List<KpiJob> = emptyList(),
+)
 
 // --- uploads (local-disk upload result) -------------------------------------
 data class UploadResult(
@@ -191,6 +229,7 @@ data class AcceptJobReq(
     val note: String? = null,
 )
 data class JobStatusReq(val to: String, val note: String? = null)
+data class JobDocumentReq(val kind: String, val url: String)
 
 data class SignupDoc(val kind: String, val url: String)
 

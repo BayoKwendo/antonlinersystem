@@ -1,6 +1,10 @@
 package com.spartons.antoniasdriver.ui.jobs
 
 import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -77,9 +81,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spartons.antoniasdriver.ServiceLocator
+import com.spartons.antoniasdriver.data.DocumentUpload
 import com.spartons.antoniasdriver.data.Job
+import com.spartons.antoniasdriver.data.JobDocument
 import com.spartons.antoniasdriver.ui.LoadingBox
 import com.spartons.antoniasdriver.ui.MessageBox
+import com.spartons.antoniasdriver.ui.components.DocumentUploadRow
 import com.spartons.antoniasdriver.ui.components.IconCircle
 import com.spartons.antoniasdriver.ui.components.JobStatus
 import com.spartons.antoniasdriver.ui.components.ProgressStepper
@@ -103,11 +110,35 @@ import com.spartons.antoniasdriver.ui.theme.SuccessGreen
 import com.spartons.antoniasdriver.ui.theme.SuccessGreenLight
 import com.spartons.antoniasdriver.ui.theme.WarningAmber
 import com.spartons.antoniasdriver.ui.theme.WarningAmberLight
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val SUPPORT_PHONE = "+254700100200"
+
+// Completion deliverables a provider must upload before a job can be marked complete.
+// These kinds mirror the backend's completion gate in services/jobs.ts.
+private const val KIND_REPORT = "report"
+private const val KIND_ETIMS = "etims_invoice"
+private val DELIVERABLE_MIME = arrayOf("application/pdf", "image/png", "image/jpeg")
+private const val MAX_DELIVERABLE_BYTES = 5 * 1024 * 1024
+
+/** Read a picked deliverable off the Uri into an uploadable document (null if unreadable/oversize/unsupported). */
+private fun readDeliverable(context: Context, kind: String, uri: Uri): DocumentUpload? {
+    val cr = context.contentResolver
+    val mime = cr.getType(uri)?.lowercase() ?: return null
+    if (mime !in DELIVERABLE_MIME) return null
+    val name = runCatching {
+        cr.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+            if (c.moveToFirst()) c.getString(0) else null
+        }
+    }.getOrNull() ?: uri.lastPathSegment ?: "document"
+    val bytes = runCatching { cr.openInputStream(uri)?.use { it.readBytes() } }.getOrNull() ?: return null
+    if (bytes.size > MAX_DELIVERABLE_BYTES) return null
+    return DocumentUpload(kind, name, mime, bytes)
+}
 
 data class JobDetailState(
     val loading: Boolean = true,
@@ -115,6 +146,8 @@ data class JobDetailState(
     val working: Boolean = false,
     val error: String? = null,
     val promptDone: Boolean = false,
+    val documents: List<JobDocument> = emptyList(),
+    val uploading: String? = null,        // kind currently uploading, or null
 )
 
 class JobDetailViewModel : ViewModel() {
@@ -126,10 +159,32 @@ class JobDetailViewModel : ViewModel() {
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
             runCatching { repo.myJob(id) }
-                .onSuccess { _state.value = _state.value.copy(loading = false, job = it, error = if (it == null) "Could not load this job." else null) }
+                .onSuccess { job ->
+                    val docs = runCatching { repo.jobDocuments(id) }.getOrDefault(emptyList())
+                    _state.value = _state.value.copy(
+                        loading = false, job = job, documents = docs,
+                        error = if (job == null) "Could not load this job." else null,
+                    )
+                }
                 .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
         }
     }
+
+    /** Upload a completion deliverable (report / etims_invoice), then refresh the job's document set. */
+    fun uploadDeliverable(id: Long, kind: String, doc: DocumentUpload) {
+        _state.value = _state.value.copy(uploading = kind, error = null)
+        viewModelScope.launch {
+            runCatching { repo.uploadJobDeliverable(id, kind, doc) }
+                .onSuccess { added ->
+                    val docs = runCatching { repo.jobDocuments(id) }.getOrDefault(_state.value.documents + added)
+                    _state.value = _state.value.copy(uploading = null, documents = docs)
+                }
+                .onFailure { _state.value = _state.value.copy(uploading = null, error = it.message ?: "Upload failed") }
+        }
+    }
+
+    /** Record that the customer has been contacted (Contact Speed KPI); reloads the job. */
+    fun markContacted(id: Long) = advance(id) { repo.markContacted(id) }
 
     fun headedToSite(context: Context, id: Long) = advance(id) {
         repo.jobStatus(id, JobStatus.EN_ROUTE); startTracking(context, id)
@@ -222,6 +277,8 @@ private fun AwaitingPaymentBody(modifier: Modifier, b: Job, working: Boolean, er
         Spacer(Modifier.height(14.dp))
         CustomerDetailsCard(b, context)
         Spacer(Modifier.height(14.dp))
+        ContactedCard(b, working, vm)
+        Spacer(Modifier.height(14.dp))
         AgreedDateCard(b)
         Spacer(Modifier.height(14.dp))
         FeeSummaryCard(b)
@@ -239,6 +296,26 @@ private fun AwaitingPaymentBody(modifier: Modifier, b: Job, working: Boolean, er
             style = MaterialTheme.typography.labelSmall, color = MutedGrey, modifier = Modifier.padding(top = 8.dp),
         )
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+/** Provider records that they've called/contacted the customer (Contact Speed KPI). */
+@Composable
+private fun ContactedCard(b: Job, working: Boolean, vm: JobDetailViewModel) {
+    val done = !b.contactedAt.isNullOrBlank()
+    Column {
+        Button(
+            onClick = { if (!done) vm.markContacted(b.id) },
+            enabled = !working && !done,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = if (done) SuccessGreen else BrandBlue),
+        ) { Text(if (done) "✓ Customer contacted" else "Mark customer contacted", fontWeight = FontWeight.SemiBold) }
+        Text(
+            if (done) "Recorded — this counts toward your Customer Contact Speed rating."
+            else "Call the customer, then tap once contacted. Contacting quickly improves your rating.",
+            style = MaterialTheme.typography.labelSmall, color = MutedGrey, modifier = Modifier.padding(top = 6.dp),
+        )
     }
 }
 
@@ -285,6 +362,24 @@ private fun StageCard(b: Job, working: Boolean, context: Context, vm: JobDetailV
     val onSite = s == JobStatus.ARRIVED || s == JobStatus.IN_PROGRESS
     val stage1Done = s in setOf(JobStatus.ARRIVED, JobStatus.IN_PROGRESS, JobStatus.COMPLETED, JobStatus.CONFIRMED)
     val stage3Done = s in setOf(JobStatus.COMPLETED, JobStatus.CONFIRMED)
+
+    // Completion is gated on the required deliverables (report + eTIMS invoice) being
+    // uploaded — mirrors the backend rule so the button can't even be tapped early.
+    val st by vm.state.collectAsState()
+    val hasReport = st.documents.any { it.kind == KIND_REPORT }
+    val hasEtims = st.documents.any { it.kind == KIND_ETIMS }
+    val uploading = st.uploading
+    var pendingKind by remember { mutableStateOf<String?>(null) }
+    val pickScope = rememberCoroutineScope()
+    val deliverablePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val kind = pendingKind
+        pendingKind = null
+        if (kind != null && uri != null) pickScope.launch {
+            val doc = withContext(Dispatchers.IO) { readDeliverable(context, kind, uri) }
+            if (doc == null) notify("Couldn't read that file. Upload a PDF, PNG or JPG under 5 MB.")
+            else vm.uploadDeliverable(b.id, kind, doc)
+        }
+    }
 
     // Gate the trip start on runtime location permission — without it the
     // foreground service self-stops and tracking silently never starts.
@@ -357,7 +452,42 @@ private fun StageCard(b: Job, working: Boolean, context: Context, vm: JobDetailV
             detail = { DetailBox("Deliverables", deliverableFor(b.category), SuccessGreenLight) {} },
             action = {
                 if (stage3Done) DoneTag()
-                else StageButton("Job Completed", SuccessGreen, onSite && !working) { vm.completeJob(context, b.id) }
+                else Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Required completion deliverables — only uploadable once on site.
+                    if (onSite) {
+                        DocumentUploadRow(
+                            title = "Completion Report",
+                            icon = Icons.Filled.Description,
+                            selectedName = when {
+                                hasReport -> "Uploaded"
+                                uploading == KIND_REPORT -> "Uploading…"
+                                else -> null
+                            },
+                            onPick = { pendingKind = KIND_REPORT; deliverablePicker.launch(DELIVERABLE_MIME) },
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        DocumentUploadRow(
+                            title = "eTIMS Invoice",
+                            icon = Icons.Filled.Sell,
+                            selectedName = when {
+                                hasEtims -> "Uploaded"
+                                uploading == KIND_ETIMS -> "Uploading…"
+                                else -> null
+                            },
+                            onPick = { pendingKind = KIND_ETIMS; deliverablePicker.launch(DELIVERABLE_MIME) },
+                        )
+                        Spacer(Modifier.height(12.dp))
+                    }
+                    StageButton("Job Completed", SuccessGreen, onSite && !working && hasReport && hasEtims) { vm.completeJob(context, b.id) }
+                    if (onSite && !(hasReport && hasEtims)) {
+                        Text(
+                            "Upload the completion report and eTIMS invoice to finish.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MutedGrey,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                    }
+                }
             },
             note = "Smart Drill will review and confirm with the customer.",
             noteBg = SuccessGreenLight, noteTint = SuccessGreen,

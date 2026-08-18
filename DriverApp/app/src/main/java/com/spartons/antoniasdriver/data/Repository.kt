@@ -116,6 +116,15 @@ class Repository(private val api: ApiService, val session: SessionStore) {
         api.declineJob(id)
     }
 
+    /** Mark that the customer has been contacted (drives the Contact Speed KPI). */
+    suspend fun markContacted(id: Long) {
+        val res = api.markContacted(id)
+        if (!res.success) throw ApiException(res.message ?: "Could not update")
+    }
+
+    /** This provider's automatic KPI rating breakdown. */
+    suspend fun providerKpi(): ProviderKpi = api.providerKpi().unwrap()
+
     /** Generate the two proforma invoices; returns the amount breakdown. */
     suspend fun promptPayment(id: Long): PromptPaymentResult = api.promptPayment(id).unwrap()
 
@@ -123,6 +132,19 @@ class Repository(private val api: ApiService, val session: SessionStore) {
     suspend fun jobStatus(id: Long, to: String, note: String? = null) {
         val res = api.jobStatus(id, JobStatusReq(to, note))
         if (!res.success) throw ApiException(res.message ?: "Could not update the job")
+    }
+
+    /** Completion deliverables already uploaded for a job. */
+    suspend fun jobDocuments(id: Long): List<JobDocument> = api.jobDocuments(id).unwrap()
+
+    /** Upload a job deliverable (report / etims_invoice): store the file, then link it to the job. */
+    suspend fun uploadJobDeliverable(bookingId: Long, kind: String, doc: DocumentUpload): JobDocument {
+        val text = "text/plain".toMediaTypeOrNull()
+        val filePart = MultipartBody.Part.createFormData(
+            "file", doc.filename, doc.bytes.toRequestBody(doc.mime.toMediaTypeOrNull()),
+        )
+        val url = api.uploadFile(filePart, "jobdoc".toRequestBody(text), kind.toRequestBody(text)).unwrap().url
+        return api.addJobDocument(bookingId, JobDocumentReq(kind, url)).unwrap()
     }
 
     // --- notifications ------------------------------------------------------

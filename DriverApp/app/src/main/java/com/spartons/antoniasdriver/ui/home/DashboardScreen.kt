@@ -63,6 +63,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spartons.antoniasdriver.ServiceLocator
 import com.spartons.antoniasdriver.data.EarningsTotals
 import com.spartons.antoniasdriver.data.ProviderDashboard
+import com.spartons.antoniasdriver.data.ProviderKpi
 import com.spartons.antoniasdriver.data.ProviderMetrics
 import com.spartons.antoniasdriver.data.ProviderReadiness
 import com.spartons.antoniasdriver.data.ProviderService
@@ -87,6 +88,7 @@ private val Purple = Color(0xFF7C4DFF)
 data class DashboardState(
     val loading: Boolean = true,
     val dashboard: ProviderDashboard? = null,
+    val kpi: ProviderKpi? = null,
     val accepting: Boolean = false,
     val error: String? = null,
 )
@@ -100,7 +102,10 @@ class DashboardViewModel : ViewModel() {
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
             runCatching { repo.dashboard() }
-                .onSuccess { _state.value = _state.value.copy(loading = false, dashboard = it, accepting = it.acceptingRequests) }
+                .onSuccess { d ->
+                    val kpi = runCatching { repo.providerKpi() }.getOrNull()
+                    _state.value = _state.value.copy(loading = false, dashboard = d, accepting = d.acceptingRequests, kpi = kpi)
+                }
                 .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
         }
     }
@@ -153,6 +158,10 @@ fun DashboardScreen(
                 }
                 Spacer(Modifier.height(16.dp))
                 PerformanceCard(d.metrics)
+                s.kpi?.let {
+                    Spacer(Modifier.height(16.dp))
+                    KpiCard(it)
+                }
                 if ((d.metrics?.activeRequests ?: 0) == 0) {
                     Spacer(Modifier.height(16.dp))
                     CaughtUpCard()
@@ -434,6 +443,62 @@ private fun PerfStat(icon: ImageVector, value: String, label: String, tint: Colo
         Spacer(Modifier.height(4.dp))
         Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = InkBlack)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MutedGrey, textAlign = TextAlign.Center, maxLines = 2)
+    }
+}
+
+/** The provider's automatic KPI rating, with the factors that make it up (transparent). */
+@Composable
+private fun KpiCard(kpi: ProviderKpi) {
+    val sm = kpi.summary
+    if (sm == null || sm.jobs == 0) return
+    Surface(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, HairlineGrey),
+    ) {
+        Column {
+            Row(
+                Modifier.fillMaxWidth().background(BrandBlueLight).padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Filled.Star, null, tint = Navy, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("My Performance Rating", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = InkBlack)
+                Spacer(Modifier.weight(1f))
+                Text("${sm.kpiAvg ?: "—"} / 100", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = Navy)
+            }
+            Column(Modifier.padding(14.dp)) {
+                Text(
+                    "Based on ${sm.jobs} rated ${if (sm.jobs == 1) "job" else "jobs"} — quicker acceptance, contact, on-time arrival and completion raise your score.",
+                    style = MaterialTheme.typography.labelSmall, color = MutedGrey,
+                )
+                Spacer(Modifier.height(10.dp))
+                KpiBar("Job acceptance speed", sm.acceptance, kpi.weights.acceptance)
+                KpiBar("Customer contact speed", sm.contact, kpi.weights.contact)
+                KpiBar("Arrival on time", sm.arrival, kpi.weights.arrival)
+                KpiBar("Job completion time", sm.completion, kpi.weights.completion)
+                KpiBar("Customer feedback", sm.feedback, kpi.weights.feedback)
+            }
+        }
+    }
+}
+
+@Composable
+private fun KpiBar(label: String, pct: String?, weight: Int) {
+    val value = ((pct?.toFloatOrNull() ?: 0f) / 100f).coerceIn(0f, 1f)
+    Column(Modifier.padding(vertical = 5.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("$label ($weight%)", style = MaterialTheme.typography.bodySmall, color = MutedGrey)
+            Text("${pct ?: "—"}%", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = InkBlack)
+        }
+        Spacer(Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = { value },
+            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)),
+            color = BrandBlue,
+            trackColor = HairlineGrey,
+        )
     }
 }
 

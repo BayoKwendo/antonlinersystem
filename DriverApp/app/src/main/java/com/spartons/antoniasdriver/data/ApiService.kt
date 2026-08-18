@@ -42,6 +42,9 @@ interface ApiService {
     @GET("providers/earnings")
     suspend fun earnings(): ApiResponse<ProviderEarnings>
 
+    @GET("providers/kpi")
+    suspend fun providerKpi(): ApiResponse<ProviderKpi>
+
     @POST("providers/me/online")
     suspend fun setOnline(@Body body: OnlineReq): ApiResponse<OnlineState>
 
@@ -61,11 +64,20 @@ interface ApiService {
     @POST("jobs/{id}/decline")
     suspend fun declineJob(@Path("id") id: Long): ApiResponse<Unit>
 
+    @POST("jobs/{id}/contacted")
+    suspend fun markContacted(@Path("id") id: Long): ApiResponse<Unit>
+
     @POST("jobs/{id}/prompt-payment")
     suspend fun promptPayment(@Path("id") id: Long): ApiResponse<PromptPaymentResult>
 
     @POST("jobs/{id}/status")
     suspend fun jobStatus(@Path("id") id: Long, @Body body: JobStatusReq): ApiResponse<Unit>
+
+    @GET("jobs/{id}/documents")
+    suspend fun jobDocuments(@Path("id") id: Long): ApiResponse<List<JobDocument>>
+
+    @POST("jobs/{id}/documents")
+    suspend fun addJobDocument(@Path("id") id: Long, @Body body: JobDocumentReq): ApiResponse<JobDocument>
 
     // --- uploads (statutory documents; multipart → backend local disk) ------
     @Multipart

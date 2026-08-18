@@ -225,7 +225,7 @@ const bookingRepo = {
   jobsForProvider(providerId: number) {
     return client.query(
       `SELECT b.id, b.request_no, b.status, b.pricing_mode, b.total_amount, b.quoted_amount,
-              b.amount_paid, b.address, b.lat, b.lng, b.scheduled_at, b.created_at, b.details,
+              b.amount_paid, b.address, b.lat, b.lng, b.scheduled_at, b.contacted_at, b.created_at, b.details,
               sc.\`key\` AS category, sc.name AS service_name,
               c.display_name AS customer_name, c.phone AS customer_phone
          FROM bookings b
