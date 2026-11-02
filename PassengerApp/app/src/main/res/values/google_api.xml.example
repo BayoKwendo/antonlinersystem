@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+    Copy this file to google_api.xml in the same folder and put your own
+    Google Maps key in it. Restrict the key to this app's package name and
+    signing certificate in the Google Cloud console. google_api.xml is
+    ignored by git.
+    -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">YOUR_GOOGLE_MAPS_KEY</string>
+</resources>

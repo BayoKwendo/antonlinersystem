@@ -30,3 +30,25 @@ waterdril_back/upload_files/
 
 # Transient local dev-only session seeder (never commit — auth bypass)
 portal/public/__devseed.html
+
+# --- IDE and local tooling ---
+**/.idea/
+**/.gradle/
+**/local.properties
+**/*.iml
+
+# --- keys and per-developer config (see README) ---
+**/google-services.json
+**/google_maps_api.xml
+**/google_api.xml
+!**/google_maps_api.xml.example
+
+# --- database dumps and backups: never commit real data ---
+*.sql.gz
+waterdril_back/db/backups/
+waterdril_back/*.sql
+/*.sql
+
+# --- built artefacts ---
+**/*.apk
+**/*.aab
